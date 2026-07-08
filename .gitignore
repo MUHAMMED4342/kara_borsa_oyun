@@ -1,0 +1,12 @@
+# Derlenmiş dosyalar
+*.exe
+dist/
+build/
+
+# Python ile ilgili gereksizler
+__pycache__/
+*.pyc
+
+# VS Code veya diğer editörlerin dosyaları
+.vscode/
+.idea/
