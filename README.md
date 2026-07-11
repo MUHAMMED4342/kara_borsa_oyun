@@ -1,74 +1,85 @@
-# Karaborsa Ticaret Simülasyonu (Erişilebilir wxPython Oyunu)
+# Karaborsa Ticaret Simülasyonu — Proje Rehberi
 
-Görme engelli oyuncuların ekran okuyucu (NVDA, JAWS vb.) ile rahatça
-oynayabileceği, metin tabanlı bir karaborsa ticaret simülasyonu.
+Bu dosya, projeye AI (Claude vb.) ile çalışırken **hangi durumda hangi dosyayı
+yüklemeniz/güncellemeniz gerektiğini** hatırlamanız için hazırlandı.
 
-## Kurulum
+## 1. Dosya Yapısı ve Görevleri
 
-```bash
-pip install -r requirements.txt
+| Dosya | Görevi |
+|---|---|
+| `main.py` | Giriş noktası. `MainFrame` (ana oyun penceresi), `App` sınıfı, gün atlama, klavye kısayolları (F1–F6, C/D/E), polis/hapis akışı. |
+| `game_state.py` | `GameState` sınıfı: nakit, envanter, kredi, arsa, aklama, polis riski gibi tüm oyun **mantığı ve hesaplamaları**. Ekranla (wx) neredeyse ilgisi yok. |
+| `dialogs.py` | Tüm pencereler: Ana Menü, Arsa Yönetimi, Kayıt Yükle, Şirket, Aklama, Kredi, Bankacılık, Hapis dialogları. Buton/tuş davranışları ve ses tetikleme burada. |
+| `game_data.py`* | Sabit oyun verileri: `PRODUCTS`, `EVENTS`, `LAND_TYPES`, `COMPANY_TYPES`, `CREDIT_TIERS` vb. |
+| `accessibility_helper.py`* | `speak()` fonksiyonu — ekran okuyucuya (SAPI5/NVDA/JAWS) metin gönderir. |
+| `audio_manager.py`* | `AudioManager` sınıfı — müzik/efekt çalma, ses seviyesi. |
+| `save_manager.py`* | `save_game`, `load_game`, `list_saves`, `delete_save` — kayıt dosyası okuma/yazma. |
+| `updater.py`* | Oyun içi otomatik güncelleme kontrolü (`check_for_update_async`, `apply_pending_update_if_ready`). |
+| `updater_app.py`* | Ayrı, gömülü çalışan **yardımcı güncelleyici** programın kaynak kodu (`KaraborsaGuncelleyici.exe` bundan derlenir). |
+| `build.spec` | Ana oyunu (`KaraborsaSimulasyonu.exe`) PyInstaller ile tek-dosya olarak derleyen betik. |
+| `build_updater.spec`* | Yardımcı güncelleyiciyi (`KaraborsaGuncelleyici.exe`) derleyen betik. |
+| `build_all.bat` | İki spec'i doğru sırayla çalıştıran toplu Windows derleme betiği. |
+| `help.html` | Oyun içi yardım sayfası (yoksa `game_state.py` içindeki `create_help_file` otomatik üretir). |
+| `sounds/` | Ses/müzik dosyaları klasörü. |
+
+`*` işaretli dosyalar henüz benimle paylaşılmadı — içeriklerini bilmiyorum,
+sadece diğer dosyalardaki `import` satırlarından ne işe yaradıklarını
+çıkarabiliyorum. Bunlarla ilgili bir sorun/istek geldiğinde **o dosyayı da
+yüklemeniz gerekir**, yoksa körlemesine tahmin ederim.
+
+## 2. Hangi Durumda Hangi Dosyayı Yüklemeliyim?
+
+| Senaryo / Şikayet | Yüklenecek Dosya(lar) |
+|---|---|
+| Menüde buton/tuş çalışmıyor, dialog penceresi (Arsa, Kredi, Banka, Şirket, Aklama, Hapis, Kayıt Yükle, Ana Menü) hatalı davranıyor | `dialogs.py` |
+| Para/kredi/faiz/polis riski/arsa fiyatı/envanter hesabı yanlış | `game_state.py` |
+| Ana pencere, gün atlama, klavye kısayolları (F1–F6, C/D/E), oyunu başlatma/kapatma | `main.py` |
+| Ürün, olay, şirket tipi, arsa tipi, kredi katmanı gibi **sabit veriler** yanlış/eksik | `game_data.py` |
+| Ekran okuyucu hiç konuşmuyor / yanlış konuşuyor | `accessibility_helper.py` |
+| Ses/müzik çalmıyor, kesiliyor, ses seviyesi çalışmıyor | `audio_manager.py` + ilgili sesi çağıran dosya (genelde `dialogs.py` veya `main.py`) |
+| Kayıt yükleme/kaydetme, kayıt silme sorunları | `save_manager.py` |
+| Oyun içi otomatik güncelleme kontrolü çalışmıyor | `updater.py` |
+| Gömülü güncelleyici exe'nin kendi davranışı (indirme, uygulama) | `updater_app.py`, `build_updater.spec` |
+| `.exe` derlenmiyor / PyInstaller hatası | `build.spec`, `build_all.bat` — **ve hatanın tam metni** |
+| İki adımlı derleme sırası karışıyor | `build_all.bat`, `build.spec`, `build_updater.spec` |
+| "Programı çalıştırınca hata alıyorum" (traceback var) | Traceback'in **en altında gösterdiği dosya** — hata mesajını tam kopyalayıp yapıştırın, hangi dosya olduğunu oradan söyleyebilirim |
+
+**Altın kural:** Elinizde bir hata mesajı / traceback varsa, önce onu tam
+olarak yapıştırın. Python traceback'i zaten "şu dosyanın şu satırında hata
+oluştu" der — hangi dosyayı yükleyeceğinizi orası netleştirir.
+
+## 3. Bağımlılık Haritası (kim kimi import ediyor)
+
+```
+main.py
+ ├── game_state.py
+ │     ├── game_data.py
+ │     └── accessibility_helper.py
+ ├── dialogs.py
+ │     ├── game_state.py
+ │     ├── game_data.py
+ │     ├── accessibility_helper.py
+ │     ├── audio_manager.py
+ │     └── save_manager.py
+ ├── game_data.py
+ ├── accessibility_helper.py
+ ├── audio_manager.py
+ ├── save_manager.py
+ └── updater.py
 ```
 
-> **Not:** `wxPython` bazı Linux dağıtımlarında kaynak koddan derlenir ve
-> bunun için GTK geliştirme paketlerine ihtiyaç duyar. Eğer kurulum
-> başarısız olursa önce şunu deneyin:
->
-> ```bash
-> sudo apt-get install libgtk-3-dev   # Debian/Ubuntu
-> ```
->
-> Windows ve macOS'ta genellikle önceden derlenmiş "wheel" dosyaları
-> indirildiği için ek bir işlem gerekmez.
+Bir dosyada değişiklik yaptığınızda, o dosyayı import eden üstteki dosyaları
+**yeniden yüklemenize gerek yok** — sadece değişen dosyanın kendisini
+göndermeniz yeterli, ben zaten önceki konuşmadan diğerlerinin son halini
+hatırlıyorum (hafıza açıksa) ya da siz proje klasörünüzde zaten güncel
+tutuyorsunuzdur.
 
-## Çalıştırma
+## 4. Pratik İpucu
 
-```bash
-python main.py
-```
+Yeni bir konuşma başlatıyorsanız ve AI'nın önceki değişiklikleri
+hatırlamasını bekleyemiyorsanız, en azından şunları birlikte yükleyin:
+- Şikayetin ilgili olduğu dosya (yukarıdaki tablo)
+- Varsa tam hata mesajı / traceback
+- Kısa bir "şu an ne bekliyorum, ne oluyor" açıklaması
 
-Ses dosyalarını `sounds/` klasörüne koyun (bkz. `sounds/NEREYE_KOYMALI.txt`):
-- `game_music.mp3` — arka plan müziği (döngülü)
-- `para.mp3` — satın alma efekti
-- `buy.ogg` — satış efekti
-
-Dosyalar eksikse oyun çökmez, sadece sessiz kalır.
-
-## Dosya Yapısı
-
-| Dosya | Görev |
-|---|---|
-| `main.py` | wxPython arayüzü + `GameState` oyun mantığı |
-| `game_data.py` | Ürünler, kategoriler, rastgele olaylar (sabit veri) |
-| `accessibility_helper.py` | `accessible_output2` için güvenli sarmalayıcı (`speak()`) |
-| `audio_manager.py` | `pygame.mixer` ile müzik/efekt yönetimi |
-
-## Klavye Kısayolları
-
-| Tuş | İşlev |
-|---|---|
-| `Tab` | Ürün Listesi → Satın Al → Sat → Gün Atla sırasıyla gezinme |
-| `↑ / ↓` | Ürün listesinde gezinme (seçili ürün otomatik seslendirilir) |
-| `C` | Cüzdan + detaylı envanter özetini seslendirir |
-| `Page Up` | Arka plan müziğinin sesini artırır |
-| `Page Down` | Arka plan müziğinin sesini azaltır |
-
-## Oyun Mekaniği Özeti
-
-- Oyuncu 5.000 TL nakit ile başlar.
-- Her ürün TL üzerinden alınıp satılır; Dolar/Euro/Altın da bu mekanizmaya
-  dahildir (örn. "Dolar" satın almak, cüzdandaki Dolar miktarını artırır).
-- "Gün Atla" butonu basıldığında:
-  1. Tüm ürün fiyatları ±%15 aralığında rastgele dalgalanır.
-  2. %30 ihtimalle 1-3 rastgele küresel olay tetiklenir (Ekonomik Kriz,
-     Polis Baskını, Sınır Kapılarının Kapanması vb.), bu olaylar ilgili
-     ürün kategorisinin fiyatını dinamik olarak artırır/azaltır.
-  3. Tüm sonuçlar ekran okuyucu ile özetlenerek duyurulur.
-
-## Genişletme Noktaları
-
-- Yeni ürün eklemek: `game_data.py` → `PRODUCTS` ve `PRODUCT_CATEGORIES`
-- Yeni rastgele olay eklemek: `game_data.py` → `EVENTS` listesine bir
-  sözlük eklemek yeterli (name, category, effect_pct, description).
-- `GameState` sınıfı UI'dan tamamen bağımsızdır; birim testleri
-  `import main` edip `wx` modülünü stub'layarak (veya `unittest.mock`
-  ile) UI'sız çalıştırılabilir.
+Bu üçü genelde tek mesajda sorunu tam teşhis etmek için yeterli olur.

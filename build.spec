@@ -35,6 +35,20 @@ if not os.path.exists(_updater_exe):
         "calistirin."
     )
 
+# token.txt exe'nin İÇİNE gömülüyor (sounds/help.html ile aynı mantık),
+# böylece dağıttığınız tek exe dosyası kendi başına çalışır; kullanıcının
+# ayrıca yanına token.txt koymasına gerek kalmaz. Bu dosya build.spec ile
+# AYNI klasörde (main.py'nin yanında) durmalı - derleme zamanında okunup
+# exe'nin içine paketlenir.
+_token_file = 'token.txt'
+if not os.path.exists(_token_file):
+    raise SystemExit(
+        "HATA: token.txt bulunamadi.\n"
+        "GitHub 'gist' izinli personal access token'inizi icerecek\n"
+        "sekilde, bu build.spec ile ayni klasore bir token.txt dosyasi\n"
+        "olusturup tekrar deneyin."
+    )
+
 a = Analysis(
     ['main.py'],
     pathex=[],
@@ -43,6 +57,7 @@ a = Analysis(
         ('help.html', '.'),
         ('sounds', 'sounds'),
         (_updater_exe, '.'),
+        (_token_file, '.'),
     ],
     hiddenimports=[],
     hookspath=[],
