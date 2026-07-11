@@ -10,3 +10,4 @@ __pycache__/
 # VS Code veya diğer editörlerin dosyaları
 .vscode/
 .idea/
+token.txt
