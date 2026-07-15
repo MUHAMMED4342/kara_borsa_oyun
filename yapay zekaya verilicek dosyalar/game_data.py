@@ -85,7 +85,6 @@ COMPANY_TYPES = {
         "description": "İkinci el araç alım-satımı yapan bir galeri",
         "daily_upkeep": 100,
         "laundering_capacity": 0.15,
-        "laundering_fee": 0.25,
         "credit_multiplier": 1.0,
     },
     "Gece Kulübü": {
@@ -93,7 +92,6 @@ COMPANY_TYPES = {
         "description": "Yüksek cirolu bir eğlence mekanı",
         "daily_upkeep": 250,
         "laundering_capacity": 0.25,
-        "laundering_fee": 0.15,
         "credit_multiplier": 1.5,
     },
     "Restoran": {
@@ -101,7 +99,6 @@ COMPANY_TYPES = {
         "description": "Nakit ağırlıklı çalışan bir yemek işletmesi",
         "daily_upkeep": 150,
         "laundering_capacity": 0.20,
-        "laundering_fee": 0.20,
         "credit_multiplier": 1.2,
     },
     "Tekstil Atölyesi": {
@@ -109,7 +106,6 @@ COMPANY_TYPES = {
         "description": "Küçük ölçekli tekstil üretimi",
         "daily_upkeep": 80,
         "laundering_capacity": 0.12,
-        "laundering_fee": 0.30,
         "credit_multiplier": 0.8,
     },
     "Kripto Madenciliği": {
@@ -117,18 +113,9 @@ COMPANY_TYPES = {
         "description": "Yasal görünümlü kripto madencilik operasyonu",
         "daily_upkeep": 500,
         "laundering_capacity": 0.35,
-        "laundering_fee": 0.10,
         "credit_multiplier": 2.0,
     },
 }
-
-# NOT (laundering_fee): Aklama sırasında kirli paranın bir kısmı komisyon
-# olarak kaybedilir - gerçek para aklamada da "temizleme" ücretsiz değildir.
-# Küçük/az sofistike işletmeler (Tekstil Atölyesi) daha yüksek kesinti
-# uygularken, büyük/kurumsal görünümlü işletmeler (Kripto Madenciliği,
-# Gece Kulübü) daha düşük kesintiyle çalışır. Oran, laundering_capacity
-# ile ters orantılı seçildi: kapasitesi yüksek olan zaten daha güvenilir/
-# etkili bir aklama kanalı demektir.
 
 # Kredi Notu Seviyeleri
 CREDIT_TIERS = [
@@ -232,11 +219,36 @@ def calculate_dirty_money_risk(dirty_cash: float) -> float:
 # hem de kurduğu şirketi (aklama dahil) kendi kendine yönetir; oyuncu
 # sadece kâr toplar ve her 30 günde bir maaş öder.
 
-# NOT: Şehir ve isim listeleri artık burada sabit kodlanmıyor. Tek
-# kaynak insanlar.txt / iller.txt dosyalarıdır (bkz. load_names_from_file
-# ve load_cities_from_file). Bu dosyalar bulunamazsa/boşsa fonksiyonlar
-# boş liste döner; oyun çökmez, sadece "adam tutma" / "şehir seçimi"
-# ekranlarında ilgili liste boş görünür.
+TURKISH_CITIES = [
+    "İstanbul", "Bursa", "Kocaeli", "Edirne", "Tekirdağ", "Kırklareli",
+    "Sakarya", "Çanakkale", "Balıkesir", "Bilecik", "Yalova",
+    "İzmir", "Manisa", "Aydın", "Denizli", "Muğla", "Uşak",
+    "Kütahya", "Afyonkarahisar",
+    "Antalya", "Adana", "Mersin", "Hatay", "Kahramanmaraş", "Osmaniye",
+    "Isparta", "Burdur",
+    "Ankara", "Konya", "Kayseri", "Sivas", "Eskişehir", "Nevşehir",
+    "Niğde", "Kırşehir", "Aksaray", "Karaman", "Yozgat", "Çankırı",
+    "Kırıkkale",
+    "Samsun", "Trabzon", "Ordu", "Giresun", "Rize", "Artvin",
+    "Zonguldak", "Bartın", "Karabük", "Kastamonu", "Sinop", "Çorum",
+    "Amasya", "Tokat", "Bayburt", "Gümüşhane", "Düzce", "Bolu",
+    "Erzurum", "Erzincan", "Van", "Ağrı", "Kars", "Ardahan", "Iğdır",
+    "Malatya", "Elazığ", "Bingöl", "Tunceli", "Muş", "Bitlis", "Hakkari",
+    "Gaziantep", "Şanlıurfa", "Diyarbakır", "Mardin", "Batman", "Siirt",
+    "Şırnak", "Adıyaman", "Kilis",
+]
+
+PEOPLE_POOL = [
+    "Kasap Nuri", "Bitirim İhsan", "Sarı Recep", "Topal Hasan", "Deli Fuat",
+    "Kel Mahmut", "Uzun Ferit", "Sessiz Kemal", "Kambur Şaban", "Karayel Cemal",
+    "Aslan Yusuf", "Kurt Bekir", "Demir Yakup", "Tilki Selim", "Boğa Naim",
+    "Şeytan Metin", "Yılmaz Turan", "Öksüz Ramazan", "Zeytin Ekrem", "Fırtına Onur",
+    "Manyak Cengiz", "Sarhoş Tayfun", "Sinsi Halil", "Yaralı Tahsin", "Kanlı Nizam",
+    "Kurşun Vahit", "Baba Rasim", "Terzi Şükrü", "Berber Cevdet", "Manav Zeki",
+    "Simsar Necmi", "Tefeci Kadir", "Palabıyık Sadık", "Kambiyocu Erol", "Sokak Feramuz",
+    "Gölge Aziz", "Karga Yavuz", "Kobra İlyas", "Panter Cihan", "Akrep Ozan",
+    "Çekirge Salih", "Yılan Barış", "Ejder Volkan", "Şahin Emrah", "Kartal Serdar",
+]
 
 # Bir adamı bulup ikna etmenin sabit maliyeti. Adamlar artık şirket
 # kurmuyor, bu yüzden şirket kuruluş maliyeti EKLENMİYOR.
@@ -252,11 +264,15 @@ EMPLOYEE_DAILY_MIN = 150
 EMPLOYEE_DAILY_MAX = 600
 
 
+def get_flat_city_list() -> list:
+    """Düz şehir listesini döner (artık bölge yok)."""
+    return list(TURKISH_CITIES)
+
+
 def load_names_from_file(path: str) -> list:
     """insanlar.txt gibi bir dosyadan, 'insanlar:' başlığı altındaki
-    satırları isim listesi olarak okur. Dosya yoksa/bozuksa/boşsa boş
-    liste döner (yedek/kopya bir isim listesi ARTIK YOK; insanlar.txt
-    tek kaynaktır)."""
+    satırları isim listesi olarak okur. Dosya yoksa veya bozuksa PEOPLE_POOL
+    döner, böylece oyun her zaman çalışabilir durumda kalır."""
     try:
         with open(path, "r", encoding="utf-8") as f:
             lines = [ln.strip() for ln in f.readlines()]
@@ -270,9 +286,9 @@ def load_names_from_file(path: str) -> list:
                 continue
             if started:
                 names.append(ln)
-        return names
+        return names if names else list(PEOPLE_POOL)
     except OSError:
-        return []
+        return list(PEOPLE_POOL)
 
 
 def load_cities_from_file(path: str) -> list:
@@ -282,9 +298,8 @@ def load_cities_from_file(path: str) -> list:
         istanbul, ankara, gazi antep, izmir
 
     ya da her satırda bir şehir olabilir. Başlıktaki "iller:" satırı
-    varsa (opsiyonel) atlanır. Dosya yoksa/bozuksa/boşsa boş liste
-    döner (yedek/kopya bir şehir listesi ARTIK YOK; iller.txt tek
-    kaynaktır)."""
+    varsa (opsiyonel) atlanır. Dosya yoksa/bozuksa/boşsa TURKISH_CITIES
+    döner, böylece oyun her zaman çalışabilir durumda kalır."""
     try:
         with open(path, "r", encoding="utf-8") as f:
             raw = f.read()
@@ -311,9 +326,9 @@ def load_cities_from_file(path: str) -> list:
             if key not in seen:
                 seen.add(key)
                 unique_cities.append(c)
-        return unique_cities
+        return unique_cities if unique_cities else list(TURKISH_CITIES)
     except OSError:
-        return []
+        return list(TURKISH_CITIES)
 
 
 # ---------------------------------------------------------------------------

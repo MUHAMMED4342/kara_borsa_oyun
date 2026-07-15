@@ -12,7 +12,7 @@ import updater
 from game_data import (
     PRODUCT_CATEGORIES, PRODUCTS, EVENTS, RARE_EVENTS, get_flat_product_order,
     COMPANY_TYPES, CREDIT_TIERS, calculate_dirty_money_risk,
-    LAND_TYPES, EMPLOYEE_HIRE_FEE,
+    LAND_TYPES, TURKISH_CITIES, PEOPLE_POOL, EMPLOYEE_HIRE_FEE,
     EMPLOYEE_BASE_SALARY, EMPLOYEE_DAILY_MIN, EMPLOYEE_DAILY_MAX,
     load_names_from_file, load_cities_from_file,
 )
@@ -35,18 +35,23 @@ def resource_path(relative_path: str) -> str:
 # ---------------------------------------------------------------------------
 # ADAM TUTMA - isim/şehir havuzları
 # ---------------------------------------------------------------------------
-# insanlar.txt ve iller.txt TEK KAYNAKTIR (oyunun ana klasöründe,
-# resource_path ile bulunan yerde aranır). Dosya yoksa/bozuksa/boşsa
-# ilgili havuz boş liste olur; "Adam Yönetimi" ekranı bunu zaten
-# "Tutabileceğiniz kimse kalmadı" / "Boş şehir kalmadı" mesajlarıyla
-# gösteriyor, oyun çökmez.
+# insanlar.txt ve iller.txt oyunun ana klasöründe (resource_path ile bulunan
+# yerde) varsa oradan okunur; yoksa game_data.py içindeki hazır listeler
+# (PEOPLE_POOL / TURKISH_CITIES) kullanılır. Böylece dosyalar eksik olsa
+# bile oyun çalışmaya devam eder.
 def _load_people_pool() -> list:
-    return load_names_from_file(resource_path("insanlar.txt"))
+    path = resource_path("insanlar.txt")
+    if os.path.exists(path):
+        return load_names_from_file(path)
+    return list(PEOPLE_POOL)
 
 
 def _load_city_list() -> list:
     """Düz şehir listesini döner (bölge kavramı YOK)."""
-    return load_cities_from_file(resource_path("iller.txt"))
+    path = resource_path("iller.txt")
+    if os.path.exists(path):
+        return load_cities_from_file(path)
+    return list(TURKISH_CITIES)
 
 
 ACTIVE_PEOPLE_POOL = _load_people_pool()
@@ -111,10 +116,6 @@ class GameState:
             self.laundering_days_left = load_data.get("laundering_days_left", 0)
             self.laundering_amount = load_data.get("laundering_amount", 0.0)
             self.laundering_method = load_data.get("laundering_method", "")
-            # clean_money'nin ne kadarının aklamadan geldiğini takip eder.
-            # Bu kısım banka faizinden yararlanmaz (bkz. apply_bank_interest);
-            # sadece kredi vb. yollarla gelen "gerçekten temiz" para faiz alır.
-            self.laundered_balance = load_data.get("laundered_balance", 0.0)
             self.police_heat = load_data.get("police_heat", 0)
             self.total_crime = load_data.get("total_crime", 0.0)
             self.deaths_caused = load_data.get("deaths_caused", 0)
@@ -165,7 +166,6 @@ class GameState:
             self.laundering_days_left = 0
             self.laundering_amount = 0.0
             self.laundering_method = ""
-            self.laundered_balance = 0.0
             self.police_heat = 0
             self.total_crime = 0.0
             self.deaths_caused = 0
@@ -225,7 +225,7 @@ class GameState:
         if self.cash < price:
             return False, f"Yetersiz nakit. Fiyat: {format_tl(price)} TL"
         
-        self._spend_cash(price)
+        self.cash -= price
         self.lands.append({
             "type": land_type,
             "purchase_price": price,
@@ -322,14 +322,7 @@ class GameState:
         total_debt = round(amount * (1 + interest_rate), 2)
         installment_amount = round(total_debt / installments, 2)
         
-        # Kredi tutarı gerçek, harcanabilir paradır: hem "temiz para"
-        # etiketine HEM de toplam nakde (cash) eklenmeli. clean_money,
-        # cash'in bir alt kümesi olduğu için (bkz. buy_bulk), sadece
-        # clean_money'i artırmak parayı gerçekte oyuncuya vermez.
         self.clean_money += amount
-        self.cash += amount
-        if self.cash > self.highest_cash:
-            self.highest_cash = self.cash
         
         land = self.lands[land_index]
         land["has_loan"] = True
@@ -358,8 +351,7 @@ class GameState:
         if self.clean_money < debt:
             return False, f"Erken kapatma için yetersiz temiz para. Gereken: {format_tl(debt)} TL"
 
-        self._reduce_clean_money(debt)
-        self.cash -= debt
+        self.clean_money -= debt
         land["has_loan"] = False
         land.pop("loan_amount", None)
         land.pop("loan_debt", None)
@@ -525,7 +517,7 @@ class GameState:
         remaining = total_price - from_dirty
         if remaining > 0:
             from_clean = min(self.clean_money, remaining)
-            self._reduce_clean_money(from_clean)
+            self.clean_money -= from_clean
 
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
@@ -596,7 +588,7 @@ class GameState:
         if self.cash < cost:
             return False, f"Yetersiz nakit. Gereken: {format_tl(cost)} TL"
 
-        self._spend_cash(cost)
+        self.cash -= cost
         salary = self.get_employee_salary()
 
         employee = {
@@ -705,7 +697,7 @@ class GameState:
         if self.cash < cost:
             return False, f"Yetersiz nakit. Kurulum maliyeti: {format_tl(cost)} TL"
 
-        self._spend_cash(cost)
+        self.cash -= cost
         self.has_company = True
         self.company_type = company_type
         self.company_name = company_name
@@ -737,40 +729,6 @@ class GameState:
 
         return True, "Şirket kapatıldı"
 
-    def _spend_cash(self, amount: float) -> None:
-        """self.cash'i doğrudan azaltan (arsa/şirket/adam alımı, rüşvet,
-        ceza gibi) yerlerde kullanılır. Sadece cash'i düşürmek yetmez:
-        dirty_cash + clean_money toplamı cash'i geçerse (kirli/temiz para
-        etiketleri, aslında harcanmış olan "etiketsiz" paranın üstünde
-        kalırsa) 'Kirli para', 'Nakit'ten büyük görünmeye başlar - bu
-        tutarsızlığı önlemek için önce kirli paradan, sonra temiz paradan
-        fark kapatılır."""
-        amount = round(amount, 2)
-        if amount <= 0:
-            return
-        self.cash -= amount
-
-        untagged = self.cash - self.dirty_cash - self.clean_money
-        if untagged < 0:
-            deficit = -untagged
-            from_dirty = min(self.dirty_cash, deficit)
-            self.dirty_cash -= from_dirty
-            deficit -= from_dirty
-            if deficit > 0:
-                self._reduce_clean_money(min(self.clean_money, deficit))
-
-    def _reduce_clean_money(self, amount: float) -> None:
-        """clean_money her azaldığında çağrılmalı. laundered_balance'ı da
-        (clean_money'nin aklamadan gelen, faizsiz kısmı) tutarlı tutar.
-        Harcamalarda önce aklanmış/riskli para harcanmış sayılır, kalan
-        varsa gerçekten temiz (kredi vb.) para harcanır - bu yüzden
-        laundered_balance, clean_money azaldıkça aynı miktarda düşer."""
-        if amount <= 0:
-            return
-        amount = min(amount, self.clean_money)
-        self.clean_money -= amount
-        self.laundered_balance = max(0.0, self.laundered_balance - amount)
-
     def launder_money(self, amount: float) -> tuple:
         if not self.has_company:
             return False, "Önce şirket kurun"
@@ -787,27 +745,15 @@ class GameState:
         if amount > max_launder:
             return False, f"Maksimum aklama: {format_tl(max_launder)} TL"
 
-        # GERÇEKÇİLİK: para aklama bedava değildir - şirket tipine göre
-        # %10 ile %30 arasında bir "temizleme" komisyonu kaybedilir. Küçük/
-        # az sofistike işletmeler daha yüksek kesinti uygular.
-        fee_rate = company_data.get("laundering_fee", 0.20)
-        fee = round(amount * fee_rate, 2)
-        net_amount = round(amount - fee, 2)
-
         self.dirty_cash -= amount
-        self.clean_money += net_amount
-        # Aklanan para banka faizinden yararlanmaz (bkz. apply_bank_interest);
-        # sadece o kısmı burada ayrıca işaretliyoruz.
-        self.laundered_balance += net_amount
+        self.clean_money += amount
         self.company_total_laundered += amount
-        self.company_monthly_revenue += net_amount
+        self.company_monthly_revenue += amount
 
-        credit_boost = int(net_amount / 1000)
+        credit_boost = int(amount / 1000)
         self.company_credit_score += max(1, credit_boost)
 
-        return True, (f"{format_tl(amount)} TL kirli paradan %{fee_rate * 100:.0f} "
-                       f"({format_tl(fee)} TL) komisyon kesildi. {format_tl(net_amount)} TL "
-                       f"temiz paraya dönüştü. Kredi notu: {self.company_credit_score}")
+        return True, f"{format_tl(amount)} TL aklandı. Kredi notu: {self.company_credit_score}"
 
     def pay_company_upkeep(self) -> bool:
         if not self.has_company:
@@ -816,11 +762,18 @@ class GameState:
         company_data = COMPANY_TYPES[self.company_type]
         upkeep = company_data["daily_upkeep"]
 
-        if self.cash >= upkeep:
-            # _auto_deduct önce temiz paradan, sonra kirli paradan, en son
-            # etiketsiz nakitten düşer - böylece cash < dirty_cash+clean_money
-            # gibi tutarsız bir duruma asla düşülmez.
-            self._auto_deduct(upkeep)
+        if self.clean_money >= upkeep:
+            self.clean_money -= upkeep
+            self.cash -= upkeep
+            self.company_upkeep_paid += upkeep
+            return True
+        elif self.dirty_cash >= upkeep:
+            self.dirty_cash -= upkeep
+            self.cash -= upkeep
+            self.company_upkeep_paid += upkeep
+            return True
+        elif self.cash >= upkeep:
+            self.cash -= upkeep
             self.company_upkeep_paid += upkeep
             return True
         else:
@@ -896,12 +849,7 @@ class GameState:
         self.loan_installment_amount = round(self.loan_total_debt / installments, 2)
         self.loan_days_remaining = installments * 30
         self.loan_days_until_installment = 30
-        # Kredi tutarı gerçek paradır: hem clean_money hem cash artmalı
-        # (bkz. take_land_loan() içindeki aynı düzeltme için açıklama).
         self.clean_money += amount
-        self.cash += amount
-        if self.cash > self.highest_cash:
-            self.highest_cash = self.cash
 
         return True, (f"{format_tl(amount)} TL kredi onaylandı. Faiz: %{tier['interest_rate']*100:.1f}. "
                        f"{installments} taksit, her 30 günde bir {format_tl(self.loan_installment_amount)} TL "
@@ -916,8 +864,7 @@ class GameState:
         if self.clean_money < debt:
             return False, f"Erken kapatma için yetersiz temiz para. Gereken: {format_tl(debt)} TL"
 
-        self._reduce_clean_money(debt)
-        self.cash -= debt
+        self.clean_money -= debt
         self._clear_loan()
         return True, f"{format_tl(debt)} TL ödendi. Kredi erken kapatıldı"
 
@@ -940,7 +887,7 @@ class GameState:
 
         if self.clean_money > 0:
             pay = min(self.clean_money, remaining)
-            self._reduce_clean_money(pay)
+            self.clean_money -= pay
             self.cash -= pay
             remaining -= pay
 
@@ -997,7 +944,6 @@ class GameState:
 
         seized = self.clean_money
         self.clean_money = 0
-        self.laundered_balance = 0.0
         self.cash -= seized
         seized_dirty = self.dirty_cash * 0.5
         self.dirty_cash -= seized_dirty
@@ -1005,8 +951,7 @@ class GameState:
 
         self._clear_loan()
 
-        return True, (f"Şirket kapatıldı. {format_tl(seized)} TL temiz para ve "
-                       f"{format_tl(seized_dirty)} TL kirli para musadere edildi")
+        return True, f"Şirket kapatıldı. {format_tl(seized)} TL temiz para musadere edildi"
 
     def police_check(self) -> dict:
         self.police_heat = min(100, self.police_heat + (self.dirty_cash / 50000) * 10)
@@ -1025,7 +970,7 @@ class GameState:
 
     def bribe_police(self, amount: float) -> bool:
         if amount <= self.cash:
-            self._spend_cash(amount)
+            self.cash -= amount
             self.police_heat = max(0, self.police_heat - 20)
             return True
         return False
@@ -1053,7 +998,7 @@ class GameState:
             # olsun aynı gerçekçi tutar geçerli. Yeterli nakdiniz olmasa
             # bile tutar tam olarak düşülür; bakiye eksiye düşebilir.
             amount = round(random.uniform(event["min_amount"], event["max_amount"]), 2)
-            self._spend_cash(amount)
+            self.cash -= amount
             return event["message_template"].format(amount=f"{format_tl(amount)}")
         elif etype == "inventory_loss":
             category = event["category"]
@@ -1071,7 +1016,7 @@ class GameState:
             # Nakit kısmı da sabit bir TL aralığından çekiliyor (cüzdana
             # göre değil); yetersiz nakit varsa bakiye eksiye düşebilir.
             cash_loss = round(random.uniform(event["cash_min_amount"], event["cash_max_amount"]), 2)
-            self._spend_cash(cash_loss)
+            self.cash -= cash_loss
             category = event["category"]
             inv_pct = random.uniform(event["inventory_min_pct"], event["inventory_max_pct"])
             total_lost = 0
@@ -1087,16 +1032,7 @@ class GameState:
             if self.has_company and self.clean_money > 0:
                 risk_amount = self.clean_money * 0.10
                 if random.random() < 0.3:
-                    # ÖNEMLİ: clean_money, cash'in bir ALT KÜMESİ (etiketi).
-                    # Para gerçekten müsadere ediliyorsa (default_loan(),
-                    # pay_company_upkeep(), _auto_deduct() gibi) her zaman
-                    # HEM clean_money HEM de cash birlikte azaltılmalı;
-                    # sadece clean_money'i azaltmak parayı "kaybettirmez",
-                    # onu sessizce etiketsiz/nötr paraya çevirir. Önceden
-                    # cash'e dokunulmadığı için bu ceza oyuncuya gerçekte
-                    # hiçbir maliyet getirmiyordu.
-                    self._reduce_clean_money(risk_amount)
-                    self.cash -= risk_amount
+                    self.clean_money -= risk_amount
                     return f"Maliye cezası. {format_tl(risk_amount)} TL bloke edildi"
                 else:
                     return "Maliye denetimi geçti"
@@ -1151,28 +1087,15 @@ class GameState:
 
     def apply_bank_interest(self) -> float:
         """Temiz paraya faiz her gün çağrılsa bile sadece 30 günde bir
-        (aylık) uygulanır; günlük bileşik büyümeyi önler.
-
-        GERÇEKÇİLİK: clean_money'nin tamamı faiz almaz. Aklamadan gelen
-        kısım (laundered_balance) hâlâ "sıcak/izlenebilir" para sayılır ve
-        bankaya güvenle yatırılıp faiz kazanamaz; sadece kredi gibi
-        gerçekten meşru yollarla gelen kısım faiz kazanır."""
+        (aylık) uygulanır; günlük bileşik büyümeyi önler."""
         self.days_until_bank_interest = getattr(self, "days_until_bank_interest", 30) - 1
         if self.days_until_bank_interest > 0:
             return 0.0
 
         self.days_until_bank_interest = 30
-        legit_clean_money = max(0.0, self.clean_money - self.laundered_balance)
-        if legit_clean_money > 0:
-            interest = round(legit_clean_money * self.BANK_INTEREST_RATE, 2)
-            # Faiz gerçek kazanılmış paradır: clean_money ile birlikte
-            # cash da artmalı, yoksa "Banka faizi: X TL" anonsu gerçekte
-            # hiçbir karşılığı olmayan hayali bir rakam olur. Faiz, aklama
-            # kaynaklı sayılmadığı için laundered_balance'a eklenmez.
+        if self.clean_money > 0:
+            interest = round(self.clean_money * self.BANK_INTEREST_RATE, 2)
             self.clean_money += interest
-            self.cash += interest
-            if self.cash > self.highest_cash:
-                self.highest_cash = self.cash
             return interest
         return 0.0
 

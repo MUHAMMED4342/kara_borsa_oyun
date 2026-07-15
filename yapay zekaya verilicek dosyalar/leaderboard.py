@@ -405,9 +405,7 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
     Oyun sonunda oyuncunun TOPLAM PARASINI (nakit + temiz para) GitHub
     Gist'teki skor tablosuna gönderir. Tablo artık sadece paraya göre
     sıralanıyor (gün sayısı sıralamayı etkilemiyor). Kullanıcı zaten
-    listede varsa kaydı HER ZAMAN günceller (yeni toplam daha düşük
-    olsa bile) — bkz. _merge_entry(). Bu tablo "en yüksek skor" değil,
-    oyuncunun güncel/gerçek durumunu gösterir.
+    listede varsa ve yeni toplamı daha yüksekse günceller.
     """
     _log(f"[Bilgi] Gönderim başlatıldı. Kullanıcı: {username}, Gün: {day}, Nakit: {cash}")
 

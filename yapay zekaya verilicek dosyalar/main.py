@@ -139,11 +139,9 @@ class MainFrame(wx.Frame):
 
         btn_sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         self.company_btn = wx.Button(panel, label="Şirket Yönetimi")
-        self.employees_btn = wx.Button(panel, label="Adamlarım")
         self.launder_btn = wx.Button(panel, label="Para Aklama")
         self.loan_btn = wx.Button(panel, label="Kredi Çek")
         btn_sizer2.Add(self.company_btn, 0, wx.ALL, 3)
-        btn_sizer2.Add(self.employees_btn, 0, wx.ALL, 3)
         btn_sizer2.Add(self.launder_btn, 0, wx.ALL, 3)
         btn_sizer2.Add(self.loan_btn, 0, wx.ALL, 3)
         sizer.Add(btn_sizer2, 0, wx.ALIGN_CENTER | wx.TOP, 5)
@@ -155,7 +153,12 @@ class MainFrame(wx.Frame):
         btn_sizer3.Add(self.bank_btn, 0, wx.ALL, 3)
         btn_sizer3.Add(self.land_btn, 0, wx.ALL, 3)
         btn_sizer3.Add(self.status_btn, 0, wx.ALL, 3)
-        sizer.Add(btn_sizer3, 0, wx.ALIGN_CENTER | wx.BOTTOM, 10)
+        sizer.Add(btn_sizer3, 0, wx.ALIGN_CENTER | wx.TOP, 5)
+
+        btn_sizer4 = wx.BoxSizer(wx.HORIZONTAL)
+        self.employees_btn = wx.Button(panel, label="Adamlarım")
+        btn_sizer4.Add(self.employees_btn, 0, wx.ALL, 3)
+        sizer.Add(btn_sizer4, 0, wx.ALIGN_CENTER | wx.BOTTOM, 10)
 
         self.CreateStatusBar()
         self.SetStatusText("F1: Yardım | F3: Geçmiş | F6: Arsa | F7: Adamlar | C: Nakit | D: Kategori | E: Envanter | PgUp/PgDn: Ses | Otomatik kayıt aktif")
@@ -491,7 +494,6 @@ class MainFrame(wx.Frame):
                 "",
                 "ŞİRKET BİLGİLERİ",
                 f"İsim: {self.state.company_name}",
-                f"Şehir: {self.state.company_city or '-'}",
                 f"Tip: {self.state.company_type}",
                 f"Kredi Notu: {self.state.company_credit_score}",
                 f"Aktif Gün: {self.state.company_days_active}",
@@ -531,15 +533,17 @@ class MainFrame(wx.Frame):
             lines.append("")
             lines.append("ADAMLARINIZ")
             lines.append("-" * 30)
-            total_generated = 0.0
+            total_monthly = 0.0
             for e in self.state.employees:
-                total_generated += e.get("total_generated", 0.0)
+                total_monthly += e.get("monthly_revenue", 0.0)
                 lines.append(
-                    f"{e['name']} - {e['city']} - "
-                    f"Toplam Ürettiği: {format_tl(e.get('total_generated', 0.0))} TL - "
+                    f"{e['name']} - {e['city']} ({e['region']}) - "
+                    f"{e['company_name']} ({e['company_type']}) - "
+                    f"Kredi Notu: {e['credit_score']} - "
+                    f"Bu Ay Ciro: {format_tl(e['monthly_revenue'])} TL - "
                     f"Maaşa {e['days_until_salary']} gün kaldı"
                 )
-            lines.append(f"Toplam Üretim (Adamlar): {format_tl(total_generated)} TL")
+            lines.append(f"Toplam Aylık Ciro (Adamlar): {format_tl(total_monthly)} TL")
 
         if self.state.deaths_caused > 0:
             lines.append(f"Ölümler: {self.state.deaths_caused}")
@@ -814,6 +818,8 @@ class MainFrame(wx.Frame):
             cash_text = f"Nakit: {format_tl(self.state.cash)} TL"
             if self.state.dirty_cash > 0:
                 cash_text += f", Kirli para: {format_tl(self.state.dirty_cash)} TL"
+            if self.state.clean_money > 0:
+                cash_text += f", Temiz para: {format_tl(self.state.clean_money)} TL"
             speak(cash_text)
             return
         if key == ord('D') or key == ord('d'):

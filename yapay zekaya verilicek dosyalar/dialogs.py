@@ -7,7 +7,6 @@ import random
 import time
 import wx
 import threading
-import webbrowser  # Tarayıcıda iletişim sayfasını açmak için eklendi
 
 from game_data import COMPANY_TYPES, LAND_TYPES, EMPLOYEE_HIRE_FEE, EMPLOYEE_BASE_SALARY
 from accessibility_helper import speak as _tts_speak
@@ -171,6 +170,9 @@ class LandManagementDialog(wx.Dialog):
                 self._update_ui()
                 self.parent.auto_save()
 
+    # Arsa kredisi işlemleri artık ana ekrandaki birleşik "Kredi Çek" butonu
+    # (LandLoanDialog) üzerinden yürütülüyor.
+
 
 # ============================================================
 # MENU SINIFLARI
@@ -178,8 +180,7 @@ class LandManagementDialog(wx.Dialog):
 
 class MainMenu(wx.Dialog):
     def __init__(self, parent=None):
-        # Yüksekliği (size) yeni İletişim butonu sığacak şekilde 450'den 480'e çıkardık.
-        super().__init__(parent, title="Karaborsa", size=(350, 480))
+        super().__init__(parent, title="Karaborsa", size=(350, 450))
         self.parent = parent
         self.username = None
         self.audio = AudioManager()
@@ -198,14 +199,13 @@ class MainMenu(wx.Dialog):
         title.SetFont(wx.Font(20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         sizer.Add(title, 0, wx.ALL | wx.CENTER, 15)
         
-        # Ana menü seçenekleri (İletişim eklendi)
+        # Ana menü seçenekleri
         menu_items = [
             "Yeni Oyun",
             "Devam Et",
             "Skor Tablosunu Görüntüle",
             "Yardım",
             "Yenilikler",
-            "İletişim",
             "Çıkış"
         ]
         
@@ -269,8 +269,7 @@ class MainMenu(wx.Dialog):
         # 3: Skor Gönderimi Toggle
         # 4: Yardım
         # 5: Yenilikler
-        # 6: İletişim
-        # 7: Çıkış
+        # 6: Çıkış
         
         if idx == 0:
             self.start_new_game()
@@ -285,16 +284,13 @@ class MainMenu(wx.Dialog):
         elif idx == 5:
             open_release_notes()
         elif idx == 6:
-            self.open_contact_page()
-        elif idx == 7:
             self.EndModal(wx.ID_CANCEL)
-
-    def open_contact_page(self):
-        """İletişim web sayfasını varsayılan tarayıcıda açar."""
-        webbrowser.open("https://bilgisayar-xi.vercel.app/iletisim.html")
-        speak("İletişim sayfası tarayıcınızda açılıyor.")
     
     def start_new_game(self):
+        # TEK HESAP KURALI: Bu bilgisayarda zaten bir hesap (kayıtlı oyun)
+        # varsa, ondan FARKLI bir isimle yeni hesap açılmasına izin verme.
+        # Böylece aynı bilgisayardan birden fazla hesap açıp skor tablosunu
+        # manipüle etmek mümkün olmuyor.
         saves = list_saves()
         if saves:
             existing = saves[0]
@@ -337,9 +333,11 @@ class MainMenu(wx.Dialog):
     
     def show_leaderboard(self):
         """Skor tablosunu gösteren dialog."""
+        # Arka planda yükleme işlemi yap
         dlg = wx.Dialog(self, title="Skor Tablosu Yükleniyor...", size=(300, 150))
         dlg.CenterOnScreen()
         
+        # Yükleme mesajı
         panel = wx.Panel(dlg)
         sizer = wx.BoxSizer(wx.VERTICAL)
         loading_label = wx.StaticText(panel, label="Skorlar yükleniyor, lütfen bekleyin...")
@@ -347,6 +345,7 @@ class MainMenu(wx.Dialog):
         panel.SetSizer(sizer)
         dlg.Show()
         
+        # Asenkron yükleme
         def load_scores():
             try:
                 scores = get_leaderboard()
@@ -379,6 +378,7 @@ class MainMenu(wx.Dialog):
             wx.MessageBox("Henüz hiç skor kaydedilmemiş.", "Skor Tablosu", wx.OK | wx.ICON_INFORMATION)
             return
         
+        # Skor tablosu dialog'u
         dlg = wx.Dialog(self, title="SKOR TABLOSU", size=(500, 450))
         
         panel = wx.Panel(dlg)
@@ -388,14 +388,18 @@ class MainMenu(wx.Dialog):
         title.SetFont(wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         sizer.Add(title, 0, wx.ALL | wx.CENTER, 10)
         
+        # Skor listesi
         list_box = wx.ListBox(panel, style=wx.LB_SINGLE)
         list_box.SetMinSize((460, 300))
         
+        # Skorları listele (get_leaderboard artık toplam paraya göre
+        # büyükten küçüğe sıralı döndürüyor)
         for i, entry in enumerate(scores, 1):
             username = entry.get("username", "Bilinmeyen")
             cash = entry.get("cash", 0)
             day = entry.get("day", 0)
             clean_money = entry.get("clean_money", 0)
+            # Eski kayıtlarda "total" olmayabilir; geriye dönük uyumluluk.
             total = entry.get("total", entry.get("score", cash + clean_money))
             
             label = (
@@ -407,6 +411,7 @@ class MainMenu(wx.Dialog):
         
         sizer.Add(list_box, 1, wx.EXPAND | wx.ALL, 10)
         
+        # Kapat butonu
         close_btn = wx.Button(panel, label="Kapat")
         sizer.Add(close_btn, 0, wx.ALL | wx.CENTER, 10)
         
@@ -426,13 +431,14 @@ class MainMenu(wx.Dialog):
         yeni_durum = not leaderboard.is_score_submission_enabled()
         leaderboard.set_score_submission_enabled(yeni_durum)
 
+        # Menüdeki metni güncelle
         status = "Etkin" if yeni_durum else "Devre Dışı"
+        # Menü listesinde 3. indeksteki öğeyi güncelle (Skor Gönderimi: ...)
         current_items = self.menu_list.GetItems()
+        # Eğer liste uzunluğu yeterliyse
         if len(current_items) > 3:
             current_items[3] = f"Skor Gönderimi: {status}"
             self.menu_list.SetItems(current_items)
-            self.menu_list.SetSelection(3)
-            self.menu_list.SetFocus()
         
         msg = f"Skor gönderimi {status.lower()}"
         speak(msg)

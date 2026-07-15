@@ -67,7 +67,7 @@ import appdirs
 import wx
 
 CURRENT_VERSION = "1.0.0"  # SADECE ilk sürüm için başlangıç değeri; bkz. aşağıdaki not
-VERSION_URL = "https://bilgisayar.netlify.app/versiyon.txt"
+VERSION_URL = "https://github.com/MUHAMMED4342/kara_borsa_oyun/raw/refs/heads/main/versiyon.txt"
 DOWNLOAD_URL = (
     "https://github.com/MUHAMMED4342/kara_borsa_oyun/releases/latest/"
     "download/KaraborsaSimulasyonu.exe"
