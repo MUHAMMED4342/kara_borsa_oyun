@@ -303,10 +303,11 @@ def update_gist_content(data: Dict) -> bool:
 
 def get_leaderboard() -> Optional[List[Dict]]:
     """
-    Skor tablosunu en çok paradan en aza doğru sıralı olarak döndürür.
-    Sıralama ölçütü: toplam para (nakit + temiz para) — gün sayısı artık
-    hesaba katılmıyor, en çok parası olan en üstte.
-    Her kayıt: {"username": str, "total": float, "cash": float, "day": int, "clean_money": float}
+    Skor tablosunu en çok nakitten en aza doğru sıralı olarak döndürür.
+    Sıralama ölçütü: nakit (cash) — cash zaten kirli para + temiz para +
+    etiketsiz parayı içeren toplam bakiye olduğu için ayrıca "total"
+    hesaplamaya gerek yok; iki kez saymayı da önler.
+    Her kayıt: {"username": str, "cash": float, "day": int, "clean_money": float}
 
     Dönüş:
       - Liste (boş olabilir): veri başarıyla çekildi.
@@ -323,72 +324,72 @@ def get_leaderboard() -> Optional[List[Dict]]:
     if "score_data" in data:
         entries = data["score_data"]
 
-        def _total_of(entry: Dict) -> float:
-            # Eski kayıtlarda "total" alanı olmayabilir (ör. eski formülle
-            # hesaplanmış "score" alanı); geriye dönük uyumluluk için
-            # bulunan ilk değeri kullan.
+        def _cash_of(entry: Dict) -> float:
+            # Eski kayıtlarda "cash" alanı olmayabilir; bu durumda geriye
+            # dönük uyumluluk için "total"/"score" alanına düş.
+            if "cash" in entry:
+                return entry.get("cash", 0)
             if "total" in entry:
                 return entry.get("total", 0)
-            if "score" in entry:
-                return entry.get("score", 0)
-            return entry.get("cash", 0) + entry.get("clean_money", 0)
+            return entry.get("score", 0)
 
-        sorted_entries = sorted(entries, key=_total_of, reverse=True)
+        sorted_entries = sorted(entries, key=_cash_of, reverse=True)
         _log(f"[Bilgi] {len(sorted_entries)} kayıt bulundu.")
         return sorted_entries
     _log("[Bilgi] Kayıt bulunamadı veya veri boş.")
     return []
 
 
-def _merge_entry(score_data: List[Dict], username: str, total: float,
+def _merge_entry(score_data: List[Dict], username: str,
                   cash: float, day: int, clean_money: float) -> Tuple[List[Dict], bool, str]:
     """
-    Verilen listeye (username, total) girdisini ekler/günceller.
+    Verilen listeye (username, cash) girdisini ekler/günceller.
     Dönüş: (yeni_liste, değişiklik_yapıldı_mı, mesaj)
 
     ÖNEMLİ: Skor tablosu bir "en yüksek skor" tablosu DEĞİL, oyuncunun
     GÜNCEL/GERÇEK durumunu gösteren bir tablo olmalı. Bu yüzden yeni
-    toplam eskisinden düşük olsa bile (ör. oyuncu 50.000 TL'den 2.000
+    nakit eskisinden düşük olsa bile (ör. oyuncu 50.000 TL'den 2.000
     TL'ye düşmüşse) kayıt her zaman güncellenir; oyuncunun para durumu
     ne ise tabloda o görünür.
     """
     for entry in score_data:
         if entry.get("username") == username:
             entry.update({
-                "total": total,
                 "cash": cash,
                 "day": day,
                 "clean_money": clean_money,
                 "last_updated": __import__("datetime").datetime.now().isoformat()
             })
-            # Eski formülle hesaplanmış "score" alanı varsa temizle,
-            # karışıklık olmasın.
+            # Eski formülle hesaplanmış "total"/"score" alanları varsa
+            # temizle, karışıklık olmasın (cash zaten kirli+temiz+etiketsiz
+            # paranın toplamı; ayrıca bir "total" tutmaya gerek yok).
+            entry.pop("total", None)
             entry.pop("score", None)
-            _log(f"[Bilgi] Kullanıcı güncellendi: {username} -> Yeni toplam: {format_tl(total)} TL")
-            return score_data, True, f"Bakiyeniz gönderildi! Toplam: {format_tl(total)} TL"
+            _log(f"[Bilgi] Kullanıcı güncellendi: {username} -> Yeni nakit: {format_tl(cash)} TL")
+            return score_data, True, f"Bakiyeniz gönderildi! Nakit: {format_tl(cash)} TL"
 
     score_data.append({
         "username": username,
-        "total": total,
         "cash": cash,
         "day": day,
         "clean_money": clean_money,
         "last_updated": __import__("datetime").datetime.now().isoformat()
     })
-    _log(f"[Bilgi] Yeni kullanıcı eklendi: {username}, Toplam: {format_tl(total)} TL")
-    return score_data, True, f"Bakiyeniz gönderildi! Toplam: {format_tl(total)} TL"
+    _log(f"[Bilgi] Yeni kullanıcı eklendi: {username}, Nakit: {format_tl(cash)} TL")
+    return score_data, True, f"Bakiyeniz gönderildi! Nakit: {format_tl(cash)} TL"
 
 
-def _entry_matches(score_data: List[Dict], username: str, total: float) -> bool:
-    """Gist'teki güncel veride bizim yazdığımız (username, total) çiftinin
+def _entry_matches(score_data: List[Dict], username: str, cash: float) -> bool:
+    """Gist'teki güncel veride bizim yazdığımız (username, cash) çiftinin
     gerçekten orada olup olmadığını kontrol eder. Yoksa, aramızda başka bir
     bilgisayarın yazması PATCH'imizi ezmiş demektir."""
     for entry in score_data:
         if entry.get("username") == username:
-            current = entry.get("total", entry.get("score", 0))
+            current = entry.get("cash", entry.get("total", entry.get("score", 0)))
             # Küçük ondalık farkları tolere et.
-            return abs(current - total) < 0.01
+            return abs(current - cash) < 0.01
     return False
+
 
 
 # Farklı bilgisayarlardan aynı anda gelen gönderimlerde, iki process aynı
@@ -402,12 +403,15 @@ _MAX_RETRIES = 4
 
 def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> Tuple[bool, str]:
     """
-    Oyun sonunda oyuncunun TOPLAM PARASINI (nakit + temiz para) GitHub
-    Gist'teki skor tablosuna gönderir. Tablo artık sadece paraya göre
-    sıralanıyor (gün sayısı sıralamayı etkilemiyor). Kullanıcı zaten
-    listede varsa kaydı HER ZAMAN günceller (yeni toplam daha düşük
+    Oyun sonunda oyuncunun NAKDİNİ GitHub Gist'teki skor tablosuna
+    gönderir. Tablo sadece nakde (cash) göre sıralanıyor - cash zaten
+    kirli para + temiz para + etiketsiz parayı içeren toplam bakiye
+    olduğu için ayrıca bir "toplam" hesaplamaya gerek yok. Kullanıcı
+    zaten listede varsa kaydı HER ZAMAN günceller (yeni nakit daha düşük
     olsa bile) — bkz. _merge_entry(). Bu tablo "en yüksek skor" değil,
     oyuncunun güncel/gerçek durumunu gösterir.
+    clean_money parametresi geriye dönük uyumluluk ve bilgi amaçlı hâlâ
+    kaydediliyor, ama sıralamaya/karşılaştırmaya dahil edilmiyor.
     """
     _log(f"[Bilgi] Gönderim başlatıldı. Kullanıcı: {username}, Gün: {day}, Nakit: {cash}")
 
@@ -416,10 +420,6 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
 
     if not username:
         return False, "Kullanıcı adı boş."
-
-    # Sıralama ölçütü: toplam para.
-    total = cash + clean_money
-    _log(f"[Bilgi] Toplam para: {format_tl(total)} TL")
 
     with _score_lock:
         last_error = "Gönderilemedi. Bağlantı hatası."
@@ -433,9 +433,9 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
             score_data = data.get("score_data", [])
 
             # 2) Kendi girdimizi ekle/güncelle
-            score_data, changed, msg = _merge_entry(score_data, username, total, cash, day, clean_money)
+            score_data, changed, msg = _merge_entry(score_data, username, cash, day, clean_money)
             if not changed:
-                # Zaten daha yüksek bir toplamımız var, gönderime gerek yok.
+                # Zaten aynı nakit kaydımız var, gönderime gerek yok.
                 return True, msg
 
             data["score_data"] = score_data
@@ -449,7 +449,7 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
             # 4) Doğrula: gerçekten bizim yazdığımız veri orada mı?
             #    (Aramızda başka bir bilgisayar yazıp bizi ezmiş olabilir.)
             verify_data = get_gist_content()
-            if verify_data and _entry_matches(verify_data.get("score_data", []), username, total):
+            if verify_data and _entry_matches(verify_data.get("score_data", []), username, cash):
                 return True, msg
 
             _log(f"[Bilgi] Doğrulama başarısız (muhtemelen başka bir gönderimle çakıştı), "

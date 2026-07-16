@@ -394,15 +394,8 @@ class MainMenu(wx.Dialog):
         for i, entry in enumerate(scores, 1):
             username = entry.get("username", "Bilinmeyen")
             cash = entry.get("cash", 0)
-            day = entry.get("day", 0)
-            clean_money = entry.get("clean_money", 0)
-            total = entry.get("total", entry.get("score", cash + clean_money))
-            
-            label = (
-                f"{i}. {username} - Toplam Para: {format_tl(total)} TL | "
-                f"Nakit: {format_tl(cash)} TL | Temiz Para: {format_tl(clean_money)} TL | "
-                f"Gün: {day}"
-            )
+
+            label = f"{i}. {username} Nakit: {format_tl(cash)} TL"
             list_box.Append(label)
         
         sizer.Add(list_box, 1, wx.EXPAND | wx.ALL, 10)
@@ -890,7 +883,7 @@ class EmployeeManagementDialog(wx.Dialog):
         self.employee_list.SetMinSize((640, 130))
         sizer.Add(self.employee_list, 0, wx.EXPAND | wx.ALL, 10)
 
-        self.fire_btn = wx.Button(panel, label="Kovala")
+        self.fire_btn = wx.Button(panel, label="Kov")
         sizer.Add(self.fire_btn, 0, wx.ALL | wx.CENTER, 5)
 
         sizer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.ALL, 5)
