@@ -1,33 +1,395 @@
-<h1>Kara Borsa Simülasyonu Detaylı Kılavuzu</h1>
-<p>Kara Borsa Simülasyonu; karanlık ürünlerin alım-satımını yaparak para kazanmaya çalıştığınız bir oyundur. Bu kılavuz, oyunu detaylı bir şekilde anlatmaya çalışmaktadır; fakat kılavuzda yer almayan bazı özellikler olabilir.</p>
-<h2>Oyuna Giriş</h2>
-<p>Oyunda bizleri klasik bir menü karşılamaktadır: Yeni Oyun, Devam Et, Sıralama Listesi, Skor Gönderimini Devre Dışı Bırak, Yardım, yenilikler ve Çıkış. Eğer yeni başlıyorsanız "Yeni Oyun" düğmesine basın, kullanıcı adınızı yazın ve oyuna başlayın.</p>
-<h3>Ürün Listesi</h3>
-<p>Oyuna başladığımızda bizleri bir ürün listesi karşılıyor. Burada esrar, eroin, dolar gibi onlarca ürün vardır (bazılarının ne olduğunu ben bile bilmiyorum 😊). Ok tuşlarıyla listeden bir ürün seçip "Tab" tuşuyla ilerleyince karşımıza adet yazı alanı ile "Satın Al" ve "Sat" düğmeleri çıkıyor. Buradan satın alım yapabilir ve ürün satabiliriz. Daha sonra gün atlayarak ürünlerin fiyat değişimlerini gözlemleyebilir; ürün pahalılaşınca satabilir, ucuzlayınca yeni ürünler alabiliriz.</p>
-<h3>Kısayollar</h3>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Karaborsa Ticaret Simülasyonu - Yardım</title>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        max-width: 850px;
+        margin: 40px auto;
+        padding: 0 20px 60px 20px;
+        line-height: 1.7;
+        color: #1a1a1a;
+        background: #fdfdfd;
+    }
+    h1 {
+        color: #1b2a3d;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 12px;
+    }
+    h2 {
+        color: #1b2a3d;
+        margin-top: 40px;
+        border-left: 5px solid #3498db;
+        padding-left: 10px;
+    }
+    h3 {
+        color: #2c3e50;
+        margin-top: 22px;
+    }
+    .shortcut {
+        display: inline-block;
+        background: #2c3e50;
+        color: #fff;
+        padding: 2px 10px;
+        border-radius: 4px;
+        font-family: "Consolas", monospace;
+        font-weight: bold;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0 20px 0;
+    }
+    caption {
+        text-align: left;
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: #2c3e50;
+    }
+    th, td {
+        border: 1px solid #ccc;
+        padding: 8px 10px;
+        text-align: left;
+    }
+    th {
+        background: #eef4fa;
+    }
+    ul, ol {
+        padding-left: 24px;
+    }
+    li {
+        margin: 6px 0;
+    }
+    .note {
+        background: #fff8e1;
+        border-left: 4px solid #f5b400;
+        padding: 10px 15px;
+        margin: 15px 0;
+    }
+    .tip {
+        background: #eaf7ea;
+        border-left: 4px solid #2ecc71;
+        padding: 10px 15px;
+        margin: 15px 0;
+    }
+    .warn {
+        background: #fdecea;
+        border-left: 4px solid #e74c3c;
+        padding: 10px 15px;
+        margin: 15px 0;
+    }
+    nav {
+        background: #eef4fa;
+        border: 1px solid #d3e2ef;
+        border-radius: 6px;
+        padding: 15px 20px;
+        margin-bottom: 30px;
+    }
+    nav ul {
+        columns: 2;
+    }
+    footer {
+        margin-top: 50px;
+        padding-top: 15px;
+        border-top: 1px solid #ddd;
+        font-size: 0.9em;
+        color: #555;
+    }
+</style>
+</head>
+<body>
+
+<h1>Karaborsa Ticaret Simülasyonu — Yardım Kılavuzu</h1>
+
+<p>
+Karaborsa, ekonomi ve risk yönetimi üzerine kurulu, <strong>görme engelli
+dostu</strong> (ekran okuyucu ile tam uyumlu) bir ticaret simülasyonudur.
+Ürün alıp satarak, şirket kurarak, arsa yatırımı yaparak ve adamlar
+tutarak servetinizi büyütürken polisten kaçmaya çalışırsınız. Oyun
+sınırsızdır: bitiş yoktur, hedef sürekli daha zengin olmaktır.
+</p>
+
+<nav aria-label="İçindekiler">
+<strong>İçindekiler</strong>
 <ul>
-<li><strong>C:</strong> Cüzdanınızdaki parayı gösterir.</li>
-<li><strong>D:</strong> Listedeki ürünün hangi kategoride olduğunu gösterir (Örneğin; dolar, döviz ve değerli metaller kategorisindedir).</li>
-<li><strong>E:</strong> Envanter ve durum bilgisi.</li>
-<li><strong>F1:</strong> Şu anda okumakta olduğunuz yardım dosyasını açar.</li>
-<li><strong>F2:</strong> Durum raporu.</li>
-<li><strong>F3:</strong> Geçmiş; eğer ekran okuyucunuzun söylediği bir şeyi kaçırdıysanız oradan tekrar okuyabilirsiniz.</li>
-<li><strong>Sayfa Yukarı (Page Up):</strong> Müzik sesini yüzde 10 artırır.</li>
-<li><strong>Sayfa Aşağı (Page Down):</strong> Müzik sesini yüzde 10 azaltır.</li>
-<li><strong>Home:</strong> Müzik değiştirir.</li>
-<li><strong>End:</strong> Müzik değiştirir.</li>
-<li><strong>F6:</strong> Arsa yönetim ekranını açar.</li>
+    <li><a href="#kisayollar">Klavye Kısayolları</a></li>
+    <li><a href="#temel">Temel Oynanış</a></li>
+    <li><a href="#urunler">Ürün Kategorileri</a></li>
+    <li><a href="#sirket">Şirket Sistemi</a></li>
+    <li><a href="#kredi">Kredi Notu ve Banka Kredisi</a></li>
+    <li><a href="#arsa">Arsa Sistemi</a></li>
+    <li><a href="#muhbir">Muhbir Sistemi</a></li>
+    <li><a href="#adamlar">Adam Tutma Sistemi</a></li>
+    <li><a href="#kumar">Kumar (Rulet)</a></li>
+    <li><a href="#polis">Polis Riski ve Hapis</a></li>
+    <li><a href="#olaylar">Rastgele Olaylar</a></li>
+    <li><a href="#skor">Skor Tablosu</a></li>
+    <li><a href="#kayit">Kayıt Sistemi</a></li>
+    <li><a href="#hedefler">Oyun Hedefleri</a></li>
+    <li><a href="#ipuclari">İpuçları</a></li>
 </ul>
-<p>;### Kredi Sistemi</p>
-<p>Kredi çekmek için şirket açabilir veya arsa satın alabilirsiniz. Her iki durumda da kredi ödenmez ise şirkete veya tarlaya el koyulmaktadır.</p>
-<h3>Olaylar</h3>
-<p>Gün atlarken rastgele olaylar oluşmaktadır. Bu olaylar sizleri zarara da uğratabilir, kâr da getirebilir. Olaylar tamamen rastgele bir sistemle çalışmaktadır.</p>
-<h3>Adamlar</h3>
-<p>adamlar gönderdiğiniz şehirde sizler için çalışan elemanlarınızdır.</p>
-<h3>Muhbirler</h3>
-<p>Muhbirler polisin geldiğini önceden haber veren kişilerdir, 8000 tl ya tutulmaktadır.</p>
-<h3>Polisler:</h3>
-<p>Polisler çok fazla mal aldığınızda sizleri yakalayıp hapse atabilir ve hapse girdiğinizde paranızın çeyreğine el koyulur.</p>
-<h2>İletişim</h2>
-<p>Her türlü konuda <a href="http://bilgisayar.netlify.app/">http://bilgisayar.netlify.app/</a> sitesi üzerinden iletişime geçebilirsiniz.</p>
-<p><strong>Not:</strong> Bu kılavuz, oyun güncellendikçe eski kalabilmektedir. Oyun henüz test aşamasındadır ve yakında çok daha fazla özellik eklenecektir.</p>
+</nav>
+
+<h2 id="kisayollar">Klavye Kısayolları</h2>
+<table>
+<caption>Genel kısayollar</caption>
+<tr><th>Tuş</th><th>İşlev</th></tr>
+<tr><td><span class="shortcut">F1</span></td><td>Bu yardım dosyasını açar</td></tr>
+<tr><td><span class="shortcut">F2</span></td><td>Durum raporu (nakit, polis riski, şirketler, arsalar, adamlar, krediler)</td></tr>
+<tr><td><span class="shortcut">F3</span></td><td>Geçmiş ekranı — söylenmiş tüm anonsları tekrar okutur</td></tr>
+<tr><td><span class="shortcut">F5</span></td><td>Gün atla (Gün Atla düğmesiyle aynı)</td></tr>
+<tr><td><span class="shortcut">F6</span></td><td>Arsa yönetimi ekranını açar</td></tr>
+<tr><td><span class="shortcut">F7</span></td><td>Adamlarım (çalışan yönetimi) ekranını açar</td></tr>
+<tr><td><span class="shortcut">C</span></td><td>Anlık nakit durumunu sesli okur</td></tr>
+<tr><td><span class="shortcut">D</span></td><td>Seçili ürünün kategorisini sesli okur</td></tr>
+<tr><td><span class="shortcut">E</span></td><td>Envanter özetini sesli okur</td></tr>
+<tr><td><span class="shortcut">Sayfa Yukarı (PgUp)</span></td><td>Ses seviyesini artırır</td></tr>
+<tr><td><span class="shortcut">Sayfa Aşağı (PgDn)</span></td><td>Ses seviyesini azaltır</td></tr>
+<tr><td><span class="shortcut">Home</span></td><td>Önceki müzik parçasına geçer</td></tr>
+<tr><td><span class="shortcut">End</span></td><td>Sonraki müzik parçasına geçer</td></tr>
+<tr><td><span class="shortcut">Yukarı / Aşağı Ok</span></td><td>Ürün listesinde gezinme (sesli geri bildirimle)</td></tr>
+</table>
+<p>Ana ekrandaki düğmeler ile de tüm işlemlere ulaşabilirsiniz: Satın Al,
+Sat, Gün Atla, Şirket Yönetimi, Adamlarım, Muhbir Yönetimi, Kredi Çek,
+Bankacılık, Arsa Yönetimi, Durum Raporu ve Kumar Oyna.</p>
+
+<h2 id="temel">Temel Oynanış</h2>
+<ul>
+    <li>Oyuna <strong>15.000 TL</strong> nakit ile başlarsınız.</li>
+    <li>Ürün listesinden bir ürün seçip <strong>Adet</strong> kutusuna
+        miktar girerek <strong>Satın Al</strong> veya <strong>Sat</strong>
+        düğmesine basarsınız.</li>
+    <li><strong>Gün Atla</strong> düğmesi (veya F5) zamanı bir gün ileri
+        alır: fiyatlar dalgalanır, şirket/kredi/arsa/çalışan işlemleri
+        günlük olarak yürütülür, rastgele olaylar tetiklenir ve polis
+        kontrolü yapılır.</li>
+    <li>Her ürünün fiyatı her gün rastgele %10'a kadar dalgalanır; bazı
+        kategoriler ek olarak özel olaylardan (ekonomik kriz, çete
+        savaşları, kripto balinası vb.) de etkilenir.</li>
+    <li>Oyun <strong>sınırsızdır</strong> — kaybetme ya da "oyun bitti"
+        durumu yoktur, amaç sürekli servetinizi büyütmektir.</li>
+    <li>Oyun her 30 saniyede bir ve her gün sonunda <strong>otomatik
+        olarak kaydedilir</strong>.</li>
+</ul>
+
+<h2 id="urunler">Ürün Kategorileri</h2>
+<p>Toplam 5 kategori ve 33 farklı ürün bulunur. Fiyatlar günden güne
+değişir; ucuzken alıp pahalıyken satmak temel stratejidir.</p>
+
+<h3>Karanlık Maddeler <span style="font-weight:normal">(yasa dışı — polis riski taşır)</span></h3>
+<p>Esrar, Eroin, Kokain, Amfetamin, Metamfetamin, Captagon, LSD</p>
+
+<h3>Mühimmat &amp; Silahlar <span style="font-weight:normal">(yasa dışı — polis riski taşır)</span></h3>
+<p>Tabanca, Tüfek, Mermi, El Bombası, Susturucu, Zırh Yeleği, Av Tüfeği</p>
+
+<h3>Döviz &amp; Değerli Metaller</h3>
+<p>Dolar, Euro, Sterlin, Altın, Gümüş, Platin</p>
+
+<h3>Kripto &amp; Dijital Varlıklar <span style="font-weight:normal">(yüksek volatilite)</span></h3>
+<p>Bitcoin, Ethereum, Monero</p>
+
+<h3>Kaçak Eşya &amp; Elektronik</h3>
+<p>Sahte Pasaport, Çalıntı Telefon, Kaçak Sigara, Kaçak İçki, Çalıntı Araç Parçası</p>
+
+<div class="warn">
+<strong>Dikkat:</strong> Yalnızca <em>Karanlık Maddeler</em> ve
+<em>Mühimmat &amp; Silahlar</em> kategorilerindeki ürünler polis
+yakalanma riskinizi etkiler. Elinizde bu kategorilerden ne kadar çok
+mal (ve değer) varsa, yakalanma ihtimaliniz o kadar artar.
+</div>
+
+<h2 id="sirket">Şirket Sistemi</h2>
+<p>Şirketler, para aklama yapmaz; sadece <strong>günlük düzenli kâr</strong>
+üretir ve <strong>kredi notunuzu</strong> büyütüp banka kredisi çekmenizi
+sağlar. Aynı anda farklı şehirlerde birden fazla şirketiniz olabilir.</p>
+<table>
+<caption>Şirket Tipleri</caption>
+<tr><th>Şirket</th><th>Kuruluş Maliyeti</th><th>Günlük Gider</th><th>Günlük Kâr Aralığı</th><th>Kredi Notu Çarpanı</th></tr>
+<tr><td>Tekstil Atölyesi</td><td>8.000 TL</td><td>80 TL</td><td>100 - 300 TL</td><td>0.8x</td></tr>
+<tr><td>Restoran</td><td>10.000 TL</td><td>150 TL</td><td>200 - 500 TL</td><td>1.2x</td></tr>
+<tr><td>Oto Galeri</td><td>15.000 TL</td><td>100 TL</td><td>150 - 400 TL</td><td>1.0x</td></tr>
+<tr><td>Gece Kulübü</td><td>25.000 TL</td><td>250 TL</td><td>400 - 900 TL</td><td>1.5x</td></tr>
+<tr><td>Kripto Madenciliği</td><td>30.000 TL</td><td>500 TL</td><td>600 - 1.400 TL</td><td>2.0x</td></tr>
+</table>
+<p>Her gün işletme giderini ödeyemezseniz şirketiniz kapanır. Şirket
+Yönetimi ekranından yeni şirket kurabilir, mevcut şirketlerinizi
+görüntüleyebilir veya kapatabilirsiniz.</p>
+
+<h2 id="kredi">Kredi Notu ve Banka Kredisi</h2>
+<p>Banka kredisi çekebilmek için önce en az bir şirket kurmanız gerekir.
+Kredi notunuz yükseldikçe hem çekebileceğiniz kredi limiti hem de faiz
+oranınız iyileşir.</p>
+<table>
+<caption>Kredi Notu Seviyeleri</caption>
+<tr><th>Seviye</th><th>Min. Puan</th><th>Kredi Limiti Çarpanı</th><th>Faiz Oranı</th><th>Kredi Çekilebilir mi?</th></tr>
+<tr><td>Sicil Bozuk</td><td>0</td><td>—</td><td>—</td><td>Hayır</td></tr>
+<tr><td>Başlangıç</td><td>50</td><td>1.5x</td><td>%35</td><td>Evet</td></tr>
+<tr><td>Güvenilir İşletme</td><td>150</td><td>3.0x</td><td>%25</td><td>Evet</td></tr>
+<tr><td>Kurumsal</td><td>300</td><td>5.0x</td><td>%15</td><td>Evet</td></tr>
+<tr><td>Premium</td><td>500</td><td>8.0x</td><td>%8</td><td>Evet</td></tr>
+</table>
+<p>Krediler taksitli olarak (30 günde bir taksit) geri ödenir. Taksitini
+ödeyemezseniz kredi <strong>temerrüde</strong> düşer ve ciddi
+yaptırımlarla karşılaşırsınız.</p>
+
+<h2 id="arsa">Arsa Sistemi</h2>
+<p>Arsa Yönetimi ekranından (F6) 6 farklı arsa tipinden satın alabilir,
+elinizdekileri piyasa değerinden satabilir veya arsanızı teminat
+göstererek kredi çekebilirsiniz. Arsa fiyatları her gün ekonomik
+olaylara bağlı olarak dalgalanır.</p>
+<table>
+<caption>Arsa Tipleri</caption>
+<tr><th>Arsa Tipi</th><th>Başlangıç Fiyatı</th><th>Fiyat Aralığı</th><th>Kredi Teminat Çarpanı</th></tr>
+<tr><td>Tarla</td><td>30.000 TL</td><td>15.000 - 100.000 TL</td><td>%50</td></tr>
+<tr><td>Arsa</td><td>50.000 TL</td><td>25.000 - 150.000 TL</td><td>%70</td></tr>
+<tr><td>Sanayi Arsa</td><td>80.000 TL</td><td>40.000 - 200.000 TL</td><td>%65</td></tr>
+<tr><td>İmarlı Arsa</td><td>100.000 TL</td><td>50.000 - 300.000 TL</td><td>%75</td></tr>
+<tr><td>Sahil Arsa</td><td>200.000 TL</td><td>100.000 - 500.000 TL</td><td>%60</td></tr>
+</table>
+<ul>
+    <li>Arsa satışında piyasa değerinin <strong>%5'i komisyon</strong>
+        olarak kesilir.</li>
+    <li>Arsa teminatlı krediler <strong>%15 sabit faiz</strong> ile verilir
+        ve arsa değerinin belirtilen yüzdesine kadar çekilebilir.</li>
+    <li>Arsa fiyatları imar düzenlemesi, metro hattı müjdesi, deprem
+        riski, sahil kirliliği gibi olaylardan etkilenip artabilir ya da
+        düşebilir.</li>
+</ul>
+
+<h2 id="muhbir">Muhbir Sistemi</h2>
+<p>Muhbir Yönetimi ekranından bir muhbir tutabilirsiniz:</p>
+<ul>
+    <li><strong>Tutma bedeli:</strong> 8.000 TL (bir defalık)</li>
+    <li><strong>Günlük ücret:</strong> 300 TL</li>
+</ul>
+<p>Muhbiriniz varken, yaklaşan bir polis baskınını önceden haber
+verebilir. Uyarı geldiğinde mallarınızı hemen elden çıkarırsanız polisi
+tamamen atlatırsınız; uyarıyı görmezden gelirseniz muhbir genellikle
+(%80 ihtimalle) haklı çıkar ve o gün kesin yakalanırsınız. Ücretini
+ödeyemezseniz muhbiriniz sizi terk eder.</p>
+
+<h2 id="adamlar">Adam Tutma Sistemi</h2>
+<p>Adamlarım ekranından (F7) güvendiğiniz kişileri farklı şehirlere
+gönderip oradaki karaborsa satışını sizin adınıza yönetmelerini
+sağlayabilirsiniz. Her şehirde yalnızca bir adamınız olabilir.</p>
+<ul>
+    <li><strong>Tutma bedeli:</strong> 5.000 TL (bir defalık)</li>
+    <li><strong>Maaş:</strong> 1.500 TL, her 30 günde bir ödenir</li>
+    <li><strong>Günlük üretim:</strong> 150 - 600 TL arasında rastgele,
+        doğrudan nakde eklenir</li>
+</ul>
+<p>Maaşını ödeyemezseniz adamınız sizi terk eder.</p>
+
+<h2 id="kumar">Kumar (Rulet)</h2>
+<p>Kumar Oyna düğmesi standart Avrupa ruleti (tek sıfır, 0-36) sunar.
+Kazanç oranları (bahsiniz dahil toplam ödeme):</p>
+<table>
+<caption>Rulet Bahis Türleri ve Ödemeleri</caption>
+<tr><th>Bahis</th><th>Ödeme Çarpanı</th></tr>
+<tr><td>Tek Sayı (0-36)</td><td>36x</td></tr>
+<tr><td>Düzine (1., 2. veya 3.)</td><td>3x</td></tr>
+<tr><td>Kırmızı / Siyah</td><td>2x</td></tr>
+<tr><td>Tek / Çift</td><td>2x</td></tr>
+<tr><td>1-18 / 19-36</td><td>2x</td></tr>
+</table>
+<p>Net kazancınız (kâr) suç geliri istatistiğinize eklenir; oyunun
+karaborsa temasıyla tutarlı bir detaydır.</p>
+
+<h2 id="polis">Polis Riski ve Hapis</h2>
+<ul>
+    <li>Polis riski yalnızca elinizdeki <em>Karanlık Maddeler</em> ve
+        <em>Mühimmat &amp; Silahlar</em> stoğunun piyasa değerine göre
+        hesaplanır. Bu ürünlerden ne kadar çok taşırsanız risk o kadar
+        artar (birikimli olarak da büyür).</li>
+    <li>Durum Raporu ekranından (F2) anlık <strong>Polis Riski</strong>
+        yüzdenizi görebilirsiniz.</li>
+    <li>Yakalanırsanız <strong>1 ila 3 gün</strong> hapis yatarsınız ve
+        elinizdeki nakdin <strong>%25'ine el konulur</strong>.</li>
+    <li>Hapisteyken alım/satım yapamazsınız ancak şirketleriniz,
+        krediniz, arsalarınız ve adamlarınız işlemeye devam eder.</li>
+</ul>
+
+<h2 id="olaylar">Rastgele Olaylar</h2>
+<p>Her gün %70 ihtimalle 1 ila 3 rastgele olay tetiklenir. Bu olaylar
+şunları içerebilir:</p>
+<ul>
+    <li>Kategoriye özel <strong>fiyat dalgalanmaları</strong> (ekonomik
+        kriz, çete savaşları, kripto çöküşü, gümrük denetimleri vb.)</li>
+    <li><strong>Nakit kazanç</strong> olayları (bahşiş, komisyon, şans
+        oyunu kazancı vb.)</li>
+    <li><strong>Nakit kayıp</strong> olayları (soygun, rüşvet, siber
+        dolandırıcılık, haraç vb.)</li>
+    <li><strong>Envanter müsaderesi</strong> (polis baskını, fare
+        istilası, köstebek ihaneti, gümrük el koyması)</li>
+    <li><strong>Büyük risk / kombo olaylar</strong> (rakip çete baskını
+        gibi hem nakit hem envanter kaybettiren olaylar)</li>
+    <li><strong>Şirket olayları</strong> (maliye denetimi, kredi notu
+        artışı/düşüşü)</li>
+    <li><strong>Arsa fiyat olayları</strong> (imar, metro, deprem, sahil
+        kirliliği)</li>
+</ul>
+<div class="note">
+Ayrıca çok düşük bir ihtimalle (ortalama ~250 günde bir) beklenmedik bir
+<strong>miras</strong> olayı tetiklenip hesabınıza 500.000 - 1.000.000 TL
+arası büyük bir meblağ yatabilir.
+</div>
+
+<h2 id="skor">Skor Tablosu</h2>
+<p>Her 3 günde bir, mevcut nakit miktarınız ve gününüz otomatik olarak
+çevrimiçi skor tablosuna gönderilir (arka planda, oyunu bekletmeden).
+Oyunu kapatırken de son bir skor gönderimi yapılır. Hapisteyken skor
+gönderimi yapılmaz.</p>
+
+<h2 id="kayit">Kayıt Sistemi</h2>
+<ul>
+    <li>Oyun her 30 saniyede bir ve her gün sonunda otomatik olarak
+        kaydedilir.</li>
+    <li>Ana menüden "Devam Et / Yükle" seçeneğiyle daha önceki kayıtlı
+        oyununuza dönebilirsiniz.</li>
+    <li>Hapisteyken otomatik kayıt yapılmaz; hapis bittiğinde kayıt
+        devam eder.</li>
+</ul>
+
+<h2 id="hedefler">Oyun Hedefleri</h2>
+<p>Oyun sınırsız olsa da, kendinizi ölçebileceğiniz referans hedefler
+şunlardır:</p>
+<table>
+<caption>Referans Hedefler</caption>
+<tr><th>Unvan</th><th>Gün</th><th>Hedef Nakit</th></tr>
+<tr><td>Çırak Tüccar</td><td>30</td><td>25.000 TL</td></tr>
+<tr><td>Usta Tüccar</td><td>45</td><td>75.000 TL</td></tr>
+<tr><td>Efsane Tüccar</td><td>60</td><td>200.000 TL</td></tr>
+<tr><td>Karaborsa Kralı</td><td>90</td><td>500.000 TL</td></tr>
+</table>
+
+<h2 id="ipuclari">İpuçları</h2>
+<div class="tip">
+<ul>
+    <li>Ucuzken alıp pahalıyken satmak temel kazanç yöntemidir; ürün
+        listesi fiyata göre sıralı gelir, en ucuz ürünler üstte
+        görünür.</li>
+    <li>Karanlık Maddeler ve Mühimmat/Silah stoklarınızı gereğinden
+        fazla biriktirmeyin — polis riskiniz katlanarak artar.</li>
+    <li>Muhbir tutmak, özellikle yasa dışı ürün ticareti yapıyorsanız
+        uzun vadede kendini fazlasıyla amorti eder.</li>
+    <li>Şirket kurmak hem düzenli pasif gelir hem de banka kredisi
+        yolunu açar; kredi notunuzu büyütmek için şirketinizi uzun süre
+        ayakta tutun.</li>
+    <li>Arsa piyasa değeri düşükken alıp yükseldiğinde satmak, ürün
+        ticaretinden bağımsız ek bir kazanç kaynağıdır.</li>
+    <li>Kredi taksitlerinizi zamanında ödeyin; temerrüt ciddi mali
+        zarara yol açar.</li>
+</ul>
+</div>
+
+<footer>
+<p>Karaborsa Ticaret Simülasyonu — görme engelli bireyler gözetilerek
+tasarlanmış, ekran okuyucu ile tam uyumlu bir ticaret simülasyonudur.
+Bu yardım dosyası oyun içinden <span class="shortcut">F1</span> tuşu ile
+her zaman tekrar açılabilir.</p>
+</footer>
+
+</body>
+</html>

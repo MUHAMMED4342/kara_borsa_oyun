@@ -15,7 +15,7 @@ from history_log import log_history
 from formatting import format_tl
 from audio_manager import AudioManager
 from save_manager import list_saves, delete_save
-from game_state import resource_path, open_help, open_release_notes, ID_LOAD, ID_NEW
+from game_state import resource_path, open_help, open_release_notes, ID_LOAD, ID_NEW, ROULETTE_BET_LABELS
 
 # Skor tablosu için import
 # ÖNEMLİ: skor_gonderimi_aktif'i doğrudan "from leaderboard import ..." ile
@@ -29,6 +29,33 @@ def speak(text: str):
     """Ekran okuyucuya seslendirir VE aynı mesajı geçmiş kaydına ekler."""
     _tts_speak(text)
     log_history(text)
+
+
+# ---------------------------------------------------------------------------
+# RULET ÇARKI SESİ - SÜRE TESPİTİ
+# ---------------------------------------------------------------------------
+# çark.mp3 çalmaya başladıktan sonra, ses bitene kadar bekleyip SONRA
+# sonucu ekran okuyucuya bildirmemiz gerekiyor. Bunun için mp3 dosyasının
+# süresini mümkünse `mutagen` kütüphanesiyle (pip install mutagen) otomatik
+# okuyoruz. mutagen kurulu değilse ya da süre okunamazsa aşağıdaki sabit
+# (SPIN_SOUND_FALLBACK_SECONDS) kullanılır.
+#
+# ÖNEMLİ: mutagen kurulu değilse, bu sabiti kendi cark.mp3 dosyanızın
+# GERÇEK süresine (saniye) göre elle güncelleyin; aksi halde anons ses
+# bitmeden ya da bittikten epey sonra yapılır.
+SPIN_SOUND_FALLBACK_SECONDS = 4.0
+
+
+def _get_spin_sound_duration(path: str) -> float:
+    if os.path.exists(path):
+        try:
+            from mutagen.mp3 import MP3
+            length = MP3(path).info.length
+            if length and length > 0:
+                return length
+        except Exception:
+            pass
+    return SPIN_SOUND_FALLBACK_SECONDS
 
 
 class LandManagementDialog(wx.Dialog):
@@ -112,8 +139,7 @@ class LandManagementDialog(wx.Dialog):
         status = (
             f"Toplam Arsa Sayısı: {len(self.state.lands)} | "
             f"Toplam Değer: {total_land_value:,.0f} TL\n"
-            f"Nakit: {self.state.cash:,.0f} TL | "
-            f"Temiz Para: {self.state.clean_money:,.0f} TL"
+            f"Nakit: {self.state.cash:,.0f} TL"
         )
         self.status_text.SetValue(status)
 
@@ -662,9 +688,59 @@ class HistoryDialog(wx.Dialog):
         # İmleci en sona (en yeni mesaja) götür.
         self.text_ctrl.SetInsertionPointEnd()
 
+
+class DailyMessageDialog(wx.Dialog):
+    """
+    GÜNÜN MESAJI
+    Geliştiricinin GitHub üzerinden yayınladığı, oyunculara yönelik
+    duyuru/mesajı gösterir. Sadece daha önce gösterilmemiş (yeni tarihli)
+    bir mesaj varsa açılır - bkz. daily_message.py.
+    """
+
+    def __init__(self, parent, date_str: str, message_text: str):
+        super().__init__(
+            parent, title="Günün Mesajı",
+            size=(520, 380),
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER
+        )
+        self.parent = parent
+        self._build_ui(date_str, message_text)
+        self._bind_events()
+        self.CenterOnScreen()
+
+    def _build_ui(self, date_str, message_text):
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label=f"GÜNÜN MESAJI ({date_str})")
+        title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        sizer.Add(title, 0, wx.ALL | wx.CENTER, 10)
+
+        self.text_ctrl = wx.TextCtrl(
+            panel, value=message_text,
+            style=wx.TE_READONLY | wx.TE_MULTILINE | wx.TE_WORDWRAP
+        )
+        self.text_ctrl.SetMinSize((470, 260))
+        sizer.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
+
+        self.close_btn = wx.Button(panel, label="Tamam")
+        sizer.Add(self.close_btn, 0, wx.ALL | wx.CENTER, 10)
+
+        panel.SetSizer(sizer)
+
+    def _bind_events(self):
+        self.close_btn.Bind(wx.EVT_BUTTON, lambda e: self.EndModal(wx.ID_OK))
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
+
+    def on_key_down(self, event: wx.KeyEvent):
+        if event.GetKeyCode() == wx.WXK_ESCAPE:
+            self.EndModal(wx.ID_OK)
+            return
+        event.Skip()
+
 class CompanyDialog(wx.Dialog):
     def __init__(self, parent, state):
-        super().__init__(parent, title="Şirket Yönetimi", size=(600, 450))
+        super().__init__(parent, title="Şirket Yönetimi", size=(650, 560))
         self.parent = parent
         self.state = state
         self._build_ui()
@@ -679,9 +755,17 @@ class CompanyDialog(wx.Dialog):
         title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         sizer.Add(title, 0, wx.ALL | wx.CENTER, 10)
 
-        self.status_text = wx.TextCtrl(panel, style=wx.TE_READONLY | wx.TE_MULTILINE)
-        self.status_text.SetMinSize((500, 120))
-        sizer.Add(self.status_text, 0, wx.EXPAND | wx.ALL, 10)
+        sizer.Add(wx.StaticText(panel, label="Şirketleriniz (farklı şehirlerde birden fazla olabilir):"),
+                   0, wx.LEFT | wx.TOP, 10)
+        self.company_list = wx.ListBox(panel, style=wx.LB_SINGLE)
+        self.company_list.SetMinSize((550, 100))
+        sizer.Add(self.company_list, 0, wx.EXPAND | wx.ALL, 10)
+
+        self.close_btn = wx.Button(panel, label="Seçili Şirketi Kapat")
+        sizer.Add(self.close_btn, 0, wx.ALL | wx.CENTER, 5)
+
+        sizer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.ALL, 5)
+        sizer.Add(wx.StaticText(panel, label="Yeni Şirket Kur:"), 0, wx.LEFT | wx.TOP, 5)
 
         guide = wx.StaticText(
             panel,
@@ -690,14 +774,15 @@ class CompanyDialog(wx.Dialog):
                 "Restoran uygundur. Daha yüksek günlük kâr isterseniz Kripto "
                 "Madenciliği veya Gece Kulübü daha uygundur, ancak günlük "
                 "giderleri de yüksektir. Oto Galeri dengeli bir orta "
-                "seçenektir. Şirketiniz her gün otomatik olarak kâr üretir "
-                "ve kredi notunuzu yükselterek banka kredisi çekmenizi "
-                "sağlar. Listeden bir tip seçtiğinizde altta o şirketin "
-                "maliyet, gider ve kâr aralığı mevcut bakiyenize göre "
-                "gösterilir."
+                "seçenektir. Her şirket her gün otomatik olarak kendi kârını "
+                "üretir ve kendi kredi notunu yükseltir. Her şehirde en fazla "
+                "bir şirketiniz olabilir, ama farklı şehirlerde istediğiniz "
+                "kadar şirket açabilirsiniz. Listeden bir tip seçtiğinizde "
+                "altta o şirketin maliyet, gider ve kâr aralığı mevcut "
+                "bakiyenize göre gösterilir."
             ),
         )
-        guide.Wrap(520)
+        guide.Wrap(560)
         sizer.Add(guide, 0, wx.EXPAND | wx.ALL, 10)
 
         company_choices = [
@@ -713,7 +798,7 @@ class CompanyDialog(wx.Dialog):
         sizer.Add(type_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
         self.detail_text = wx.TextCtrl(panel, style=wx.TE_READONLY | wx.TE_MULTILINE)
-        self.detail_text.SetMinSize((500, 90))
+        self.detail_text.SetMinSize((550, 90))
         sizer.Add(self.detail_text, 0, wx.EXPAND | wx.ALL, 5)
 
         name_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -724,18 +809,12 @@ class CompanyDialog(wx.Dialog):
 
         city_sizer = wx.BoxSizer(wx.HORIZONTAL)
         city_sizer.Add(wx.StaticText(panel, label="Şehir:"), 0, wx.ALL | wx.CENTER, 5)
-        self.city_combo = wx.ComboBox(panel, choices=self.state.get_city_list(), style=wx.CB_READONLY)
-        if self.city_combo.GetCount() > 0:
-            self.city_combo.SetSelection(0)
+        self.city_combo = wx.ComboBox(panel, style=wx.CB_READONLY)
         city_sizer.Add(self.city_combo, 1, wx.ALL | wx.CENTER, 5)
         sizer.Add(city_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
-        btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.setup_btn = wx.Button(panel, label="Kur")
-        self.close_btn = wx.Button(panel, label="Kapat")
-        btn_sizer.Add(self.setup_btn, 0, wx.ALL, 5)
-        btn_sizer.Add(self.close_btn, 0, wx.ALL, 5)
-        sizer.Add(btn_sizer, 0, wx.ALIGN_CENTER, 5)
+        self.setup_btn = wx.Button(panel, label="Bu Şehirde Şirket Kur")
+        sizer.Add(self.setup_btn, 0, wx.ALL | wx.CENTER, 5)
 
         self.done_btn = wx.Button(panel, label="Tamam")
         sizer.Add(self.done_btn, 0, wx.ALL | wx.CENTER, 10)
@@ -759,41 +838,49 @@ class CompanyDialog(wx.Dialog):
         self.close_btn.Bind(wx.EVT_BUTTON, self.on_close_company)
         self.done_btn.Bind(wx.EVT_BUTTON, lambda e: self.EndModal(wx.ID_OK))
         self.type_combo.Bind(wx.EVT_COMBOBOX, self.on_type_selected)
+        self.company_list.Bind(wx.EVT_LISTBOX, self.on_company_select)
 
     def _update_ui(self):
-        if self.state.has_company:
-            self.status_text.SetValue(
-                f"Şirket: {self.state.company_name}\n"
-                f"Şehir: {self.state.company_city or '-'}\n"
-                f"Tip: {self.state.company_type}\n"
-                f"Kredi Notu: {self.state.company_credit_score}\n"
-                f"Aktif Gün: {self.state.company_days_active}\n"
-                f"Toplam Kâr: {format_tl(self.state.company_total_profit)} TL\n"
-                f"Aylık Ciro: {format_tl(self.state.company_monthly_revenue)} TL\n"
-                f"Temiz Para: {format_tl(self.state.clean_money)} TL"
+        self.company_list.Clear()
+        for c in self.state.companies:
+            self.company_list.Append(
+                f"{c['name']} ({c['city']}) - {c['type']} - Kredi Notu: {c['credit_score']} - "
+                f"Aktif Gün: {c['days_active']} - Toplam Kâr: {format_tl(c['total_profit'])} TL - "
+                f"Aylık Ciro: {format_tl(c['monthly_revenue'])} TL",
+                c["id"],
             )
-            self.detail_text.SetValue("")
-            self.type_combo.Enable(False)
-            self.name_input.Enable(False)
-            self.city_combo.Enable(False)
-            self.setup_btn.Enable(False)
-            self.close_btn.Enable(True)
-        else:
-            self.status_text.SetValue("Aktif şirket yok")
-            self.detail_text.SetValue(
-                "Bir şirket tipi seçtiğinizde ayrıntılar burada görünecek."
-            )
+        self.close_btn.Enable(len(self.state.companies) > 0)
+
+        available_cities = self.state.get_available_company_cities()
+        self.city_combo.Clear()
+        self.city_combo.AppendItems(available_cities)
+        if available_cities:
+            self.city_combo.SetSelection(0)
             self.type_combo.Enable(True)
             self.name_input.Enable(True)
             self.city_combo.Enable(True)
             self.setup_btn.Enable(True)
-            self.close_btn.Enable(False)
+            self.detail_text.SetValue(
+                "Bir şirket tipi seçtiğinizde ayrıntılar burada görünecek."
+            )
+        else:
+            self.type_combo.Enable(False)
+            self.name_input.Enable(False)
+            self.city_combo.Enable(False)
+            self.setup_btn.Enable(False)
+            self.detail_text.SetValue("Şirket açabileceğiniz boş şehir kalmadı.")
 
     def _get_selected_company_type(self):
         idx = self.type_combo.GetSelection()
         if idx == wx.NOT_FOUND:
             return ""
         return self.type_combo.GetClientData(idx)
+
+    def on_company_select(self, event):
+        idx = self.company_list.GetSelection()
+        if idx != wx.NOT_FOUND and idx < len(self.state.companies):
+            c = self.state.companies[idx]
+            speak(f"{c['name']} ({c['city']}) seçildi")
 
     def on_type_selected(self, event):
         company_type = self._get_selected_company_type()
@@ -833,19 +920,29 @@ class CompanyDialog(wx.Dialog):
             return
 
         c_idx = self.city_combo.GetSelection()
-        city = self.city_combo.GetString(c_idx) if c_idx != wx.NOT_FOUND else ""
+        if c_idx == wx.NOT_FOUND:
+            speak("Şehir seçin")
+            return
+        city = self.city_combo.GetString(c_idx)
 
         success, msg = self.state.setup_company(company_type, company_name, city)
         speak(msg)
         if success:
+            self.name_input.SetValue("")
             self._update_ui()
 
     def on_close_company(self, event):
-        if not self.state.has_company:
+        idx = self.company_list.GetSelection()
+        if idx == wx.NOT_FOUND:
+            speak("Kapatmak istediğiniz şirketi seçin")
             return
 
-        if wx.MessageBox("Şirketi kapatmak istediğinize emin misiniz?", "Onay", wx.YES_NO | wx.ICON_WARNING) == wx.YES:
-            success, msg = self.state.close_company()
+        company_id = self.company_list.GetClientData(idx)
+        company = self.state.get_company(company_id)
+        name = f"{company['name']} ({company['city']})" if company else "şirket"
+
+        if wx.MessageBox(f"{name} kapatılsın mı?", "Onay", wx.YES_NO | wx.ICON_WARNING) == wx.YES:
+            success, msg = self.state.close_company(company_id)
             speak(msg)
             if success:
                 self._update_ui()
@@ -1193,14 +1290,14 @@ class BankLoanDialog(wx.Dialog):
                 f"Sonraki Taksite: {self.state.loan_days_until_installment} gün\n"
                 f"Kalan Taksit Sayısı: {remaining_installments}\n"
                 f"Faiz Oranı: %{self.state.loan_interest_rate*100:.1f}\n\n"
-                f"Kredi Notu: {self.state.company_credit_score}\n\n"
+                f"Kredi Notu (ortalama): {self.state.get_average_credit_score()}\n\n"
                 f"Not: Taksitler her 30 günde bir hesabınızdan otomatik çekilir."
             )
             self.options = []
             self.option_list.Clear()
             self.option_list.Enable(False)
             self.take_btn.Enable(False)
-            self.payoff_btn.Enable(self.state.clean_money >= self.state.loan_total_debt)
+            self.payoff_btn.Enable(self.state.cash >= self.state.loan_total_debt)
         else:
             self.payoff_btn.Enable(False)
             self.options = self.state.get_loan_options()
@@ -1208,14 +1305,14 @@ class BankLoanDialog(wx.Dialog):
 
             if not self.options:
                 self.status_text.SetValue(
-                    f"Kredi Notu: {self.state.company_credit_score}\n"
+                    f"Kredi Notu (ortalama): {self.state.get_average_credit_score()}\n"
                     f"Durum: Kredi notu yetersiz veya şirket yok"
                 )
                 self.option_list.Enable(False)
             else:
                 limit = self.state.get_loan_limit()
                 self.status_text.SetValue(
-                    f"Kredi Notu: {self.state.company_credit_score}\n"
+                    f"Kredi Notu (ortalama): {self.state.get_average_credit_score()}\n"
                     f"Kredi Limiti: {format_tl(limit)} TL\n"
                     f"Faiz Oranı: %{tier['interest_rate']*100:.1f}\n\n"
                     f"Bir paket seçip 'Kredi Çek' butonuna basın.\n"
@@ -1329,7 +1426,7 @@ class LandLoanDialog(wx.Dialog):
             self.option_list.Clear()
             self.option_list.Enable(False)
             self.take_btn.Enable(False)
-            self.payoff_btn.Enable(self.state.clean_money >= debt)
+            self.payoff_btn.Enable(self.state.cash >= debt)
         else:
             self.payoff_btn.Enable(False)
             self.options = self.state.get_land_loan_options(self.land_index)
@@ -1403,7 +1500,11 @@ class BankingDialog(wx.Dialog):
         self.status_text = wx.StaticText(panel, label="")
         sizer.Add(self.status_text, 0, wx.ALL | wx.CENTER, 10)
 
-        self.interest_text = wx.StaticText(panel, label=f"Günlük Faiz: %{self.state.BANK_INTEREST_RATE*100:.1f}")
+        self.interest_text = wx.StaticText(
+            panel,
+            label="Faiz yok: kazandığınız her şey doğrudan nakde geçer.\n"
+                  "Faiz sadece aldığınız kredi borcuna uygulanır."
+        )
         sizer.Add(self.interest_text, 0, wx.ALL | wx.CENTER, 5)
 
         self.done_btn = wx.Button(panel, label="Tamam")
@@ -1416,9 +1517,245 @@ class BankingDialog(wx.Dialog):
 
     def _update_ui(self):
         self.status_text.SetLabel(
-            f"Temiz Para: {format_tl(self.state.clean_money)} TL\n"
             f"Nakit: {format_tl(self.state.cash)} TL"
         )
+
+
+class GamblingDialog(wx.Dialog):
+    """
+    RULET (KUMAR) EKRANI
+    Kullanıcı bir veya daha fazla bahsi listeye ekler, ardından
+    "Bahisleri Bitir / Çarkı Çevir" ile hepsi birden oynanır:
+    çark.mp3 çalmaya başlar, ses BİTENE KADAR beklenir, ardından sonuç
+    (kazanan sayı/renk ve her bahsin durumu) ekran okuyucuya bildirilir.
+    """
+
+    BET_CHOICES = [
+        ("kirmizi", "Kırmızı (2x)"),
+        ("siyah", "Siyah (2x)"),
+        ("cift", "Çift (2x)"),
+        ("tek", "Tek (2x)"),
+        ("1-18", "1-18 (2x)"),
+        ("19-36", "19-36 (2x)"),
+        ("1.duzine", "1. Düzine 1-12 (3x)"),
+        ("2.duzine", "2. Düzine 13-24 (3x)"),
+        ("3.duzine", "3. Düzine 25-36 (3x)"),
+        ("sayi", "Tek Sayı 0-36 (36x)"),
+    ]
+
+    # NOT: dosya adı ASCII tutuldu (diğer ses dosyalarıyla aynı kural:
+    # para.mp3, buy.ogg, button.wav...). "sounds/cark.mp3" dosyasını
+    # kendiniz eklemelisiniz (rulet çarkı dönüş sesi).
+    SOUND_CARK = resource_path("sounds/cark.mp3")
+
+    def __init__(self, parent, state):
+        super().__init__(parent, title="Rulet - Kumar Oyna", size=(480, 560))
+        self.parent = parent
+        self.state = state
+        self.pending_bets = []
+        self.spin_timer = None
+        self.is_spinning = False
+
+        self._build_ui()
+        self._bind_events()
+        self._update_ui()
+
+    def _build_ui(self):
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label="RULET")
+        title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        sizer.Add(title, 0, wx.ALL | wx.CENTER, 10)
+
+        self.cash_text = wx.StaticText(panel, label="")
+        sizer.Add(self.cash_text, 0, wx.ALL | wx.CENTER, 5)
+
+        bet_labels = [label for _, label in self.BET_CHOICES]
+        self.bet_type_radio = wx.RadioBox(panel, label="Bahis Türü", choices=bet_labels,
+                                           majorDimension=1, style=wx.RA_SPECIFY_COLS)
+        sizer.Add(self.bet_type_radio, 0, wx.EXPAND | wx.ALL, 10)
+
+        number_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        number_sizer.Add(wx.StaticText(panel, label="Sayı (yalnızca 'Tek Sayı' için, 0-36):"),
+                          0, wx.ALL | wx.CENTER, 5)
+        self.number_spinner = wx.SpinCtrl(panel, value="0", min=0, max=36)
+        self.number_spinner.Disable()
+        number_sizer.Add(self.number_spinner, 0, wx.ALL | wx.CENTER, 5)
+        sizer.Add(number_sizer, 0, wx.EXPAND | wx.ALL, 5)
+
+        amount_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        amount_sizer.Add(wx.StaticText(panel, label="Bahis Tutarı (TL):"), 0, wx.ALL | wx.CENTER, 5)
+        self.amount_spinner = wx.SpinCtrl(panel, value="100", min=1, max=100000000)
+        amount_sizer.Add(self.amount_spinner, 0, wx.ALL | wx.CENTER, 5)
+        sizer.Add(amount_sizer, 0, wx.EXPAND | wx.ALL, 5)
+
+        self.add_bet_btn = wx.Button(panel, label="Bahis Ekle")
+        sizer.Add(self.add_bet_btn, 0, wx.ALL | wx.CENTER, 5)
+
+        sizer.Add(wx.StaticText(panel, label="Eklenen Bahisler:"), 0, wx.LEFT | wx.TOP, 10)
+        self.bets_list = wx.ListBox(panel, style=wx.LB_SINGLE)
+        self.bets_list.SetMinSize((420, 90))
+        sizer.Add(self.bets_list, 0, wx.EXPAND | wx.ALL, 10)
+
+        self.remove_bet_btn = wx.Button(panel, label="Seçili Bahsi Sil")
+        sizer.Add(self.remove_bet_btn, 0, wx.ALL | wx.CENTER, 5)
+
+        self.status_text = wx.StaticText(panel, label="Bahislerinizi ekleyip çarkı çevirin.")
+        self.status_text.Wrap(440)
+        sizer.Add(self.status_text, 0, wx.EXPAND | wx.ALL, 10)
+
+        btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.spin_btn = wx.Button(panel, label="Bahisleri Bitir / Çarkı Çevir")
+        self.close_btn = wx.Button(panel, label="Kapat")
+        btn_sizer.Add(self.spin_btn, 0, wx.ALL, 5)
+        btn_sizer.Add(self.close_btn, 0, wx.ALL, 5)
+        sizer.Add(btn_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
+
+        panel.SetSizer(sizer)
+
+    def _bind_events(self):
+        self.bet_type_radio.Bind(wx.EVT_RADIOBOX, self.on_bet_type_changed)
+        self.add_bet_btn.Bind(wx.EVT_BUTTON, self.on_add_bet)
+        self.remove_bet_btn.Bind(wx.EVT_BUTTON, self.on_remove_bet)
+        self.spin_btn.Bind(wx.EVT_BUTTON, self.on_spin)
+        self.close_btn.Bind(wx.EVT_BUTTON, self.on_close_dialog)
+        self.Bind(wx.EVT_CLOSE, self.on_close_dialog)
+
+    def _update_ui(self):
+        self.cash_text.SetLabel(f"Nakit: {format_tl(self.state.cash)} TL")
+
+    def on_bet_type_changed(self, event):
+        idx = self.bet_type_radio.GetSelection()
+        bet_type = self.BET_CHOICES[idx][0]
+        self.number_spinner.Enable(bet_type == "sayi")
+
+    def _total_pending(self) -> float:
+        return sum(b["amount"] for b in self.pending_bets)
+
+    def on_add_bet(self, event):
+        idx = self.bet_type_radio.GetSelection()
+        if idx == wx.NOT_FOUND:
+            speak("Bahis türü seçin")
+            return
+        bet_type, label = self.BET_CHOICES[idx]
+        amount = float(self.amount_spinner.GetValue())
+        if amount <= 0:
+            speak("Geçerli bir tutar girin")
+            return
+
+        if self._total_pending() + amount > self.state.cash:
+            speak("Yetersiz bakiye, bu bahsi ekleyemezsiniz")
+            return
+
+        number = None
+        display = label
+        if bet_type == "sayi":
+            number = self.number_spinner.GetValue()
+            display = f"Tek Sayı: {number} (36x)"
+
+        self.pending_bets.append({"type": bet_type, "number": number, "amount": amount})
+        self.bets_list.Append(f"{display} - {format_tl(amount)} TL")
+        speak(f"{display} için {format_tl(amount)} TL bahis eklendi")
+
+    def on_remove_bet(self, event):
+        idx = self.bets_list.GetSelection()
+        if idx == wx.NOT_FOUND:
+            speak("Silmek istediğiniz bahsi seçin")
+            return
+        self.pending_bets.pop(idx)
+        self.bets_list.Delete(idx)
+        speak("Bahis silindi")
+
+    def on_spin(self, event):
+        if self.is_spinning:
+            return
+        if not self.pending_bets:
+            speak("Önce en az bir bahis ekleyin")
+            return
+
+        total_bet = self._total_pending()
+        if self.state.cash < total_bet:
+            speak("Yetersiz bakiye")
+            return
+
+        self.is_spinning = True
+        self._set_controls_enabled(False)
+        self.status_text.SetLabel("Çark dönüyor, lütfen bekleyin...")
+        speak("Çark dönüyor, lütfen bekleyin")
+
+        if self.parent:
+            self.parent.play_sound(self.SOUND_CARK)
+
+        duration = _get_spin_sound_duration(self.SOUND_CARK)
+        self.spin_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_spin_finished, self.spin_timer)
+        self.spin_timer.StartOnce(int(duration * 1000))
+
+    def on_spin_finished(self, event):
+        if self.spin_timer:
+            self.spin_timer.Stop()
+            self.spin_timer = None
+
+        result = self.state.play_roulette(self.pending_bets)
+        self.is_spinning = False
+
+        if not result.get("success"):
+            speak(result.get("message", "Kumar işlemi başarısız"))
+            self.status_text.SetLabel("Bahisler işlenemedi, tekrar deneyin.")
+            self._set_controls_enabled(True)
+            return
+
+        winning_number = result["winning_number"]
+        winning_color = result["winning_color"]
+        net = result["net"]
+
+        lines = [f"Çark {winning_number} ({winning_color}) geldi."]
+        for br in result["bet_results"]:
+            label = ROULETTE_BET_LABELS.get(br["type"], br["type"])
+            if br["type"] == "sayi":
+                label = f"{label} {br['number']}"
+            if br["won"]:
+                lines.append(f"{label} bahsi KAZANDI: {format_tl(br['payout'])} TL")
+            else:
+                lines.append(f"{label} bahsi kaybetti: {format_tl(br['amount'])} TL")
+
+        if net >= 0:
+            lines.append(f"Toplam net kazanç: {format_tl(net)} TL")
+        else:
+            lines.append(f"Toplam net kayıp: {format_tl(abs(net))} TL")
+
+        summary = " ".join(lines)
+        self.status_text.SetLabel(summary)
+        speak(summary)
+
+        self._update_ui()
+        if self.parent:
+            self.parent.update_wallet_display()
+            self.parent.auto_save()
+
+        self.pending_bets = []
+        self.bets_list.Clear()
+
+        self.spin_btn.SetLabel("Bahisleri Bitir / Çarkı Çevir")
+        self._set_controls_enabled(True)
+
+    def _set_controls_enabled(self, enabled: bool):
+        self.bet_type_radio.Enable(enabled)
+        is_sayi = self.BET_CHOICES[self.bet_type_radio.GetSelection()][0] == "sayi"
+        self.number_spinner.Enable(enabled and is_sayi)
+        self.amount_spinner.Enable(enabled)
+        self.add_bet_btn.Enable(enabled)
+        self.remove_bet_btn.Enable(enabled)
+        self.spin_btn.Enable(enabled)
+
+    def on_close_dialog(self, event):
+        if self.is_spinning:
+            speak("Çark dönerken kapatamazsınız")
+            if hasattr(event, "Veto"):
+                event.Veto()
+            return
+        self.EndModal(wx.ID_OK)
 
 
 class JailDialog(wx.Dialog):

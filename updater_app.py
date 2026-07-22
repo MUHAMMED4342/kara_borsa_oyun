@@ -135,8 +135,26 @@ def _copy_with_retry(src: str, dst: str, log_path: str,
     return False
 
 
+def _fallback_log_path() -> str:
+    """
+    task.json'daki log_file yolu bile okunamadığında kullanılacak,
+    yardımcı exe'nin YANINDAKİ (yani AppData/guncelleme klasöründeki)
+    sabit bir yedek log dosyası. Böylece "hiç iz kalmadı" durumu
+    ortadan kalkar; her zaman en azından buraya bir satır düşer.
+    """
+    try:
+        base = os.path.dirname(os.path.abspath(sys.argv[0]))
+    except Exception:
+        base = os.getcwd()
+    return os.path.join(base, "guncelleyici_kritik_hata.log")
+
+
 def main() -> None:
+    fallback_log = _fallback_log_path()
+    _log(fallback_log, f"guncelleyici baslatildi, argv={sys.argv}")
+
     if len(sys.argv) < 2:
+        _log(fallback_log, "argv eksik: task_path verilmemis, cikiliyor")
         return
 
     task_path = sys.argv[1]
@@ -144,11 +162,12 @@ def main() -> None:
     try:
         with open(task_path, "r", encoding="utf-8") as f:
             task = json.load(f)
-    except Exception:
-        # Görev dosyası okunamıyorsa yapacak bir şey yok.
+    except Exception as e:
+        # Görev dosyası okunamadıysa bile artık bunu bir yere yazıyoruz.
+        _log(fallback_log, f"gorev dosyasi okunamadi ({task_path}): {e}")
         return
 
-    log_path = task.get("log_file", "")
+    log_path = task.get("log_file", "") or fallback_log
     pid = task.get("pid", 0)
     target_exe = task.get("target_exe", "")
     new_exe = task.get("new_exe", "")
@@ -209,4 +228,13 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        # Buraya kadar hiçbir try/except yakalayamadıysa (ör. os/sys
+        # modül seviyesinde beklenmedik bir durum), en azından bunu
+        # exe'nin yanındaki sabit log dosyasına yazalım.
+        try:
+            _log(_fallback_log_path(), f"beklenmeyen kritik hata: {e}")
+        except Exception:
+            pass

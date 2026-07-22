@@ -10,6 +10,7 @@ import wx
 import threading
 
 import updater
+import daily_message
 from game_data import PRODUCT_CATEGORIES, get_flat_product_order
 from accessibility_helper import speak as _tts_speak
 from history_log import log_history
@@ -21,7 +22,7 @@ from game_state import GameState, resource_path, get_music_tracks, open_help, ID
 from dialogs import (
     LandManagementDialog, MainMenu, LoadGameDialog, CompanyDialog,
     InformantDialog, BankLoanDialog, LandLoanDialog, BankingDialog, JailDialog,
-    HistoryDialog, EmployeeManagementDialog
+    HistoryDialog, EmployeeManagementDialog, GamblingDialog, DailyMessageDialog
 )
 
 # Skor tablosu için import
@@ -67,6 +68,7 @@ class MainFrame(wx.Frame):
     SOUND_TRANSITION = resource_path("sounds/transition.mp3")
     SOUND_POLICE = resource_path("sounds/polis_siren.mp3")
     SOUND_JAIL_DOOR = resource_path("sounds/Prison Door Opening Sound.mp3")
+    SOUND_CARK = resource_path("sounds/cark.mp3")
 
     def __init__(self, username=None, load_data=None):
         super().__init__(None, title=f"Karaborsa - {username}", size=(800, 650))
@@ -108,6 +110,33 @@ class MainFrame(wx.Frame):
         else:
             speak(f"Hoş geldiniz {username}")
 
+        # GÜNÜN MESAJI: arka planda (internete bağlı, oyunu bekletmeden)
+        # kontrol edilir; yeni bir mesaj varsa hazır olduğunda gösterilir.
+        daily_message.check_for_new_message(self._on_daily_message_ready)
+
+    def _on_daily_message_ready(self, date_str: str, message_text: str):
+        """daily_message arka plan thread'inden çağrılır; UI güncellemesi
+        ana thread'de yapılmalı, bu yüzden wx.CallAfter kullanıyoruz."""
+        wx.CallAfter(self._show_daily_message, date_str, message_text)
+
+    def _show_daily_message(self, date_str: str, message_text: str):
+        # Hapis penceresi her zaman en üstte kalacak şekilde (STAY_ON_TOP)
+        # açılıyor; bu sırada normal bir modal diyalog açarsak F3 hatasında
+        # olduğu gibi diyalog arkada kalıp oyunu tepkisiz hale getirebilir.
+        # Bu yüzden hapisteyken göstermeyi erteliyoruz.
+        if self.state.in_jail:
+            wx.CallLater(2000, self._show_daily_message, date_str, message_text)
+            return
+
+        speak(f"Günün mesajı ({date_str}): {message_text}")
+        dlg = DailyMessageDialog(self, date_str, message_text)
+        dlg.ShowModal()
+        dlg.Destroy()
+        # Mesaj gerçekten gösterildikten sonra "okunmuş" olarak işaretle;
+        # böylece erteleme sırasında oyun kapatılsa bile mesaj kaybolmaz,
+        # bir dahaki açılışta tekrar gösterilir.
+        daily_message.mark_seen(date_str)
+
     def _build_ui(self):
         panel = wx.Panel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -125,7 +154,7 @@ class MainFrame(wx.Frame):
 
         qty_sizer = wx.BoxSizer(wx.HORIZONTAL)
         qty_sizer.Add(wx.StaticText(panel, label="Adet:"), 0, wx.ALL | wx.CENTER, 5)
-        self.qty_spinner = wx.SpinCtrl(panel, value="1", min=1, max=100)
+        self.qty_spinner = wx.SpinCtrl(panel, value="1", min=1, max=1000000)
         qty_sizer.Add(self.qty_spinner, 0, wx.ALL | wx.CENTER, 5)
         sizer.Add(qty_sizer, 0, wx.LEFT | wx.TOP, 5)
 
@@ -153,9 +182,11 @@ class MainFrame(wx.Frame):
         self.bank_btn = wx.Button(panel, label="Bankacılık")
         self.land_btn = wx.Button(panel, label="Arsa Yönetimi")
         self.status_btn = wx.Button(panel, label="Durum Raporu")
+        self.gamble_btn = wx.Button(panel, label="Kumar Oyna")
         btn_sizer3.Add(self.bank_btn, 0, wx.ALL, 3)
         btn_sizer3.Add(self.land_btn, 0, wx.ALL, 3)
         btn_sizer3.Add(self.status_btn, 0, wx.ALL, 3)
+        btn_sizer3.Add(self.gamble_btn, 0, wx.ALL, 3)
         sizer.Add(btn_sizer3, 0, wx.ALIGN_CENTER | wx.BOTTOM, 10)
 
         self.CreateStatusBar()
@@ -175,6 +206,7 @@ class MainFrame(wx.Frame):
         self.land_btn.Bind(wx.EVT_BUTTON, self.on_land_management)
         self.status_btn.Bind(wx.EVT_BUTTON, self.on_status)
         self.employees_btn.Bind(wx.EVT_BUTTON, self.on_employees)
+        self.gamble_btn.Bind(wx.EVT_BUTTON, self.on_gamble)
         
         self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
         self.Bind(wx.EVT_CLOSE, self.on_close)
@@ -183,7 +215,7 @@ class MainFrame(wx.Frame):
         for btn in [self.buy_btn, self.sell_btn, self.next_btn,
                     self.company_btn, self.informant_btn, self.loan_btn,
                     self.bank_btn, self.land_btn, self.status_btn,
-                    self.employees_btn]:
+                    self.employees_btn, self.gamble_btn]:
             btn.Enable(not in_jail)
         self.product_list.Enable(not in_jail)
         self.qty_spinner.Enable(not in_jail)
@@ -434,6 +466,21 @@ class MainFrame(wx.Frame):
             self.auto_save()
         dlg.Destroy()
 
+    def on_gamble(self, event):
+        if self.state.in_jail:
+            speak("Hapistesiniz")
+            return
+
+        self.play_sound(self.SOUND_BUTTON)
+        dlg = GamblingDialog(self, self.state)
+        dlg.ShowModal()
+        # GamblingDialog her çark sonucundan hemen sonra cüzdanı ve
+        # otomatik kaydı zaten kendi içinde güncelliyor; burada yalnızca
+        # dialog kapanırken son bir kez tazeliyoruz (envanteri etkilemez).
+        self.update_wallet_display()
+        self.auto_save()
+        dlg.Destroy()
+
     def get_current_music_track(self) -> str:
         if self.music_tracks:
             return self.music_tracks[self.current_track_index]
@@ -462,7 +509,6 @@ class MainFrame(wx.Frame):
             "DURUM RAPORU",
             f"Gün: {self.state.day}",
             f"Nakit: {format_tl(self.state.cash)} TL",
-            f"Temiz Para: {format_tl(self.state.clean_money)} TL",
             f"Polis Riski: %{self.state.police_heat:.1f}",
             f"Toplam Suçlu Gelir: {format_tl(self.state.total_crime)} TL",
             f"En Yüksek Nakit: {format_tl(self.state.highest_cash)} TL",
@@ -483,17 +529,19 @@ class MainFrame(wx.Frame):
             lines.append(f"Toplam Arsa Değeri: {total_value:,.0f} TL")
 
         if self.state.has_company:
-            lines.extend([
-                "",
-                "ŞİRKET BİLGİLERİ",
-                f"İsim: {self.state.company_name}",
-                f"Şehir: {self.state.company_city or '-'}",
-                f"Tip: {self.state.company_type}",
-                f"Kredi Notu: {self.state.company_credit_score}",
-                f"Aktif Gün: {self.state.company_days_active}",
-                f"Toplam Kâr: {format_tl(self.state.company_total_profit)} TL",
-                f"Aylık Ciro: {format_tl(self.state.company_monthly_revenue)} TL",
-            ])
+            lines.append("")
+            lines.append("ŞİRKET BİLGİLERİ")
+            for c in self.state.companies:
+                lines.extend([
+                    f"İsim: {c['name']}",
+                    f"Şehir: {c['city'] or '-'}",
+                    f"Tip: {c['type']}",
+                    f"Kredi Notu: {c['credit_score']}",
+                    f"Aktif Gün: {c['days_active']}",
+                    f"Toplam Kâr: {format_tl(c['total_profit'])} TL",
+                    f"Aylık Ciro: {format_tl(c['monthly_revenue'])} TL",
+                    "",
+                ])
 
             if self.state.loan_amount > 0:
                 remaining_installments = self.state.loan_total_installments - self.state.loan_installments_paid
@@ -545,6 +593,10 @@ class MainFrame(wx.Frame):
 
     def on_history(self, event):
         """F3: Şimdiye kadar söylenmiş tüm mesajları gösteren geçmiş ekranını açar."""
+        if self.state.in_jail:
+            speak("Hapistesiniz")
+            return
+
         dlg = HistoryDialog(self)
         dlg.ShowModal()
         dlg.Destroy()
@@ -599,7 +651,7 @@ class MainFrame(wx.Frame):
             return
         
         # Toplam varlık sıfırsa skor gönderme
-        total_wealth = self.state.cash + self.state.clean_money
+        total_wealth = self.state.cash
         if total_wealth <= 0:
             return
         
@@ -611,12 +663,12 @@ class MainFrame(wx.Frame):
                     self.username, 
                     self.state.cash, 
                     self.state.day, 
-                    self.state.clean_money
+                    0.0
                 )
                 # Sesle rahatsız etmemek için gönderim sonucu sadece
                 # geçmişe (F3) yazılıyor, sesli anons yapılmıyor.
                 if success:
-                    total = self.state.cash + self.state.clean_money
+                    total = self.state.cash
                     log_history(f"Skor tablosuna gönderildi: {format_tl(total)} TL")
                 else:
                     log_history(f"Skor gönderilemedi: {msg}")
@@ -634,6 +686,28 @@ class MainFrame(wx.Frame):
             speak("Hapistesiniz. Bekleyin")
             return
 
+        try:
+            self._advance_day()
+        except Exception as e:
+            # Önceden bu tür bir hata, gün işleme kodunun ortasında sessizce
+            # duruyordu: gün ilerliyor ama polis kontrolü ve rastgele olaylar
+            # (bunlar kodun daha sonraki kısımlarında) hiç çalışmıyordu -
+            # oyuncuya "hiçbir şey olmuyor" gibi görünüyordu. Artık hatayı
+            # yakalayıp hem geçmişe (F3) yazıyoruz hem de sesli bildiriyoruz,
+            # böylece hem fark edilir hem de bize bildirilebilir.
+            import traceback
+            print(traceback.format_exc())
+            log_history(f"[HATA] Gün ilerletilirken beklenmeyen bir sorun oluştu: {e}")
+            speak(
+                "Gün ilerletilirken beklenmeyen bir hata oluştu. Oyun "
+                "kaydedildi, geçmiş ekranında (F3) hata kaydı var."
+            )
+        finally:
+            self.refresh_product_list()
+            self.update_wallet_display()
+            self.auto_save()
+
+    def _advance_day(self):
         self.play_sound(self.SOUND_TRANSITION)
 
         # Ekran okuyucu, art arda hızlıca gelen speak() çağrılarında her
@@ -645,26 +719,20 @@ class MainFrame(wx.Frame):
         narration = []
 
         self.state.day += 1
-        narration.append(f"Gün {self.state.day} başladı.")
+        log_history(f"Gün {self.state.day} başladı.")
 
         if self.state.has_company:
-            self.state.company_days_active += 1
-            if self.state.company_days_active % 30 == 0:
-                self.state.company_monthly_revenue = 0.0
+            self.state.advance_companies_day()
 
         self.state.fluctuate_prices()
 
         if self.state.has_company:
-            if not self.state.pay_company_upkeep():
-                narration.append("Şirketiniz kapandı. İşletme giderleri karşılanamadı.")
-                speak(" ".join(narration))
-                self.refresh_product_list()
-                self.update_wallet_display()
-                self.auto_save()
-                return
+            closed_messages = self.state.pay_company_upkeep()
+            for msg in closed_messages:
+                narration.append(msg)
             profit_msg = self.state.process_company_daily()
             if profit_msg:
-                narration.append(profit_msg)
+                log_history(profit_msg)
 
         # DÜN verilmiş bir muhbir uyarısı varsa, bugünkü ücret ödemesi
         # başarısız olup muhbir kovulsa bile bu uyarı YOK SAYILMAMALI.
@@ -679,8 +747,8 @@ class MainFrame(wx.Frame):
         if self.state.loan_amount > 0:
             success, msg = self.state.process_loan_daily()
             if not success:
-                self.state.default_loan()
-                narration.append(f"Kredi temerrüdü. Şirket kapatıldı. {msg}")
+                _, default_msg = self.state.default_loan()
+                narration.append(f"Kredi temerrüdü. {default_msg}")
                 speak(" ".join(narration))
                 self.refresh_product_list()
                 self.update_wallet_display()
@@ -833,10 +901,7 @@ class MainFrame(wx.Frame):
             return
         
         if key == ord('C') or key == ord('c'):
-            cash_text = f"Nakit: {format_tl(self.state.cash)} TL"
-            if self.state.clean_money > 0:
-                cash_text += f", Temiz para: {format_tl(self.state.clean_money)} TL"
-            speak(cash_text)
+            speak(f"Nakit: {format_tl(self.state.cash)} TL")
             return
         if key == ord('D') or key == ord('d'):
             name = self.get_selected_product()

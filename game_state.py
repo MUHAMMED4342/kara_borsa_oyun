@@ -71,10 +71,41 @@ ID_LOAD = wx.NewIdRef()
 ID_NEW = wx.NewIdRef()
 
 
+# ---------------------------------------------------------------------------
+# RULET (KUMAR) - standart Avrupa ruleti düzeni (tek sıfır, 0-36)
+# ---------------------------------------------------------------------------
+ROULETTE_RED_NUMBERS = {
+    1, 3, 5, 7, 9, 12, 14, 16, 18,
+    19, 21, 23, 25, 27, 30, 32, 34, 36,
+}
+
+ROULETTE_BET_LABELS = {
+    "kirmizi": "Kırmızı",
+    "siyah": "Siyah",
+    "cift": "Çift",
+    "tek": "Tek",
+    "1-18": "1-18",
+    "19-36": "19-36",
+    "1.duzine": "1. Düzine (1-12)",
+    "2.duzine": "2. Düzine (13-24)",
+    "3.duzine": "3. Düzine (25-36)",
+    "sayi": "Tek Sayı",
+}
+
+
+def get_roulette_color(number: int) -> str:
+    """0 yeşildir; kalan 36 sayı standart Avrupa ruleti düzenine göre
+    kırmızı/siyah olarak dağıtılmıştır."""
+    if number == 0:
+        return "yeşil"
+    return "kırmızı" if number in ROULETTE_RED_NUMBERS else "siyah"
+
+
 class GameState:
     STARTING_CASH = 15000.0
-    STARTING_CLEAN_MONEY = 0.0
-    BANK_INTEREST_RATE = 0.015  # AYLIK oran - her 30 günde bir uygulanır (apply_bank_interest)
+    # "Temiz para" / banka faizi mantığı tamamen kaldırıldı: kazanılan her
+    # şey doğrudan nakde (cash) geçer. Faiz artık SADECE kredi borcunda var
+    # (bkz. take_loan / take_land_loan içindeki interest_rate).
 
     def __init__(self, load_data=None):
         self.lands = []
@@ -82,21 +113,37 @@ class GameState:
         
         if load_data:
             self.cash = load_data.get("cash", self.STARTING_CASH)
-            self.clean_money = load_data.get("clean_money", self.STARTING_CLEAN_MONEY)
+            # Eski kayıtlarda "clean_money" olabilir; artık ayrı bir para
+            # etiketi olmadığı için doğrudan nakde katılır.
+            self.cash += load_data.get("clean_money", 0.0)
             self.day = load_data.get("day", 1)
             self.inventory = load_data.get("inventory", {name: 0 for name in PRODUCTS})
             self.prices = load_data.get("prices", {name: float(data["base_price"]) for name, data in PRODUCTS.items()})
             self.in_jail = load_data.get("in_jail", False)
             self.jail_days = load_data.get("jail_days", 0)
-            self.has_company = load_data.get("has_company", False)
-            self.company_type = load_data.get("company_type", "")
-            self.company_name = load_data.get("company_name", "")
-            self.company_city = load_data.get("company_city", "")
-            self.company_credit_score = load_data.get("company_credit_score", 0)
-            self.company_total_profit = load_data.get("company_total_profit", 0.0)
-            self.company_monthly_revenue = load_data.get("company_monthly_revenue", 0.0)
-            self.company_days_active = load_data.get("company_days_active", 0)
-            self.company_upkeep_paid = load_data.get("company_upkeep_paid", 0)
+
+            # ŞİRKETLER: artık tekil alanlar yerine bir liste (self.companies)
+            # kullanılıyor; böylece aynı anda farklı şehirlerde birden fazla
+            # şirket sahibi olunabiliyor. Eski kayıtlarda (companies alanı
+            # olmayan) tekil "has_company/company_type/..." alanları varsa,
+            # bunlar otomatik olarak tek elemanlı bir listeye çevrilir.
+            self.companies = load_data.get("companies")
+            if self.companies is None:
+                self.companies = []
+                if load_data.get("has_company", False):
+                    legacy_city = load_data.get("company_city", "") or (ACTIVE_CITIES[0] if ACTIVE_CITIES else "")
+                    self.companies.append({
+                        "id": 1,
+                        "type": load_data.get("company_type", ""),
+                        "name": load_data.get("company_name", "Şirketim"),
+                        "city": legacy_city,
+                        "credit_score": load_data.get("company_credit_score", 50),
+                        "days_active": load_data.get("company_days_active", 0),
+                        "total_profit": load_data.get("company_total_profit", 0.0),
+                        "monthly_revenue": load_data.get("company_monthly_revenue", 0.0),
+                        "upkeep_paid": load_data.get("company_upkeep_paid", 0.0),
+                    })
+
             self.loan_amount = load_data.get("loan_amount", 0.0)
             self.loan_interest_rate = load_data.get("loan_interest_rate", 0.0)
             self.loan_days_remaining = load_data.get("loan_days_remaining", 0)
@@ -111,7 +158,6 @@ class GameState:
             self.total_crime = load_data.get("total_crime", 0.0)
             self.deaths_caused = load_data.get("deaths_caused", 0)
             self.highest_cash = load_data.get("highest_cash", self.cash)
-            self.days_until_bank_interest = load_data.get("days_until_bank_interest", 30)
             
             self.lands = load_data.get("lands", [])
             self.land_prices = load_data.get("land_prices", {})
@@ -129,21 +175,12 @@ class GameState:
                 self._init_land_prices()
         else:
             self.cash = self.STARTING_CASH
-            self.clean_money = self.STARTING_CLEAN_MONEY
             self.day = 1
             self.inventory = {name: 0 for name in PRODUCTS}
             self.prices = {name: float(data["base_price"]) for name, data in PRODUCTS.items()}
             self.in_jail = False
             self.jail_days = 0
-            self.has_company = False
-            self.company_type = ""
-            self.company_name = ""
-            self.company_city = ""
-            self.company_credit_score = 0
-            self.company_days_active = 0
-            self.company_total_profit = 0.0
-            self.company_monthly_revenue = 0.0
-            self.company_upkeep_paid = 0
+            self.companies = []
             self.loan_amount = 0.0
             self.loan_interest_rate = 0.0
             self.loan_days_remaining = 0
@@ -158,7 +195,6 @@ class GameState:
             self.total_crime = 0.0
             self.deaths_caused = 0
             self.highest_cash = self.cash
-            self.days_until_bank_interest = 30
             
             self.lands = []
             self.land_prices = {}
@@ -186,6 +222,45 @@ class GameState:
     def _init_land_prices(self):
         for land_type, data in LAND_TYPES.items():
             self.land_prices[land_type] = float(data["base_price"])
+
+    @property
+    def clean_money(self) -> float:
+        """Geriye dönük uyumluluk için bırakıldı: 'temiz para' etiketi
+        tamamen kaldırıldığından her zaman 0 döner, kazanılan her şey
+        artık doğrudan self.cash içindedir."""
+        return 0.0
+
+    @clean_money.setter
+    def clean_money(self, value):
+        """Eski/harici kod (ör. save_manager.py) hâlâ 'state.clean_money = x'
+        yazmaya çalışırsa uygulamanın çökmemesi için değeri sessizce yok
+        sayar."""
+        pass
+
+    @property
+    def has_company(self) -> bool:
+        """En az bir aktif şirketiniz var mı."""
+        return bool(self.companies)
+
+    def get_company(self, company_id) -> dict:
+        for c in self.companies:
+            if c["id"] == company_id:
+                return c
+        return None
+
+    def get_company_cities(self) -> set:
+        return {c["city"] for c in self.companies}
+
+    def get_available_company_cities(self) -> list:
+        """Henüz şirket açılmamış şehirlerin listesi (her şehirde en fazla
+        bir şirketiniz olabilir, farklı şehirlerde birden fazla şirket
+        açabilirsiniz)."""
+        occupied = self.get_company_cities()
+        return [city for city in ACTIVE_CITIES if city not in occupied]
+
+    def _next_company_id(self) -> int:
+        used = [c.get("id", 0) for c in self.companies]
+        return (max(used) + 1) if used else 1
 
     # ----- ARSA METOTLARI -----
     
@@ -310,11 +385,9 @@ class GameState:
         total_debt = round(amount * (1 + interest_rate), 2)
         installment_amount = round(total_debt / installments, 2)
         
-        # Kredi tutarı gerçek, harcanabilir paradır: hem "temiz para"
-        # etiketine HEM de toplam nakde (cash) eklenmeli. clean_money,
-        # cash'in bir alt kümesi olduğu için (bkz. buy_bulk), sadece
-        # clean_money'i artırmak parayı gerçekte oyuncuya vermez.
-        self.clean_money += amount
+        # Kredi tutarı doğrudan nakde (cash) eklenir. Artık ayrı bir
+        # "temiz para" etiketi yok; kredi borcu üzerindeki %15 faiz tek
+        # faiz kaynağıdır.
         self.cash += amount
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
@@ -343,10 +416,9 @@ class GameState:
             return False, "Bu arsada aktif kredi yok"
 
         debt = land.get("loan_debt", 0.0)
-        if self.clean_money < debt:
-            return False, f"Erken kapatma için yetersiz temiz para. Gereken: {format_tl(debt)} TL"
+        if self.cash < debt:
+            return False, f"Erken kapatma için yetersiz nakit. Gereken: {format_tl(debt)} TL"
 
-        self._reduce_clean_money(debt)
         self.cash -= debt
         land["has_loan"] = False
         land.pop("loan_amount", None)
@@ -421,10 +493,13 @@ class GameState:
 
     def wallet_text(self) -> str:
         base = f"Gün {self.day} | Nakit: {format_tl(self.cash)} TL"
-        if self.clean_money > 0:
-            base += f" | Temiz: {format_tl(self.clean_money)} TL"
-        if self.has_company:
-            base += f" | Şirket: {self.company_name} ({self.company_city})"
+        if self.companies:
+            if len(self.companies) == 1:
+                c = self.companies[0]
+                base += f" | Şirket: {c['name']} ({c['city']})"
+            else:
+                cities = ", ".join(c["city"] for c in self.companies)
+                base += f" | Şirketler ({len(self.companies)}): {cities}"
             if self.loan_amount > 0:
                 base += f" | Kredi: {format_tl(self.loan_amount)} TL"
         if self.lands:
@@ -439,12 +514,22 @@ class GameState:
             base += f" | Polis riski: %{self.police_heat:.0f}"
         return base
 
+    def get_average_credit_score(self) -> int:
+        """Tüm şirketlerinizin ortalama kredi notu (banka kredisi bu
+        ortalamaya göre değerlendirilir). Şirketiniz yoksa 0 döner."""
+        if not self.companies:
+            return 0
+        return round(sum(c["credit_score"] for c in self.companies) / len(self.companies))
+
     def get_credit_tier(self):
-        if not self.has_company:
+        """Kredi notu artık tüm şirketlerinizin ortalamasına göre hesaplanır
+        (banka kredisi işletmenizin bütünü üzerinden değerlendirilir)."""
+        if not self.companies:
             return None
+        avg_score = sum(c["credit_score"] for c in self.companies) / len(self.companies)
         tier = CREDIT_TIERS[0]
         for t in CREDIT_TIERS:
-            if self.company_credit_score >= t["min_score"]:
+            if avg_score >= t["min_score"]:
                 tier = t
         return tier
 
@@ -452,12 +537,15 @@ class GameState:
         tier = self.get_credit_tier()
         if not tier or not tier["can_loan"]:
             return 0.0
-        if self.company_days_active > 0:
-            days_this_month = (self.company_days_active - 1) % 30 + 1
-        else:
-            days_this_month = 1
-        monthly_income = (self.company_monthly_revenue / days_this_month) * 30
-        base_limit = monthly_income * 2
+        total_monthly_income = 0.0
+        for c in self.companies:
+            days_active = c.get("days_active", 0)
+            if days_active > 0:
+                days_this_month = (days_active - 1) % 30 + 1
+            else:
+                days_this_month = 1
+            total_monthly_income += (c.get("monthly_revenue", 0.0) / days_this_month) * 30
+        base_limit = total_monthly_income * 2
         return base_limit * tier["loan_limit_multiplier"]
 
     def inventory_summary_text(self) -> str:
@@ -508,10 +596,6 @@ class GameState:
         self.cash -= total_price
         self.inventory[name] += quantity
 
-        if self.clean_money > 0:
-            from_clean = min(self.clean_money, total_price)
-            self._reduce_clean_money(from_clean)
-
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
         return True, total_price, f"{quantity} adet {name} alındı"
@@ -527,6 +611,101 @@ class GameState:
             self.highest_cash = self.cash
         speak(f"{quantity} adet {name} satıldı, {format_tl(total_price)} TL kazanıldı")
         return True, total_price, f"{quantity} adet {name} satıldı"
+
+    # ----- RULET / KUMAR -----
+
+    def evaluate_roulette_bet(self, bet: dict, winning_number: int, winning_color: str) -> tuple:
+        """Tek bir bahsin kazanıp kazanmadığını ve TOPLAM geri ödeme
+        çarpanını (orijinal bahis dahil) döner. Örn. kırmızıya oynayıp
+        kazanınca bahis 2 katına çıkar (2x); tek sayı tutunca 36x döner."""
+        btype = bet["type"]
+        if btype == "sayi":
+            return (winning_number == bet.get("number"), 36)
+        if btype == "kirmizi":
+            return (winning_color == "kırmızı", 2)
+        if btype == "siyah":
+            return (winning_color == "siyah", 2)
+        if btype == "cift":
+            return (winning_number != 0 and winning_number % 2 == 0, 2)
+        if btype == "tek":
+            return (winning_number != 0 and winning_number % 2 == 1, 2)
+        if btype == "1-18":
+            return (1 <= winning_number <= 18, 2)
+        if btype == "19-36":
+            return (19 <= winning_number <= 36, 2)
+        if btype == "1.duzine":
+            return (1 <= winning_number <= 12, 3)
+        if btype == "2.duzine":
+            return (13 <= winning_number <= 24, 3)
+        if btype == "3.duzine":
+            return (25 <= winning_number <= 36, 3)
+        return (False, 0)
+
+    def play_roulette(self, bets: list) -> dict:
+        """
+        Verilen bahis listesini tek seferde işler:
+        - Toplam bahis tutarını nakitten düşer (bakiye yetersizse hiçbir
+          şey yapmadan hata döner)
+        - Çarkı çevirir (0-36 arası rastgele sayı)
+        - Her bahsi ayrı ayrı değerlendirir, kazançları nakde ekler
+        - Net kumar kazancı pozitifse "suç geliri"ne (total_crime) eklenir;
+          bu, oyunun karaborsa temasıyla tutarlıdır (bkz. game_data.py
+          içindeki "Yasa Dışı Kumar Kazancı" rastgele olayı)
+
+        bets: [{"type": "kirmizi"/"siyah"/"cift"/"tek"/"1-18"/"19-36"/
+                        "1.duzine"/"2.duzine"/"3.duzine"/"sayi",
+                "number": int|None (yalnızca "sayi" türü için 0-36),
+                "amount": float}]
+
+        Dönen sözlük:
+            success (bool), message (str, yalnızca hata durumunda dolu),
+            winning_number (int), winning_color (str),
+            total_bet (float), total_payout (float), net (float),
+            bet_results (list of dict: type, number, amount, won, payout)
+        """
+        total_bet = sum(b["amount"] for b in bets)
+        if total_bet <= 0:
+            return {"success": False, "message": "Bahis girilmedi"}
+        if self.cash < total_bet:
+            return {"success": False, "message": "Yetersiz bakiye"}
+
+        self.cash -= total_bet
+
+        winning_number = random.randint(0, 36)
+        winning_color = get_roulette_color(winning_number)
+
+        total_payout = 0.0
+        bet_results = []
+        for b in bets:
+            won, multiplier = self.evaluate_roulette_bet(b, winning_number, winning_color)
+            payout = b["amount"] * multiplier if won else 0.0
+            total_payout += payout
+            bet_results.append({
+                "type": b["type"],
+                "number": b.get("number"),
+                "amount": b["amount"],
+                "won": won,
+                "payout": payout,
+            })
+
+        self.cash += total_payout
+        net = total_payout - total_bet
+
+        if net > 0:
+            self.total_crime += net
+
+        if self.cash > self.highest_cash:
+            self.highest_cash = self.cash
+
+        return {
+            "success": True,
+            "winning_number": winning_number,
+            "winning_color": winning_color,
+            "total_bet": total_bet,
+            "total_payout": total_payout,
+            "net": net,
+            "bet_results": bet_results,
+        }
 
     # ----- ADAM TUTMA METOTLARI (Şirketten TAMAMEN bağımsız) -----
 
@@ -664,8 +843,6 @@ class GameState:
     def go_to_jail(self, days: int) -> str:
         seized = round(self.cash * 0.25, 2)
         if seized > 0:
-            if self.clean_money > 0:
-                self._reduce_clean_money(min(self.clean_money, seized))
             self.cash -= seized
             if self.cash < 0:
                 self.cash = 0.0
@@ -676,18 +853,17 @@ class GameState:
         return f"{days} gün hapis cezası"
 
     def setup_company(self, company_type: str, company_name: str, city: str = "") -> tuple:
-        """Oyuncunun kendi şirketini kurar. Adamlar sisteminden TAMAMEN
-        bağımsızdır; şehir seçimi burada sadece hangi ilde faaliyet
-        gösterdiğinizi belirtir, bir adamınızın olduğu şehirle çakışması
-        gerekmez."""
-        if self.has_company:
-            return False, "Zaten şirketiniz var"
-
+        """Yeni bir şirket kurar ve listeye ekler. Aynı anda farklı
+        şehirlerde birden fazla şirketiniz olabilir; her şehirde en fazla
+        bir şirket açılabilir. Adamlar sisteminden TAMAMEN bağımsızdır."""
         if company_type not in COMPANY_TYPES:
             return False, "Geçersiz şirket tipi"
 
-        if city and city not in ACTIVE_CITIES:
+        if not city or city not in ACTIVE_CITIES:
             return False, "Geçersiz şehir"
+
+        if city in self.get_company_cities():
+            return False, f"{city} ilinde zaten bir şirketiniz var"
 
         company_data = COMPANY_TYPES[company_type]
         cost = company_data["setup_cost"]
@@ -696,82 +872,86 @@ class GameState:
             return False, f"Yetersiz nakit. Kurulum maliyeti: {format_tl(cost)} TL"
 
         self._spend_cash(cost)
-        self.has_company = True
-        self.company_type = company_type
-        self.company_name = company_name
-        self.company_city = city
-        self.company_credit_score = 50
-        self.company_days_active = 0
-        self.company_total_profit = 0.0
-        self.company_monthly_revenue = 0.0
-        self.company_upkeep_paid = 0
+        company = {
+            "id": self._next_company_id(),
+            "type": company_type,
+            "name": company_name,
+            "city": city,
+            "credit_score": 50,
+            "days_active": 0,
+            "total_profit": 0.0,
+            "monthly_revenue": 0.0,
+            "upkeep_paid": 0.0,
+        }
+        self.companies.append(company)
 
-        city_text = f" ({city})" if city else ""
-        return True, f"{company_name}{city_text} kuruldu. Başlangıç kredi notu: 50"
+        return True, f"{company_name} ({city}) kuruldu. Başlangıç kredi notu: 50"
 
-    def close_company(self) -> tuple:
-        if not self.has_company:
+    def close_company(self, company_id=None) -> tuple:
+        """Belirtilen şirketi kapatır. company_id verilmezse ve tek bir
+        şirketiniz varsa o kapatılır (geriye dönük uyumluluk için)."""
+        if not self.companies:
             return False, "Aktif şirket yok"
 
-        if self.loan_amount > 0:
+        if company_id is None:
+            if len(self.companies) == 1:
+                company = self.companies[0]
+            else:
+                return False, "Kapatılacak şirketi seçin"
+        else:
+            company = self.get_company(company_id)
+            if not company:
+                return False, "Şirket bulunamadı"
+
+        if len(self.companies) == 1 and self.loan_amount > 0:
             return False, "Önce kredi borcunu kapatın"
 
-        self.has_company = False
-        self.company_type = ""
-        self.company_name = ""
-        self.company_city = ""
-        self.company_credit_score = 0
-        self.company_total_profit = 0.0
-        self.company_monthly_revenue = 0.0
-        self.company_days_active = 0
+        self.companies.remove(company)
 
-        return True, "Şirket kapatıldı"
+        return True, f"{company['name']} ({company['city']}) kapatıldı"
 
     def _spend_cash(self, amount: float) -> None:
         """self.cash'i doğrudan azaltan (arsa/şirket/adam alımı, rüşvet,
-        ceza gibi) yerlerde kullanılır. clean_money, cash'in bir alt kümesi
-        (etiketi) olduğu için, harcama clean_money'den fazla düşerse önce
-        clean_money etiketi düzeltilir; böylece 'Temiz Para', 'Nakit'ten
-        büyük görünmeye başlamaz."""
+        ceza gibi) yerlerde kullanılır."""
         amount = round(amount, 2)
         if amount <= 0:
             return
         self.cash -= amount
 
-        if self.clean_money > self.cash:
-            self._reduce_clean_money(self.clean_money - self.cash)
-
-    def _reduce_clean_money(self, amount: float) -> None:
-        """clean_money her azaldığında çağrılmalı (harcama, kredi ödemesi,
-        ceza vb.)."""
-        if amount <= 0:
-            return
-        amount = min(amount, self.clean_money)
-        self.clean_money -= amount
+    def advance_companies_day(self):
+        """Her şirket için aktif gün sayısını artırır ve 30 günde bir
+        aylık ciroyu sıfırlar. Her şirket kendi takvimine göre ilerler."""
+        for c in self.companies:
+            c["days_active"] = c.get("days_active", 0) + 1
+            if c["days_active"] % 30 == 0:
+                c["monthly_revenue"] = 0.0
 
     def process_company_daily(self) -> str:
-        """Her gün: şirketiniz varsa rastgele bir aralıkta doğrudan KÂR
-        üretir. Kâr hem cash'e hem clean_money'e eklenir ve kredi notunu
-        bir miktar yükseltir."""
-        if not self.has_company:
+        """Her gün: sahip olduğunuz HER şirket ayrı ayrı rastgele bir
+        aralıkta doğrudan KÂR üretir. Kâr sadece cash'e eklenir; temiz
+        para (clean_money) mantığı şirket için tamamen kaldırıldı."""
+        if not self.companies:
             return ""
 
-        company_data = COMPANY_TYPES[self.company_type]
-        profit = round(random.uniform(
-            company_data["daily_profit_min"], company_data["daily_profit_max"]
-        ), 2)
+        messages = []
+        for c in self.companies:
+            company_data = COMPANY_TYPES[c["type"]]
+            profit = round(random.uniform(
+                company_data["daily_profit_min"], company_data["daily_profit_max"]
+            ), 2)
 
-        self.clean_money += profit
-        self.cash += profit
-        self.company_monthly_revenue += profit
+            self.cash += profit
+            c["monthly_revenue"] = c.get("monthly_revenue", 0.0) + profit
+            credit_boost = max(1, int(profit / 500))
+            c["credit_score"] = c.get("credit_score", 50) + credit_boost
+            c["total_profit"] = c.get("total_profit", 0.0) + profit
+
+            messages.append(f"{c['name']}: {format_tl(profit)} TL kâr elde ettiniz")
+
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
 
-        credit_boost = max(1, int(profit / 500))
-        self.company_credit_score += credit_boost
-        self.company_total_profit = getattr(self, "company_total_profit", 0.0) + profit
-
-        return f"{self.company_name}: {format_tl(profit)} TL kâr elde ettiniz"
+        return " ".join(messages)
 
     # ----- MUHBİR METOTLARI -----
 
@@ -845,27 +1025,28 @@ class GameState:
 
         return total_items, round(total_earned, 2)
 
-    def pay_company_upkeep(self) -> bool:
-        if not self.has_company:
-            return True
+    def pay_company_upkeep(self) -> list:
+        """Her şirket için günlük işletme giderini ayrı ayrı öder.
+        Ödeyemeyen şirket batar ve listeden çıkarılır; diğer şirketleriniz
+        etkilenmez. Kapanan şirketler için mesaj listesi döner (boşsa
+        hiçbir şirket kapanmamış demektir)."""
+        closed_messages = []
+        still_open = []
+        for c in self.companies:
+            company_data = COMPANY_TYPES[c["type"]]
+            upkeep = company_data["daily_upkeep"]
 
-        company_data = COMPANY_TYPES[self.company_type]
-        upkeep = company_data["daily_upkeep"]
+            if self.cash >= upkeep:
+                self._auto_deduct(upkeep)
+                c["upkeep_paid"] = c.get("upkeep_paid", 0.0) + upkeep
+                still_open.append(c)
+            else:
+                closed_messages.append(
+                    f"{c['name']} ({c['city']}) kapandı. İşletme giderleri karşılanamadı."
+                )
 
-        if self.cash >= upkeep:
-            # _auto_deduct önce temiz paradan, sonra etiketsiz nakitten
-            # düşer - böylece cash < clean_money gibi tutarsız bir duruma
-            # asla düşülmez.
-            self._auto_deduct(upkeep)
-            self.company_upkeep_paid += upkeep
-            return True
-        else:
-            self.has_company = False
-            self.company_type = ""
-            self.company_name = ""
-            self.company_city = ""
-            self.company_credit_score = 0
-            return False
+        self.companies = still_open
+        return closed_messages
 
     LOAN_PRESETS = [
         ("Küçük Kredi", 0.25, 1),
@@ -932,9 +1113,8 @@ class GameState:
         self.loan_installment_amount = round(self.loan_total_debt / installments, 2)
         self.loan_days_remaining = installments * 30
         self.loan_days_until_installment = 30
-        # Kredi tutarı gerçek paradır: hem clean_money hem cash artmalı
-        # (bkz. take_land_loan() içindeki aynı düzeltme için açıklama).
-        self.clean_money += amount
+        # Şirketle ilgili temiz para (clean_money) mantığı kaldırıldı:
+        # kredi tutarı sadece cash'e eklenir.
         self.cash += amount
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
@@ -949,10 +1129,9 @@ class GameState:
             return False, "Aktif kredi yok"
 
         debt = self.loan_total_debt
-        if self.clean_money < debt:
-            return False, f"Erken kapatma için yetersiz temiz para. Gereken: {format_tl(debt)} TL"
+        if self.cash < debt:
+            return False, f"Erken kapatma için yetersiz nakit. Gereken: {format_tl(debt)} TL"
 
-        self._reduce_clean_money(debt)
         self.cash -= debt
         self._clear_loan()
         return True, f"{format_tl(debt)} TL ödendi. Kredi erken kapatıldı"
@@ -968,17 +1147,11 @@ class GameState:
         self.loan_days_until_installment = 0
 
     def _auto_deduct(self, amount: float) -> float:
-        """Bir ödemeyi önce temiz paradan, sonra nakitten otomatik olarak
-        çeker. Gerçekte ödenebilen miktarı döner."""
+        """Bir ödemeyi nakitten otomatik olarak çeker. Gerçekte ödenebilen
+        miktarı döner."""
         remaining = round(amount, 2)
         if remaining <= 0:
             return 0.0
-
-        if self.clean_money > 0:
-            pay = min(self.clean_money, remaining)
-            self._reduce_clean_money(pay)
-            self.cash -= pay
-            remaining -= pay
 
         if remaining > 0 and self.cash > 0:
             pay = min(self.cash, remaining)
@@ -1016,22 +1189,13 @@ class GameState:
         return True, f"Kredi taksidi ödendi: {format_tl(paid)} TL. Kalan borç: {format_tl(self.loan_total_debt)} TL"
 
     def default_loan(self) -> tuple:
-        if not self.has_company:
+        if not self.companies:
             return False, "Aktif şirket yok"
 
-        self.has_company = False
-        self.company_type = ""
-        self.company_name = ""
-        self.company_city = ""
-        self.company_credit_score = 0
-
-        seized = self.clean_money
-        self.clean_money = 0
-        self.cash -= seized
-
+        self.companies = []
         self._clear_loan()
 
-        return True, f"Şirket kapatıldı. {format_tl(seized)} TL temiz para musadere edildi"
+        return True, "İşletmeniz iflas etti. Tüm şirketleriniz kapatıldı."
 
     def _illegal_inventory_value(self) -> float:
         """Elde bulundurulan yasa dışı ürünlerin (Karanlık Maddeler,
@@ -1120,32 +1284,21 @@ class GameState:
                 return event.get("zero_message", f"{event['name']}: kayıp yok")
             return event["message_template"].format(amount=f"{format_tl(cash_loss)}", category=category, count=total_lost)
         elif etype == "company_audit":
-            if self.has_company and self.clean_money > 0:
-                risk_amount = self.clean_money * 0.10
-                if random.random() < 0.3:
-                    # ÖNEMLİ: clean_money, cash'in bir ALT KÜMESİ (etiketi).
-                    # Para gerçekten müsadere ediliyorsa (default_loan(),
-                    # pay_company_upkeep(), _auto_deduct() gibi) her zaman
-                    # HEM clean_money HEM de cash birlikte azaltılmalı;
-                    # sadece clean_money'i azaltmak parayı "kaybettirmez",
-                    # onu sessizce etiketsiz/nötr paraya çevirir. Önceden
-                    # cash'e dokunulmadığı için bu ceza oyuncuya gerçekte
-                    # hiçbir maliyet getirmiyordu.
-                    self._reduce_clean_money(risk_amount)
-                    self.cash -= risk_amount
-                    return f"Maliye cezası. {format_tl(risk_amount)} TL bloke edildi"
-                else:
-                    return "Maliye denetimi geçti"
+            # Şirketle ilgili temiz para (clean_money) mantığı tamamen
+            # kaldırıldı: bu olayın artık hiçbir mali etkisi yok, sadece
+            # bilgilendirme amaçlı geçiyor.
             return "Maliye denetimi geçti"
         elif etype == "company_reputation":
-            if self.has_company:
+            if self.companies:
                 boost = event.get("credit_boost", 0)
                 penalty = event.get("credit_penalty", 0)
                 if boost:
-                    self.company_credit_score += boost
+                    for c in self.companies:
+                        c["credit_score"] = c.get("credit_score", 50) + boost
                     return event["message_template"].format(credit_boost=boost)
                 elif penalty:
-                    self.company_credit_score = max(0, self.company_credit_score + penalty)
+                    for c in self.companies:
+                        c["credit_score"] = max(0, c.get("credit_score", 50) + penalty)
                     return event["message_template"].format(credit_penalty=abs(penalty))
                 return event["message_template"]
             return f"{event['name']}: Şirketiniz olmadığı için etkilenmediniz"
@@ -1186,23 +1339,11 @@ class GameState:
         return results
 
     def apply_bank_interest(self) -> float:
-        """Temiz paraya faiz her gün çağrılsa bile sadece 30 günde bir
-        (aylık) uygulanır; günlük bileşik büyümeyi önler."""
-        self.days_until_bank_interest = getattr(self, "days_until_bank_interest", 30) - 1
-        if self.days_until_bank_interest > 0:
-            return 0.0
-
-        self.days_until_bank_interest = 30
-        if self.clean_money > 0:
-            interest = round(self.clean_money * self.BANK_INTEREST_RATE, 2)
-            # Faiz gerçek kazanılmış paradır: clean_money ile birlikte
-            # cash da artmalı, yoksa "Banka faizi: X TL" anonsu gerçekte
-            # hiçbir karşılığı olmayan hayali bir rakam olur.
-            self.clean_money += interest
-            self.cash += interest
-            if self.cash > self.highest_cash:
-                self.highest_cash = self.cash
-            return interest
+        """Banka/temiz para faizi sistemi tamamen kaldırıldı: nakit kendi
+        kendine büyümez. Tek faiz kaynağı, alınan kredi borcudur (bkz.
+        take_loan / take_land_loan). Bu metod geriye dönük uyumluluk için
+        (main.py günlük döngüde çağırıyor olabilir) duruyor ama artık
+        hiçbir para üretmez."""
         return 0.0
 
     def process_jail_day(self) -> list:

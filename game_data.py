@@ -126,10 +126,10 @@ COMPANY_TYPES = {
 }
 
 # NOT (daily_profit_min/max): Her gün şirketiniz bu aralıkta rastgele bir
-# kâr üretir. Kârın tamamı hem "Nakit"e hem de "Temiz Para"ya eklenir ve
-# kredi notunuzu bir miktar yükseltir. Büyük/kurumsal görünümlü işletmeler
-# (Kripto Madenciliği, Gece Kulübü) daha yüksek kâr aralığına sahiptir
-# ama günlük gideri de yüksektir.
+# kâr üretir. Kârın tamamı doğrudan "Nakit"e eklenir ve kredi notunuzu bir
+# miktar yükseltir. Büyük/kurumsal görünümlü işletmeler (Kripto Madenciliği,
+# Gece Kulübü) daha yüksek kâr aralığına sahiptir ama günlük gideri de
+# yüksektir.
 
 # Kredi Notu Seviyeleri
 CREDIT_TIERS = [
