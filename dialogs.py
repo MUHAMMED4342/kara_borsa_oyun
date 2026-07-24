@@ -1782,6 +1782,17 @@ class JailDialog(wx.Dialog):
         self._bind_events()
         self.CenterOnScreen()
 
+        # ÖNEMLİ: Bu pencere ShowModal() ile değil Show() ile (modsuz)
+        # açılıyor. wx.Dialog'un varsayılan davranışı ise Enter'a basınca
+        # EndModal(wx.ID_OK), Esc'e basınca EndModal(wx.ID_CANCEL)
+        # çağırmaktır. Modsuz açılmış bir dialogda EndModal() çağrılması
+        # (karşılığında bir modal event loop olmadığı için) pencerenin
+        # "yanıt vermiyor" durumuna düşmesine yol açıyordu. Aşağıdaki
+        # ayarlar bu varsayılan davranışı devre dışı bırakır.
+        self.SetEscapeId(wx.ID_NONE)
+        self.SetAffirmativeId(wx.ID_NONE)
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
+
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
 
@@ -1813,6 +1824,19 @@ class JailDialog(wx.Dialog):
     def _bind_events(self):
         self.exit_btn.Bind(wx.EVT_BUTTON, self.on_exit)
         self.Bind(wx.EVT_CLOSE, self.on_exit)
+
+    def on_char_hook(self, event):
+        keycode = event.GetKeyCode()
+        if keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER, wx.WXK_ESCAPE):
+            if self.is_running:
+                # Hapis sürerken Enter/Esc pencereyi kapatmaya/donmaya
+                # çalışmasın; sadece görmezden gel.
+                return
+            if keycode == wx.WXK_ESCAPE:
+                # Hapis bittiğinde Esc, "Çıkış" butonuyla aynı işi yapsın.
+                self.on_exit(event)
+                return
+        event.Skip()
 
     def start(self):
         if self.is_running:
@@ -1952,6 +1976,16 @@ class JailDialog(wx.Dialog):
             self.Destroy()
             if self.on_complete:
                 self.on_complete()
+        else:
+            # Hapis daha bitmeden Alt+F4 / sistem kapatma tuşuyla
+            # kapatılmaya çalışılıyor. Eskiden burada hiçbir şey
+            # yapılmıyordu (ne kapatma ne de Veto); bu da EVT_CLOSE
+            # olayının yarım kalıp pencerenin tepkisiz görünmesine
+            # sebep oluyordu. Şimdi kullanıcıyı bilgilendirip olayı
+            # düzgünce iptal (Veto) ediyoruz.
+            speak("Hapis cezası bitmeden çıkış yapamazsınız")
+            if hasattr(event, "Veto"):
+                event.Veto()
 
 
 # ============================================================

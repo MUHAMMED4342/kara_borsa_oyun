@@ -210,6 +210,7 @@ class GameState:
         kalır ama artık hiçbir yerde kullanılmaz."""
         defaults = {
             "total_generated": 0.0,
+            "period_generated": 0.0,
             "days_active": 0,
             "hired_day": self.day,
             "salary": EMPLOYEE_BASE_SALARY,
@@ -767,6 +768,7 @@ class GameState:
             "name": name,
             "city": city,
             "total_generated": 0.0,
+            "period_generated": 0.0,
             "days_active": 0,
             "hired_day": self.day,
             "salary": salary,
@@ -818,6 +820,7 @@ class GameState:
                 self.highest_cash = self.cash
 
             e["total_generated"] += gross
+            e["period_generated"] = e.get("period_generated", 0.0) + gross
 
             e["days_until_salary"] -= 1
             if e["days_until_salary"] <= 0:
@@ -829,10 +832,12 @@ class GameState:
                     )
                     to_remove.append(e["id"])
                     continue
+                period_total = e["period_generated"]
                 e["days_until_salary"] = 30
+                e["period_generated"] = 0.0
                 messages.append(
                     f"{e['name']} ({e['city']}): maaş ödendi ({format_tl(salary)} TL). "
-                    f"Bu dönem ürettiği: {format_tl(gross)} TL"
+                    f"Bu dönem ürettiği: {format_tl(period_total)} TL"
                 )
 
         if to_remove:
@@ -1230,6 +1235,30 @@ class GameState:
         caught = self.roll_police_catch()
         return {"caught": caught}
 
+    def _total_wealth(self) -> float:
+        """Nakit + envanter (güncel piyasa fiyatıyla) + şirket değeri +
+        arsa değeri toplamı. Servete göre dinamik olay tutarlarını
+        (cash_gain/cash_loss/raid_combo/inheritance/disaster) hesaplamak
+        için kullanılır. game_data.calculate_total_wealth burada
+        kullanılamaz çünkü o fonksiyon companies/lands için dict
+        bekliyor, ancak GameState bunları liste olarak tutuyor."""
+        total = self.cash
+
+        for name, qty in self.inventory.items():
+            total += qty * self.prices.get(name, 0.0)
+
+        for c in self.companies:
+            company_data = COMPANY_TYPES.get(c.get("type"), {})
+            setup_cost = company_data.get("setup_cost", 0)
+            total_profit = c.get("total_profit", 0.0)
+            total += setup_cost + total_profit
+
+        for land in self.lands:
+            land_type = land.get("type")
+            total += self.get_land_price(land_type) if land_type else land.get("purchase_price", 0)
+
+        return max(total, 0.0)
+
     def apply_event(self, event: dict) -> str:
         etype = event["type"]
         if etype == "price":
@@ -1242,17 +1271,20 @@ class GameState:
                 self.prices[name] = round(new_price, 2)
             return event["message_template"].format(category=category, pct=f"{abs(pct) * 100:.1f}")
         elif etype == "cash_gain":
-            pct = random.uniform(event["min_pct"], event["max_pct"])
-            amount = round(self.cash * pct, 2)
+            wealth = self._total_wealth()
+            pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
+            amount = round(wealth * pct, 2)
             self.cash += amount
             if self.cash > self.highest_cash:
                 self.highest_cash = self.cash
             return event["message_template"].format(amount=f"{format_tl(amount)}")
         elif etype == "cash_loss":
-            # Sabit bir TL aralığından rastgele kayıp: paranız ne olursa
-            # olsun aynı gerçekçi tutar geçerli. Yeterli nakdiniz olmasa
-            # bile tutar tam olarak düşülür; bakiye eksiye düşebilir.
-            amount = round(random.uniform(event["min_amount"], event["max_amount"]), 2)
+            # Artık sabit bir TL aralığı değil, toplam servetin yüzdesi
+            # kadar kayıp (bkz. game_data.py). Yeterli nakit olmasa bile
+            # tutar tam olarak düşülür; bakiye eksiye düşebilir.
+            wealth = self._total_wealth()
+            pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
+            amount = round(wealth * pct, 2)
             self._spend_cash(amount)
             return event["message_template"].format(amount=f"{format_tl(amount)}")
         elif etype == "inventory_loss":
@@ -1267,10 +1299,44 @@ class GameState:
             if total_lost == 0:
                 return event.get("zero_message", f"{event['name']}: kayıp yok")
             return event["message_template"].format(category=category, count=total_lost)
+        elif etype == "inventory_gain":
+            # GERÇEKÇİLİK DÜZELTMESİ: Eskiden kazanılan miktar SADECE mevcut
+            # stoğun yüzdesi olarak hesaplanıyordu; elinizde o kategoriden
+            # hiç ürün yoksa (0 * yüzde = 0) tedarikçi "mal getirdi" deyip
+            # aslında hiçbir şey vermiyordu. Gerçek hayatta bir tedarikçi,
+            # elinizde o üründen hiç olmasa bile size mal getirebilir/teslim
+            # edebilir. Bu yüzden artık iki durum ayrı ele alınıyor:
+            #   - Elinizde zaten stok varsa: eskisi gibi stoğunuza ORANLI
+            #     bonus (düzenli müşteriye daha fazla mal gelir mantığı).
+            #   - Elinizde hiç yoksa: ürünün güncel fiyatına göre ölçeklenen,
+            #     makul bir TABAN miktar verilir (ucuz ürünlerden daha çok,
+            #     pahalı ürünlerden daha az adet gelir) - böylece tedarikçi
+            #     gerçekten mal teslim etmiş olur.
+            category = event["category"]
+            pct = random.uniform(event["min_pct"], event["max_pct"])
+            total_gained = 0
+            for name in PRODUCT_CATEGORIES[category]:
+                qty = self.inventory.get(name, 0)
+                if qty > 0:
+                    gained = max(1, int(round(qty * pct)))
+                else:
+                    price = self.prices.get(name) or PRODUCTS.get(name, {}).get("base_price", 500)
+                    # Yaklaşık 300-1500 TL değerinde mal, birim fiyata göre
+                    # adede çevrilir (ör. ucuz mermi -> çok adet, pahalı
+                    # tüfek -> az adet).
+                    baseline_value = random.uniform(300, 1500) * (pct / event["max_pct"])
+                    gained = max(1, int(round(baseline_value / max(price, 1))))
+                self.inventory[name] = qty + gained
+                total_gained += gained
+            if total_gained == 0:
+                return event.get("zero_message", f"{event['name']}: kazanç yok")
+            return event["message_template"].format(category=category, count=total_gained)
         elif etype == "raid_combo":
-            # Nakit kısmı da sabit bir TL aralığından çekiliyor (cüzdana
-            # göre değil); yetersiz nakit varsa bakiye eksiye düşebilir.
-            cash_loss = round(random.uniform(event["cash_min_amount"], event["cash_max_amount"]), 2)
+            # Nakit kısmı toplam servetin yüzdesi kadar çekiliyor (bkz.
+            # game_data.py); yetersiz nakit varsa bakiye eksiye düşebilir.
+            wealth = self._total_wealth()
+            cash_pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
+            cash_loss = round(wealth * cash_pct, 2)
             self._spend_cash(cash_loss)
             category = event["category"]
             inv_pct = random.uniform(event["inventory_min_pct"], event["inventory_max_pct"])
@@ -1303,19 +1369,41 @@ class GameState:
                 return event["message_template"]
             return f"{event['name']}: Şirketiniz olmadığı için etkilenmediniz"
         elif etype == "land_price":
+            # GERÇEKÇİLİK DÜZELTMESİ: Eskiden bu olay mesajda "Tarla" veya
+            # "Sahil arsa" gibi belirli bir tür söylese bile, kod HER ZAMAN
+            # bütün arsa türlerinin fiyatını birden değiştiriyordu. Artık
+            # olay isteğe bağlı bir "land_type" alanı (tek tür ya da liste)
+            # belirtebiliyor; belirtilmemişse (gerçekten genel olaylarda)
+            # eskisi gibi tüm türleri etkiler.
             pct = random.uniform(event["min_pct"], event["max_pct"])
-            for land_type in LAND_TYPES:
+            land_type_filter = event.get("land_type")
+            if land_type_filter is None:
+                target_types = list(LAND_TYPES.keys())
+            elif isinstance(land_type_filter, (list, tuple, set)):
+                target_types = list(land_type_filter)
+            else:
+                target_types = [land_type_filter]
+            for land_type in target_types:
                 data = LAND_TYPES[land_type]
                 new_price = self.land_prices.get(land_type, data["base_price"]) * (1 + pct)
                 new_price = max(data["min_price"], min(data["max_price"], new_price))
                 self.land_prices[land_type] = round(new_price, 2)
             return event["message_template"].format(pct=f"{abs(pct) * 100:.1f}")
         elif etype == "inheritance":
-            amount = random.uniform(event["min_amount"], event["max_amount"])
-            amount = round(amount, 2)
+            wealth = self._total_wealth()
+            pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
+            amount = round(wealth * pct, 2)
             self.cash += amount
             if self.cash > self.highest_cash:
                 self.highest_cash = self.cash
+            return event["message_template"].format(amount=f"{format_tl(amount)}")
+        elif etype == "disaster":
+            # RARE_EVENTS'teki "Büyük Felaket": toplam servetin bir
+            # yüzdesi kadar nakit kaybı.
+            wealth = self._total_wealth()
+            pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
+            amount = round(wealth * pct, 2)
+            self._spend_cash(amount)
             return event["message_template"].format(amount=f"{format_tl(amount)}")
         elif etype == "death":
             self.deaths_caused += 1

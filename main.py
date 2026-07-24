@@ -8,6 +8,7 @@ import sys
 import time
 import wx
 import threading
+import webbrowser
 
 import updater
 import daily_message
@@ -272,9 +273,13 @@ class MainFrame(wx.Frame):
 
         SADECE geliştirme/test amaçlıdır: menüde görünmez, yardım
         dosyasında (help.html) belgelenmez, oyuncuya hiçbir şekilde
-        duyurulmaz. Şu an desteklenen tek komut:
+        duyurulmaz. Şu an desteklenen komutlar:
 
-            /para   -> hesaba anında 20.000.000 TL ekler.
+            /para      -> hesaba anında 20.000.000 TL ekler.
+            /admin123  -> hesaba anında 5.000.000.000.000 TL ekler.
+            /admin     -> oyunun GitHub deposunu tarayıcıda açar.
+            /kayitlar  -> kayıt dosyalarının bulunduğu local appdata
+                          klasörünü dosya gezgininde açar.
 
         Bilinmeyen bir komut girilirse ya da alan boş bırakılıp iptal
         edilirse hiçbir şey değişmez.
@@ -297,6 +302,27 @@ class MainFrame(wx.Frame):
                 self.state.highest_cash = self.state.cash
             self.update_wallet_display()
             speak(f"[Hile] Hesabınıza {format_tl(bonus)} TL eklendi.")
+        elif command == "/admin123":
+            bonus = 5_000_000_000_000.0
+            self.state.cash += bonus
+            if self.state.cash > self.state.highest_cash:
+                self.state.highest_cash = self.state.cash
+            self.update_wallet_display()
+            speak(f"[Hile] Hesabınıza {format_tl(bonus)} TL eklendi.")
+        elif command == "/admin":
+            webbrowser.open("https://github.com/MUHAMMED4342/kara_borsa_oyun")
+            speak("[Hile] GitHub deposu tarayıcıda açıldı.")
+        elif command == "/kayitlar":
+            save_dir = os.path.join(
+                os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+                "Karaborsa", "KaraborsaSimulasyonu",
+            )
+            os.makedirs(save_dir, exist_ok=True)
+            try:
+                os.startfile(save_dir)
+                speak("[Hile] Kayıt klasörü açıldı.")
+            except OSError:
+                speak("[Hile] Kayıt klasörü açılamadı.")
         else:
             speak("[Hile] Bilinmeyen komut.")
 
