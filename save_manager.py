@@ -53,6 +53,12 @@ def save_game(username: str, game_state) -> bool:
             "prices": game_state.prices,
             "in_jail": getattr(game_state, "in_jail", False),
             "jail_days": getattr(game_state, "jail_days", 0),
+            # ÖNEMLİ: Oyun artık çoklu şirket sistemi (il + ilçe bazlı)
+            # kullanıyor; tüm şirketler bu listede saklanıyor. Aşağıdaki
+            # "company_*" tekil alanlar SADECE eski/harici araçlarla
+            # geriye dönük uyumluluk için tutuluyor ve artık gerçek veri
+            # taşımıyor - asıl kaynak her zaman "companies" listesidir.
+            "companies": getattr(game_state, "companies", []),
             "has_company": getattr(game_state, "has_company", False),
             "company_type": getattr(game_state, "company_type", ""),
             "company_name": getattr(game_state, "company_name", ""),
@@ -111,6 +117,60 @@ def load_game(username: str) -> dict:
     except Exception as e:
         print(f"[Hata] Kayıt yüklenemedi: {e}")
         return None
+
+
+def rename_save(old_username: str, new_username: str) -> tuple:
+    """Var olan bir kaydın kullanıcı adını (ve kayıt dosyasının adını)
+    değiştirir. Kayıt içindeki TÜM ilerleme (nakit, envanter, şirketler,
+    arsalar, çalışanlar, kredi, hapis durumu vb.) olduğu gibi korunur -
+    sadece "username" alanı ve dosya adı güncellenir. Bu sayede "tek
+    hesap kuralı" yüzünden bir oyuncu kullanıcı adını yanlış yazmışsa
+    ya da değiştirmek istiyorsa, mevcut kaydını silip sıfırdan
+    başlamak zorunda kalmaz.
+
+    Dönen değer (başarılı_mı, mesaj) biçimindedir. Başarılıysa mesaj
+    alanında temizlenmiş yeni kullanıcı adı, başarısızsa hata sebebi
+    döner."""
+    old_username = (old_username or "").strip()
+    if not old_username:
+        return False, "Geçersiz mevcut kullanıcı adı"
+
+    old_path = get_save_path(old_username)
+    if not os.path.exists(old_path):
+        return False, f"'{old_username}' adlı bir kayıt bulunamadı"
+
+    new_clean = clean_username((new_username or "").strip())
+    if not new_clean:
+        return False, "Kullanıcı adı boş olamaz"
+
+    if new_clean.casefold() == old_username.casefold():
+        return False, "Yeni kullanıcı adı mevcut adla aynı"
+
+    new_path = get_save_path(new_clean)
+    if os.path.exists(new_path):
+        return False, f"'{new_clean}' adında zaten bir kayıt var"
+
+    data = load_game(old_username)
+    if data is None:
+        return False, "Mevcut kayıt okunamadı"
+
+    data["username"] = new_clean
+
+    try:
+        json_string = json.dumps(data, indent=2, ensure_ascii=False)
+        encoded_data = base64.b64encode(json_string.encode('utf-8'))
+        with open(new_path, 'wb') as f:
+            f.write(encoded_data)
+    except Exception as e:
+        print(f"[Hata] Kullanıcı adı değiştirilemedi: {e}")
+        return False, f"Yeni kayıt yazılamadı: {e}"
+
+    try:
+        os.remove(old_path)
+    except OSError:
+        pass
+
+    return True, new_clean
 
 
 def list_saves() -> list:

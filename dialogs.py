@@ -14,7 +14,7 @@ from accessibility_helper import speak as _tts_speak
 from history_log import log_history
 from formatting import format_tl
 from audio_manager import AudioManager
-from save_manager import list_saves, delete_save
+from save_manager import list_saves, delete_save, rename_save
 from game_state import resource_path, open_help, open_release_notes, ID_LOAD, ID_NEW, ROULETTE_BET_LABELS
 
 # Skor tablosu için import
@@ -228,6 +228,7 @@ class MainMenu(wx.Dialog):
         menu_items = [
             "Yeni Oyun",
             "Devam Et",
+            "Kullanıcı Adı Değiştir",
             "Skor Tablosunu Görüntüle",
             "Yardım",
             "Yenilikler",
@@ -237,7 +238,7 @@ class MainMenu(wx.Dialog):
         
         # Skor gönderimi durumunu gösteren seçenek (toggle)
         status = "Etkin" if leaderboard.is_score_submission_enabled() else "Devre Dışı"
-        menu_items.insert(3, f"Skor Gönderimi: {status}")
+        menu_items.insert(4, f"Skor Gönderimi: {status}")
         
         self.menu_list = wx.ListBox(panel, style=wx.LB_SINGLE)
         self.menu_list.SetItems(menu_items)
@@ -291,28 +292,31 @@ class MainMenu(wx.Dialog):
         # Menü indeksleri:
         # 0: Yeni Oyun
         # 1: Devam Et
-        # 2: Skor Tablosunu Görüntüle
-        # 3: Skor Gönderimi Toggle
-        # 4: Yardım
-        # 5: Yenilikler
-        # 6: İletişim
-        # 7: Çıkış
+        # 2: Kullanıcı Adı Değiştir
+        # 3: Skor Tablosunu Görüntüle
+        # 4: Skor Gönderimi Toggle
+        # 5: Yardım
+        # 6: Yenilikler
+        # 7: İletişim
+        # 8: Çıkış
         
         if idx == 0:
             self.start_new_game()
         elif idx == 1:
             self.continue_game()
         elif idx == 2:
-            self.show_leaderboard()
+            self.change_username()
         elif idx == 3:
-            self.toggle_score_submission()
+            self.show_leaderboard()
         elif idx == 4:
-            open_help()
+            self.toggle_score_submission()
         elif idx == 5:
-            open_release_notes()
+            open_help()
         elif idx == 6:
-            self.open_contact_page()
+            open_release_notes()
         elif idx == 7:
+            self.open_contact_page()
+        elif idx == 8:
             self.EndModal(wx.ID_CANCEL)
 
     def open_contact_page(self):
@@ -320,6 +324,77 @@ class MainMenu(wx.Dialog):
         webbrowser.open("https://bilgisayar-xi.vercel.app/iletisim.html")
         speak("İletişim sayfası tarayıcınızda açılıyor.")
     
+    def change_username(self):
+        """Mevcut kayıtlı hesabın kullanıcı adını değiştirir. Nakit,
+        envanter, şirketler (il/ilçe dahil), arsalar, çalışanlar, kredi,
+        hapis durumu vb. HİÇBİR ilerleme kaybolmaz; sadece isim (ve
+        kayıt dosyasının adı) güncellenir. Böylece "tek hesap kuralı"
+        yüzünden bir oyuncu, adını yanlış yazmışsa ya da değiştirmek
+        istiyorsa, mevcut kaydını silip sıfırdan başlamak zorunda
+        kalmaz."""
+        saves = list_saves()
+        if not saves:
+            wx.MessageBox(
+                "Değiştirilecek bir hesabınız yok. Önce 'Yeni Oyun' ile "
+                "bir hesap oluşturun.",
+                "Kayıtlı Hesap Yok", wx.OK | wx.ICON_INFORMATION
+            )
+            speak("Değiştirilecek bir hesabınız yok")
+            return
+
+        current_username = saves[0]
+
+        dlg = wx.TextEntryDialog(
+            self,
+            f"Mevcut kullanıcı adınız: {current_username}\n\n"
+            f"Yeni kullanıcı adınızı girin:",
+            "Kullanıcı Adı Değiştir",
+            value=current_username,
+        )
+        result = dlg.ShowModal()
+        new_username = dlg.GetValue().strip()
+        dlg.Destroy()
+
+        if result != wx.ID_OK:
+            return
+        if not new_username:
+            speak("Kullanıcı adı boş olamaz")
+            return
+
+        success, info = rename_save(current_username, new_username)
+        if success:
+            wx.MessageBox(
+                f"Kullanıcı adınız '{info}' olarak değiştirildi.\n\n"
+                f"Nakit, şirketler, envanter ve diğer tüm ilerlemeniz "
+                f"korundu.",
+                "Kullanıcı Adı Değiştirildi", wx.OK | wx.ICON_INFORMATION
+            )
+            speak(f"Kullanıcı adınız {info} olarak değiştirildi. İlerlemeniz korundu.")
+
+            # Skor tablosundaki ESKİ adı da güncellemeliyiz, yoksa orada
+            # eski adınızla kalmış görünürsünüz ve biri sizi başka bir
+            # oyuncu sanabilir. Bu ağ üzerinden (Gist) yapıldığı için
+            # arka planda çalıştırıyoruz ki pencere kilitlenmesin;
+            # başarısız olsa bile (internet yok, isim çakışması vb.)
+            # yerel kullanıcı adı değişikliğini etkilemez, sadece geçmişe
+            # (F3) not düşülür.
+            def rename_leaderboard_async():
+                try:
+                    lb_success, lb_msg = leaderboard.rename_leaderboard_entry(
+                        current_username, info
+                    )
+                    log_history(
+                        f"Skor tablosu güncellendi: {lb_msg}" if lb_success
+                        else f"[Bilgi] Skor tablosundaki adınız güncellenemedi: {lb_msg}"
+                    )
+                except Exception as e:
+                    log_history(f"[Hata] Skor tablosu ismi güncellenirken hata: {e}")
+
+            threading.Thread(target=rename_leaderboard_async, daemon=True).start()
+        else:
+            wx.MessageBox(info, "Kullanıcı Adı Değiştirilemedi", wx.OK | wx.ICON_ERROR)
+            speak(f"Kullanıcı adı değiştirilemedi: {info}")
+
     def start_new_game(self):
         saves = list_saves()
         if saves:
@@ -770,16 +845,19 @@ class CompanyDialog(wx.Dialog):
         guide = wx.StaticText(
             panel,
             label=(
-                "Rehber: Düşük sermayeyle başlamak için Tekstil Atölyesi veya "
-                "Restoran uygundur. Daha yüksek günlük kâr isterseniz Kripto "
+                "Rehber: Düşük sermayeyle başlamak için Oto Yıkama, İnternet "
+                "Kafe, Tekstil Atölyesi veya Restoran uygundur. Daha yüksek "
+                "günlük kâr isterseniz Otel, İnşaat Firması, Kripto "
                 "Madenciliği veya Gece Kulübü daha uygundur, ancak günlük "
-                "giderleri de yüksektir. Oto Galeri dengeli bir orta "
-                "seçenektir. Her şirket her gün otomatik olarak kendi kârını "
-                "üretir ve kendi kredi notunu yükseltir. Her şehirde en fazla "
-                "bir şirketiniz olabilir, ama farklı şehirlerde istediğiniz "
-                "kadar şirket açabilirsiniz. Listeden bir tip seçtiğinizde "
-                "altta o şirketin maliyet, gider ve kâr aralığı mevcut "
-                "bakiyenize göre gösterilir."
+                "giderleri de yüksektir. Oto Galeri, Emlak Ofisi, Nakliyat "
+                "Şirketi ve Market Zinciri dengeli orta seçeneklerdir. Her "
+                "şirket her gün otomatik olarak kendi kârını üretir ve kendi "
+                "kredi notunu yükseltir. Her il için en fazla bir şirketiniz "
+                "olabilir; ama bir ilde şirketiniz varsa, o ilin ilçelerinde "
+                "de (her ilçe için ayrı ayrı) ek şirketler açabilirsiniz. "
+                "Farklı illerde de istediğiniz kadar şirket açabilirsiniz. "
+                "Listeden bir tip seçtiğinizde altta o şirketin maliyet, "
+                "gider ve kâr aralığı mevcut bakiyenize göre gösterilir."
             ),
         )
         guide.Wrap(560)
@@ -808,12 +886,12 @@ class CompanyDialog(wx.Dialog):
         sizer.Add(name_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
         city_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        city_sizer.Add(wx.StaticText(panel, label="Şehir:"), 0, wx.ALL | wx.CENTER, 5)
+        city_sizer.Add(wx.StaticText(panel, label="Şehir/İlçe:"), 0, wx.ALL | wx.CENTER, 5)
         self.city_combo = wx.ComboBox(panel, style=wx.CB_READONLY)
         city_sizer.Add(self.city_combo, 1, wx.ALL | wx.CENTER, 5)
         sizer.Add(city_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
-        self.setup_btn = wx.Button(panel, label="Bu Şehirde Şirket Kur")
+        self.setup_btn = wx.Button(panel, label="Bu Konumda Şirket Kur")
         sizer.Add(self.setup_btn, 0, wx.ALL | wx.CENTER, 5)
 
         self.done_btn = wx.Button(panel, label="Tamam")

@@ -401,6 +401,85 @@ def _entry_matches(score_data: List[Dict], username: str, cash: float) -> bool:
 _MAX_RETRIES = 4
 
 
+def rename_leaderboard_entry(old_username: str, new_username: str) -> Tuple[bool, str]:
+    """Skor tablosundaki bir kayda ait kullanıcı adını değiştirir. Oyuncu
+    ana menüden kullanıcı adını değiştirdiğinde çağrılır; böylece skor
+    tablosunda ESKİ ad kalıp oyuncu başka biriyle karıştırılmaz. Nakit,
+    gün, clean_money gibi diğer TÜM bilgiler korunur, sadece "username"
+    alanı güncellenir.
+
+    ÖNEMLİ: Bu, ayrı ve isteğe bağlı bir adımdır. Başarısız olması
+    (ör. internet yok, token yok, ya da yeni isim skor tablosunda zaten
+    BAŞKA bir oyuncu tarafından kullanılıyorsa) yerel kullanıcı adı
+    değişikliğini GERİ ALMAMALI/engellememelidir - çağıran kod bu ikisini
+    ayrı ele almalıdır (bkz. dialogs.py: change_username).
+
+    Dönüş: (başarılı_mı, mesaj)
+    """
+    if not old_username or not new_username:
+        return False, "Geçersiz kullanıcı adı."
+
+    if old_username == new_username:
+        return True, "Değişiklik yok."
+
+    if not skor_gonderimi_aktif:
+        return False, "Skor gönderimi devre dışı, skor tablosu güncellenmedi."
+
+    with _score_lock:
+        last_error = "Skor tablosu güncellenemedi. Bağlantı hatası."
+
+        for attempt in range(1, _MAX_RETRIES + 1):
+            data = get_gist_content()
+            if data is None:
+                return False, "Skor tablosu verileri alınamadı."
+
+            score_data = data.get("score_data", [])
+
+            old_entry = None
+            for entry in score_data:
+                if entry.get("username") == old_username:
+                    old_entry = entry
+                    break
+
+            if old_entry is None:
+                # Skor tablosunda hiç kaydı yokmuş (ör. hiç skor
+                # göndermemiş); değiştirilecek bir şey yok, bu bir hata
+                # değil.
+                return True, "Skor tablosunda bu isimde bir kayıt bulunamadı."
+
+            if any(e is not old_entry and e.get("username") == new_username
+                   for e in score_data):
+                return False, (
+                    f"'{new_username}' skor tablosunda zaten BAŞKA bir "
+                    f"oyuncu tarafından kullanılıyor, skor tablosundaki "
+                    f"adınız değiştirilemedi."
+                )
+
+            old_entry["username"] = new_username
+            old_entry["last_updated"] = __import__("datetime").datetime.now().isoformat()
+            data["score_data"] = score_data
+
+            if not update_gist_content(data):
+                last_error = "Skor tablosu güncellenemedi. Bağlantı hatası."
+                time.sleep(0.5 + random.random())
+                continue
+
+            verify_data = get_gist_content()
+            if verify_data and any(
+                e.get("username") == new_username
+                for e in verify_data.get("score_data", [])
+            ):
+                return True, f"Skor tablosundaki adınız '{new_username}' olarak güncellendi."
+
+            _log("[Bilgi] İsim değişikliği doğrulanamadı (muhtemelen başka "
+                 "bir gönderimle çakıştı), tekrar deneniyor... "
+                 f"({attempt}/{_MAX_RETRIES})")
+            last_error = "Güncellendi ama başka bir gönderimle çakıştığı için doğrulanamadı."
+            time.sleep(0.5 + random.random())
+
+        return False, last_error
+
+
 def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> Tuple[bool, str]:
     """
     Oyun sonunda oyuncunun NAKDİNİ GitHub Gist'teki skor tablosuna

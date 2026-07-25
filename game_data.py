@@ -123,6 +123,62 @@ COMPANY_TYPES = {
         "daily_profit_max": 1400,
         "credit_multiplier": 2.0,
     },
+    "Oto Yıkama": {
+        "setup_cost": 5000,
+        "description": "Düşük maliyetli, hızlı kurulan küçük bir işletme",
+        "daily_upkeep": 60,
+        "daily_profit_min": 80,
+        "daily_profit_max": 220,
+        "credit_multiplier": 0.7,
+    },
+    "İnternet Kafe": {
+        "setup_cost": 6000,
+        "description": "Gençlerin uğrak noktası, düzenli ama mütevazı ciro",
+        "daily_upkeep": 70,
+        "daily_profit_min": 90,
+        "daily_profit_max": 250,
+        "credit_multiplier": 0.75,
+    },
+    "Emlak Ofisi": {
+        "setup_cost": 18000,
+        "description": "Konut ve arsa alım-satımına aracılık eden ofis",
+        "daily_upkeep": 180,
+        "daily_profit_min": 260,
+        "daily_profit_max": 650,
+        "credit_multiplier": 1.3,
+    },
+    "Nakliyat Şirketi": {
+        "setup_cost": 20000,
+        "description": "Şehirler arası kamyon filosuyla yük taşımacılığı",
+        "daily_upkeep": 220,
+        "daily_profit_min": 300,
+        "daily_profit_max": 750,
+        "credit_multiplier": 1.4,
+    },
+    "Market Zinciri": {
+        "setup_cost": 22000,
+        "description": "Yoğun nakit akışı olan bir süpermarket zinciri",
+        "daily_upkeep": 240,
+        "daily_profit_min": 330,
+        "daily_profit_max": 800,
+        "credit_multiplier": 1.3,
+    },
+    "İnşaat Firması": {
+        "setup_cost": 35000,
+        "description": "Konut projeleri yürüten büyük ölçekli bir müteahhitlik firması",
+        "daily_upkeep": 450,
+        "daily_profit_min": 550,
+        "daily_profit_max": 1300,
+        "credit_multiplier": 1.8,
+    },
+    "Otel": {
+        "setup_cost": 40000,
+        "description": "Turistik bölgede lüks, yüksek cirolu bir otel işletmesi",
+        "daily_upkeep": 550,
+        "daily_profit_min": 700,
+        "daily_profit_max": 1600,
+        "credit_multiplier": 2.2,
+    },
 }
 
 # NOT (daily_profit_min/max): Her gün şirketiniz bu aralıkta rastgele bir
@@ -286,6 +342,64 @@ def load_names_from_file(path: str) -> list:
         return names
     except OSError:
         return []
+
+
+def load_districts_from_file(path: str) -> dict:
+    """ilceler.txt gibi bir dosyadan il -> ilçe listesi sözlüğü okur.
+
+    Beklenen format, her satırda (tırnaklı ya da tırnaksız):
+        "(il_adı) İlçe1, İlçe2, İlçe3, ..."
+
+    Örnek:
+        "(yozgat) Merkez, Akdağmadeni, Boğazlıyan, ..."
+
+    Dönen sözlüğün anahtarları il adının sadeleştirilmiş (casefold)
+    halidir; böylece iller.txt'teki farklı büyük/küçük harf yazımıyla
+    güvenle eşleştirilebilir. Değerler ise o ile ait, sırası korunmuş
+    ve yinelenenlerden arındırılmış ilçe adları listesidir.
+
+    Dosya yoksa/bozuksa/boşsa ya da bir satır beklenen formatta değilse
+    o satır sessizce atlanır; hiçbir durumda oyun çökmez, ilgili il
+    için ilçe listesi olmadan devam edilir (boş sözlük dönebilir)."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        return {}
+
+    districts_by_city = {}
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+        # Çevreleyen tırnakları (varsa) temizle.
+        if len(line) >= 2 and line[0] == '"' and line[-1] == '"':
+            line = line[1:-1].strip()
+        if not line.startswith("("):
+            continue
+        close_idx = line.find(")")
+        if close_idx == -1:
+            continue
+        city_name = line[1:close_idx].strip()
+        rest = line[close_idx + 1:].strip()
+        if not city_name or not rest:
+            continue
+
+        districts = []
+        seen = set()
+        for part in rest.split(","):
+            name = part.strip().rstrip(".").strip()
+            if not name:
+                continue
+            key = name.casefold()
+            if key not in seen:
+                seen.add(key)
+                districts.append(name)
+
+        if districts:
+            districts_by_city[city_name.casefold()] = districts
+
+    return districts_by_city
 
 
 def load_cities_from_file(path: str) -> list:

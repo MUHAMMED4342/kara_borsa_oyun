@@ -24,12 +24,12 @@ if not os.path.exists(_token_file):
 if not os.path.exists('release_notes.html'):
     print("UYARI: release_notes.html bulunamadi, paketlenmeyecek.")
 
-# insanlar.txt / iller.txt kontrolü (Adam Yönetimi özelliği için gerekli)
-for _pool_file in ('insanlar.txt', 'iller.txt'):
+# insanlar.txt / iller.txt / ilceler.txt kontrolü (Adam Yönetimi özelliği için gerekli)
+for _pool_file in ('insanlar.txt', 'iller.txt', 'ilceler.txt'):
     if not os.path.exists(_pool_file):
         raise SystemExit(
             f"HATA: {_pool_file} bulunamadi. Bu dosya olmadan exe "
-            "paketlense bile isim/sehir havuzu bos olacaktir.\n"
+            "paketlense bile isim/sehir/ilce havuzu bos olacaktir.\n"
             f"{_pool_file} dosyasini main.py ile ayni klasore koyup "
             "tekrar deneyin."
         )
@@ -44,6 +44,7 @@ a = Analysis(
         ('sounds', 'sounds'),
         ('insanlar.txt', '.'),
         ('iller.txt', '.'),
+        ('ilceler.txt', '.'),  # Buraya eklendi
         (_updater_exe, '.'),
         (_token_file, '.'),
     ],

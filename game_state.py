@@ -14,7 +14,7 @@ from game_data import (
     COMPANY_TYPES, CREDIT_TIERS, calculate_police_risk, INFORMANT_CONFIG,
     LAND_TYPES, EMPLOYEE_HIRE_FEE,
     EMPLOYEE_BASE_SALARY, EMPLOYEE_DAILY_MIN, EMPLOYEE_DAILY_MAX,
-    load_names_from_file, load_cities_from_file,
+    load_names_from_file, load_cities_from_file, load_districts_from_file,
 )
 from accessibility_helper import speak as _tts_speak
 from history_log import log_history
@@ -45,12 +45,58 @@ def _load_people_pool() -> list:
 
 
 def _load_city_list() -> list:
-    """Düz şehir listesini döner (bölge kavramı YOK)."""
+    """Düz şehir (il) listesini döner (bölge kavramı YOK)."""
     return load_cities_from_file(resource_path("iller.txt"))
+
+
+def _load_district_pool() -> dict:
+    """ilceler.txt TEK KAYNAKTIR: il -> ilçe listesi sözlüğünü döner.
+    ŞİRKET SİSTEMİ bu havuzu kullanarak, bir ilde zaten şirketiniz varsa
+    o ilin ilçelerinde de ayrıca şirket açabilmenizi sağlar. Dosya
+    yoksa/bozuksa/boşsa boş sözlük döner; bu durumda ilçe bazlı şirket
+    açma imkanı sunulmaz ama oyun çökmez, sadece il bazlı eski davranış
+    devam eder."""
+    return load_districts_from_file(resource_path("ilceler.txt"))
 
 
 ACTIVE_PEOPLE_POOL = _load_people_pool()
 ACTIVE_CITIES = _load_city_list()
+ACTIVE_DISTRICTS_BY_CITY = _load_district_pool()
+
+
+def resolve_company_location(city: str):
+    """Verilen 'city' değerinin geçerli bir şirket konumu olup olmadığını
+    çözer. İki biçimi kabul eder:
+      - Düz bir il adı (ACTIVE_CITIES içinde birebir eşleşen), örn. "Yozgat"
+      - "İlçe (İl)" biçiminde bir ilçe etiketi, örn. "Boğazlıyan (Yozgat)"
+        (get_available_company_cities() tarafından üretilen biçimdir)
+
+    Dönen değer (is_valid, province, district) üçlüsüdür. Geçersiz bir
+    değer verilirse (False, None, None) döner. Province-seviyesi bir
+    konum içinse district None olur."""
+    if not city:
+        return False, None, None
+
+    for c in ACTIVE_CITIES:
+        if c == city:
+            return True, c, None
+
+    if city.endswith(")") and " (" in city:
+        district_part, province_part = city.rsplit(" (", 1)
+        province_name = province_part[:-1].strip()
+        district_name = district_part.strip()
+        matching_province = None
+        for c in ACTIVE_CITIES:
+            if c.casefold() == province_name.casefold():
+                matching_province = c
+                break
+        if matching_province:
+            districts = ACTIVE_DISTRICTS_BY_CITY.get(matching_province.casefold(), [])
+            for d in districts:
+                if d.casefold() == district_name.casefold():
+                    return True, matching_province, d
+
+    return False, None, None
 
 
 def get_music_tracks() -> list:
@@ -143,6 +189,18 @@ class GameState:
                         "monthly_revenue": load_data.get("company_monthly_revenue", 0.0),
                         "upkeep_paid": load_data.get("company_upkeep_paid", 0.0),
                     })
+
+            # Eski kayıtlarda "province"/"district" alanları yoktur (ilçe
+            # bazlı şirket sistemi sonradan eklendi). Var olan "city"
+            # değerinden bunları geriye dönük olarak türetiyoruz; çözülemezse
+            # (ör. artık listede olmayan eski bir şehir) province olarak
+            # doğrudan city'yi, district'i None kabul ediyoruz - böylece
+            # eski kayıtlar bozulmadan çalışmaya devam eder.
+            for c in self.companies:
+                if "province" not in c or "district" not in c:
+                    valid, province, district = resolve_company_location(c.get("city", ""))
+                    c["province"] = province if valid else c.get("city", "")
+                    c["district"] = district if valid else None
 
             self.loan_amount = load_data.get("loan_amount", 0.0)
             self.loan_interest_rate = load_data.get("loan_interest_rate", 0.0)
@@ -250,14 +308,42 @@ class GameState:
         return None
 
     def get_company_cities(self) -> set:
+        """Aktif şirketlerinizin bulunduğu TÜM konumların (il ve ilçe
+        etiketleri karışık) kümesi."""
         return {c["city"] for c in self.companies}
 
+    def get_company_provinces_with_active_company(self) -> set:
+        """İl SEVİYESİNDE (ilçe değil) aktif şirketiniz olan illerin
+        casefold edilmiş adlarının kümesi. Bir ilçede şirket
+        açabilmeniz için önce o ilin kendisinde bir şirketiniz olması
+        gerekir - "Yozgat iline şirket açtıysak ilçesine de açabilelim"
+        mantığı burada uygulanır."""
+        return {
+            c.get("province", c["city"]).casefold()
+            for c in self.companies
+            if not c.get("district")
+        }
+
     def get_available_company_cities(self) -> list:
-        """Henüz şirket açılmamış şehirlerin listesi (her şehirde en fazla
-        bir şirketiniz olabilir, farklı şehirlerde birden fazla şirket
-        açabilirsiniz)."""
+        """Şirket açılabilecek konumların listesi:
+          - Henüz il seviyesinde şirket açılmamış TÜM iller, ve
+          - Zaten il seviyesinde bir şirketiniz bulunan illerin, henüz
+            şirket açılmamış ilçeleri ("İlçe (İl)" biçiminde etiketlenir).
+        Her il için en fazla bir il-seviyesi, her ilçe için en fazla bir
+        ilçe-seviyesi şirket açılabilir."""
         occupied = self.get_company_cities()
-        return [city for city in ACTIVE_CITIES if city not in occupied]
+        unlocked_provinces = self.get_company_provinces_with_active_company()
+
+        locations = []
+        for city in ACTIVE_CITIES:
+            if city not in occupied:
+                locations.append(city)
+            if city.casefold() in unlocked_provinces:
+                for district in ACTIVE_DISTRICTS_BY_CITY.get(city.casefold(), []):
+                    label = f"{district} ({city})"
+                    if label not in occupied:
+                        locations.append(label)
+        return locations
 
     def _next_company_id(self) -> int:
         used = [c.get("id", 0) for c in self.companies]
@@ -859,16 +945,31 @@ class GameState:
 
     def setup_company(self, company_type: str, company_name: str, city: str = "") -> tuple:
         """Yeni bir şirket kurar ve listeye ekler. Aynı anda farklı
-        şehirlerde birden fazla şirketiniz olabilir; her şehirde en fazla
-        bir şirket açılabilir. Adamlar sisteminden TAMAMEN bağımsızdır."""
+        konumlarda birden fazla şirketiniz olabilir; her il için en
+        fazla bir il-seviyesi, her ilçe için en fazla bir ilçe-seviyesi
+        şirket açılabilir. Bir ilçede şirket açabilmek için önce o ilin
+        kendisinde (il seviyesinde) bir şirketiniz olması gerekir.
+        Adamlar sisteminden TAMAMEN bağımsızdır.
+
+        'city' parametresi ya düz bir il adı (ör. "Yozgat") ya da
+        get_available_company_cities() tarafından üretilen "İlçe (İl)"
+        biçiminde bir ilçe etiketi (ör. "Boğazlıyan (Yozgat)") olabilir."""
         if company_type not in COMPANY_TYPES:
             return False, "Geçersiz şirket tipi"
 
-        if not city or city not in ACTIVE_CITIES:
+        valid, province, district = resolve_company_location(city)
+        if not valid:
             return False, "Geçersiz şehir"
 
+        if district and province.casefold() not in self.get_company_provinces_with_active_company():
+            return False, (
+                f"{district} ilçesinde şirket açabilmek için önce "
+                f"{province} ilinde bir şirketiniz olmalı"
+            )
+
         if city in self.get_company_cities():
-            return False, f"{city} ilinde zaten bir şirketiniz var"
+            location_word = "ilçesinde" if district else "ilinde"
+            return False, f"{city} {location_word} zaten bir şirketiniz var"
 
         company_data = COMPANY_TYPES[company_type]
         cost = company_data["setup_cost"]
@@ -882,6 +983,8 @@ class GameState:
             "type": company_type,
             "name": company_name,
             "city": city,
+            "province": province,
+            "district": district,
             "credit_score": 50,
             "days_active": 0,
             "total_profit": 0.0,
