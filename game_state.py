@@ -15,6 +15,7 @@ from game_data import (
     LAND_TYPES, EMPLOYEE_HIRE_FEE,
     EMPLOYEE_BASE_SALARY, EMPLOYEE_DAILY_MIN, EMPLOYEE_DAILY_MAX,
     load_names_from_file, load_cities_from_file, load_districts_from_file,
+    tr_casefold,
 )
 from accessibility_helper import speak as _tts_speak
 from history_log import log_history
@@ -87,13 +88,13 @@ def resolve_company_location(city: str):
         district_name = district_part.strip()
         matching_province = None
         for c in ACTIVE_CITIES:
-            if c.casefold() == province_name.casefold():
+            if tr_casefold(c) == tr_casefold(province_name):
                 matching_province = c
                 break
         if matching_province:
-            districts = ACTIVE_DISTRICTS_BY_CITY.get(matching_province.casefold(), [])
+            districts = ACTIVE_DISTRICTS_BY_CITY.get(tr_casefold(matching_province), [])
             for d in districts:
-                if d.casefold() == district_name.casefold():
+                if tr_casefold(d) == tr_casefold(district_name):
                     return True, matching_province, d
 
     return False, None, None
@@ -319,7 +320,7 @@ class GameState:
         gerekir - "Yozgat iline şirket açtıysak ilçesine de açabilelim"
         mantığı burada uygulanır."""
         return {
-            c.get("province", c["city"]).casefold()
+            tr_casefold(c.get("province", c["city"]))
             for c in self.companies
             if not c.get("district")
         }
@@ -338,8 +339,8 @@ class GameState:
         for city in ACTIVE_CITIES:
             if city not in occupied:
                 locations.append(city)
-            if city.casefold() in unlocked_provinces:
-                for district in ACTIVE_DISTRICTS_BY_CITY.get(city.casefold(), []):
+            if tr_casefold(city) in unlocked_provinces:
+                for district in ACTIVE_DISTRICTS_BY_CITY.get(tr_casefold(city), []):
                     label = f"{district} ({city})"
                     if label not in occupied:
                         locations.append(label)
@@ -961,7 +962,7 @@ class GameState:
         if not valid:
             return False, "Geçersiz şehir"
 
-        if district and province.casefold() not in self.get_company_provinces_with_active_company():
+        if district and tr_casefold(province) not in self.get_company_provinces_with_active_company():
             return False, (
                 f"{district} ilçesinde şirket açabilmek için önce "
                 f"{province} ilinde bir şirketiniz olmalı"

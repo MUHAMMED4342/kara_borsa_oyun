@@ -10,11 +10,63 @@ import json
 import base64
 import appdirs
 import re
+import hmac
+import hashlib
 
 # AppData klasörü
 APP_NAME = "KaraborsaSimulasyonu"
 APP_AUTHOR = "Karaborsa"
 SAVE_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
+
+# Kayıt dosyalarını imzalamak için kullanılan gizli anahtar.
+# NOT: Bu anahtar istemci koduyla birlikte dağıtıldığı için %100 gizli
+# tutulamaz; kararlı bir kullanıcı anahtarı koddan çıkarıp kayıtları
+# yeniden imzalayabilir. Bu mekanizma "dosyayı aç, düzenle, kaydet"
+# seviyesindeki kolay hile denemelerini engellemek içindir, tam bir
+# güvenlik garantisi vermez. Gerçek anti-cheat için sunucu taraflı
+# doğrulama gerekir.
+_SAVE_SECRET_KEY = b"KaraborsaSimulasyonu::save-integrity::v1::9f3a7c1e"
+
+
+def _sign(data_bytes: bytes) -> str:
+    return hmac.new(_SAVE_SECRET_KEY, data_bytes, hashlib.sha256).hexdigest()
+
+
+def _write_signed_save(path: str, save_data: dict) -> None:
+    """Kayıt verisini JSON'a çevirir, imzalar ve dosyaya base64 olarak yazar."""
+    json_string = json.dumps(save_data, indent=2, ensure_ascii=False)
+    data_bytes = json_string.encode('utf-8')
+    signature = _sign(data_bytes)
+
+    package = {
+        "sig": signature,
+        "payload": base64.b64encode(data_bytes).decode('ascii'),
+    }
+    package_bytes = json.dumps(package).encode('utf-8')
+    encoded_data = base64.b64encode(package_bytes)
+
+    with open(path, 'wb') as f:
+        f.write(encoded_data)
+
+
+def _read_signed_save(path: str) -> dict:
+    """Dosyayı okur, imzayı doğrular ve geçerliyse kayıt verisini (dict) döner.
+    İmza uyuşmuyorsa veya format bozuksa None döner."""
+    with open(path, 'rb') as f:
+        encoded_data = f.read()
+
+    package_bytes = base64.b64decode(encoded_data)
+    package = json.loads(package_bytes.decode('utf-8'))
+
+    signature = package["sig"]
+    data_bytes = base64.b64decode(package["payload"])
+    expected_signature = _sign(data_bytes)
+
+    if not hmac.compare_digest(signature, expected_signature):
+        print("[Hata] Kayıt dosyası bozulmuş veya değiştirilmiş görünüyor (imza uyuşmuyor).")
+        return None
+
+    return json.loads(data_bytes.decode('utf-8'))
 
 
 def clean_username(username: str) -> str:
@@ -93,11 +145,7 @@ def save_game(username: str, game_state) -> bool:
             "employees": getattr(game_state, "employees", []),
         }
         
-        json_string = json.dumps(save_data, indent=2, ensure_ascii=False)
-        encoded_data = base64.b64encode(json_string.encode('utf-8'))
-        
-        with open(get_save_path(username), 'wb') as f:
-            f.write(encoded_data)
+        _write_signed_save(get_save_path(username), save_data)
         return True
     except Exception as e:
         print(f"[Hata] Kayıt yapılamadı: {e}")
@@ -109,6 +157,15 @@ def load_game(username: str) -> dict:
     if not os.path.exists(save_path):
         return None
     
+    try:
+        return _read_signed_save(save_path)
+    except Exception:
+        pass
+
+    # Geriye dönük uyumluluk: imza sistemi eklenmeden önce kaydedilmiş
+    # eski (düz base64+JSON) dosyaları da okuyabiliyoruz. Böyle bir kayıt
+    # bulunursa bir sonraki save_game() çağrısında otomatik olarak
+    # imzalı yeni formata dönüştürülür.
     try:
         with open(save_path, 'rb') as f:
             encoded_data = f.read()
@@ -157,10 +214,7 @@ def rename_save(old_username: str, new_username: str) -> tuple:
     data["username"] = new_clean
 
     try:
-        json_string = json.dumps(data, indent=2, ensure_ascii=False)
-        encoded_data = base64.b64encode(json_string.encode('utf-8'))
-        with open(new_path, 'wb') as f:
-            f.write(encoded_data)
+        _write_signed_save(new_path, data)
     except Exception as e:
         print(f"[Hata] Kullanıcı adı değiştirilemedi: {e}")
         return False, f"Yeni kayıt yazılamadı: {e}"

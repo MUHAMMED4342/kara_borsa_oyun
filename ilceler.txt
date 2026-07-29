@@ -29,7 +29,7 @@
 "(gümüşhane) Merkez, Kelkit, Köse, Kürtün, Şiran, Torul"
 "(hakkari) Merkez, Çukurca, Şemdinli, Yüksekova"
 "(hatay) Antakya, Defne, Arsuz, Altınözü, Belen, Dörtyol, Erzin, Hassa, İskenderun, Kırıkhan, Kumlu, Payas, Reyhanlı, Samandağ, Yayladağı"
-"(isparta) Merkez, Aksu, Atabey, Eğirdir, Gelendost, Gönen, Keçiborlu, Senirkent, Sütçüler, Şarkikaraağaç, Uluborlu, Yalvaç, Yenişarbademli"
+"(ısparta) Merkez, Aksu, Atabey, Eğirdir, Gelendost, Gönen, Keçiborlu, Senirkent, Sütçüler, Şarkikaraağaç, Uluborlu, Yalvaç, Yenişarbademli"
 "(mersin) Akdeniz, Mezitli, Toroslar, Yenişehir, Anamur, Aydıncık, Bozyazı, Çamlıyayla, Erdemli, Gülnar, Mut, Silifke, Tarsus"
 "(istanbul) Adalar, Arnavutköy, Ataşehir, Avcılar, Bağcılar, Bahçelievler, Bakırköy, Başakşehir, Bayrampaşa, Beşiktaş, Beykoz, Beylikdüzü, Beyoğlu, Büyükçekmece, Çatalca, Çekmeköy, Esenler, Esenyurt, Eyüpsultan, Fatih, Gaziosmanpaşa, Güngören, Kadıköy, Kağıthane, Kartal, Küçükçekmece, Maltepe, Pendik, Sancaktepe, Sarıyer, Silivri, Sultanbeyli, Sultangazi, Şile, Şişli, Tuzla, Ümraniye, Üsküdar, Zeytinburnu"
 "(izmir) Aliağa, Balçova, Bayındır, Bayraklı, Bergama, Beydağ, Bornova, Buca, Çeşme, Çiğli, Dikili, Foça, Gaziemir, Güzelbahçe, Karabağlar, Karaburun, Karşıyaka, Kemalpaşa, Kınık, Kiraz, Konak, Menderes, Menemen, Narlıdere, Ödemiş, Seferihisar, Selçuk, Tire, Torbalı, Urla"

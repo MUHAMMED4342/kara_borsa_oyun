@@ -321,6 +321,41 @@ EMPLOYEE_DAILY_MIN = 150
 EMPLOYEE_DAILY_MAX = 600
 
 
+# ---------------------------------------------------------------------------
+# TÜRKÇE CASEFOLD DÜZELTMESİ
+# ---------------------------------------------------------------------------
+# Python'un standart str.casefold()/str.lower() metodları Türkçe'ye özgü
+# İ/I - i/ı çiftini doğru işlemez:
+#   "İstanbul".casefold() -> "i̇stanbul"  (noktalı i + görünmez birleşim işareti)
+#   "istanbul".casefold() -> "istanbul"  (düz i)
+#   -> bu ikisi EŞİT DEĞİLDİR, oysa aynı ilin farklı yazımlarıdır.
+#   "Iğdır".casefold()    -> "iğdır"      (büyük I'yı yanlışlıkla noktalı i yapar)
+#   "ığdır".casefold()    -> "ığdır"      (noktasız ı)
+#   -> bunlar da eşit değildir.
+# Bu yüzden il/ilçe adı karşılaştırmalarında (ve dosyalardan okunan
+# isimlerin normalize edilmesinde) casefold() yerine bu fonksiyon
+# kullanılmalıdır. Önce Türkçe'ye özgü harfler elle normalize edilir,
+# sonra geri kalanı için standart casefold uygulanır.
+_TR_CASEFOLD_MAP = str.maketrans({
+    "İ": "i",
+    "I": "ı",
+    "Ç": "ç",
+    "Ğ": "ğ",
+    "Ö": "ö",
+    "Ş": "ş",
+    "Ü": "ü",
+})
+
+
+def tr_casefold(text: str) -> str:
+    """Türkçe İ/I harflerini doğru şekilde küçük harfe çeviren casefold.
+    İl/ilçe adı karşılaştırmalarında str.casefold() yerine HER ZAMAN bu
+    fonksiyon kullanılmalıdır (bkz. yukarıdaki açıklama)."""
+    if text is None:
+        return ""
+    return text.translate(_TR_CASEFOLD_MAP).casefold()
+
+
 def load_names_from_file(path: str) -> list:
     """insanlar.txt gibi bir dosyadan, 'insanlar:' başlığı altındaki
     satırları isim listesi olarak okur. Dosya yoksa/bozuksa/boşsa boş
@@ -391,13 +426,13 @@ def load_districts_from_file(path: str) -> dict:
             name = part.strip().rstrip(".").strip()
             if not name:
                 continue
-            key = name.casefold()
+            key = tr_casefold(name)
             if key not in seen:
                 seen.add(key)
                 districts.append(name)
 
         if districts:
-            districts_by_city[city_name.casefold()] = districts
+            districts_by_city[tr_casefold(city_name)] = districts
 
     return districts_by_city
 
@@ -434,7 +469,7 @@ def load_cities_from_file(path: str) -> list:
         seen = set()
         unique_cities = []
         for c in cities:
-            key = c.casefold()
+            key = tr_casefold(c)
             if key not in seen:
                 seen.add(key)
                 unique_cities.append(c)

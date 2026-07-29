@@ -1,13 +1,10 @@
-# dialogs.py - Tüm wx.Dialog pencereleri (Arsa, Ana Menü, Kayıt Yükle,
-# Şirket, Muhbir, Kredi, Bankacılık, Hapis, Skor Tablosu)
-# -*- coding: utf-8 -*-
 
 import os
 import random
 import time
 import wx
 import threading
-import webbrowser  # Tarayıcıda iletişim sayfasını açmak için eklendi
+import webbrowser
 
 from game_data import COMPANY_TYPES, LAND_TYPES, EMPLOYEE_HIRE_FEE, EMPLOYEE_BASE_SALARY, INFORMANT_CONFIG
 from accessibility_helper import speak as _tts_speak
@@ -17,10 +14,6 @@ from audio_manager import AudioManager
 from save_manager import list_saves, delete_save, rename_save
 from game_state import resource_path, open_help, open_release_notes, ID_LOAD, ID_NEW, ROULETTE_BET_LABELS
 
-# Skor tablosu için import
-# ÖNEMLİ: skor_gonderimi_aktif'i doğrudan "from leaderboard import ..." ile
-# almıyoruz; bu modülün import edilmesiyle birlikte leaderboard.py'deki
-# gerçek durumu okuyup/yazabilmek için modülün kendisini import ediyoruz.
 import leaderboard
 from leaderboard import get_leaderboard, get_gist_content
 
@@ -31,18 +24,6 @@ def speak(text: str):
     log_history(text)
 
 
-# ---------------------------------------------------------------------------
-# RULET ÇARKI SESİ - SÜRE TESPİTİ
-# ---------------------------------------------------------------------------
-# çark.mp3 çalmaya başladıktan sonra, ses bitene kadar bekleyip SONRA
-# sonucu ekran okuyucuya bildirmemiz gerekiyor. Bunun için mp3 dosyasının
-# süresini mümkünse `mutagen` kütüphanesiyle (pip install mutagen) otomatik
-# okuyoruz. mutagen kurulu değilse ya da süre okunamazsa aşağıdaki sabit
-# (SPIN_SOUND_FALLBACK_SECONDS) kullanılır.
-#
-# ÖNEMLİ: mutagen kurulu değilse, bu sabiti kendi cark.mp3 dosyanızın
-# GERÇEK süresine (saniye) göre elle güncelleyin; aksi halde anons ses
-# bitmeden ya da bittikten epey sonra yapılır.
 SPIN_SOUND_FALLBACK_SECONDS = 4.0
 
 
@@ -56,6 +37,71 @@ def _get_spin_sound_duration(path: str) -> float:
         except Exception:
             pass
     return SPIN_SOUND_FALLBACK_SECONDS
+
+
+class ProductActionDialog(wx.Dialog):
+    """Ürün listesinde Enter'a basıldığında açılan hızlı işlem penceresi.
+    Sadece 'Satın Al' ve 'Sat' düğmelerini gösterir; hangisine basılırsa
+    (veya hangisi Enter ile seçilirse) sonucu self.result üzerinden
+    ('buy' / 'sell' / None) çağırana bildirir."""
+
+    def __init__(self, parent, product_name, price, qty):
+        super().__init__(parent, title="Ürün İşlemi",
+                          style=wx.DEFAULT_DIALOG_STYLE)
+        self.result = None
+
+        self._build_ui(product_name, price, qty)
+        self._bind_events()
+        self.Fit()
+        self.CenterOnParent()
+
+    def _build_ui(self, product_name, price, qty):
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        info = wx.StaticText(
+            panel,
+            label=f"{product_name} - {format_tl(price)} TL ({qty} adet)"
+        )
+        sizer.Add(info, 0, wx.ALL | wx.CENTER, 10)
+
+        btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.buy_btn = wx.Button(panel, label="Satın Al")
+        self.sell_btn = wx.Button(panel, label="Sat")
+        self.cancel_btn = wx.Button(panel, label="İptal (Esc)")
+        btn_sizer.Add(self.buy_btn, 0, wx.ALL, 5)
+        btn_sizer.Add(self.sell_btn, 0, wx.ALL, 5)
+        btn_sizer.Add(self.cancel_btn, 0, wx.ALL, 5)
+        sizer.Add(btn_sizer, 0, wx.ALIGN_CENTER, 10)
+
+        panel.SetSizer(sizer)
+        wx.CallAfter(self.buy_btn.SetFocus)
+
+    def _bind_events(self):
+        self.buy_btn.Bind(wx.EVT_BUTTON, self.on_buy)
+        self.sell_btn.Bind(wx.EVT_BUTTON, self.on_sell)
+        self.cancel_btn.Bind(wx.EVT_BUTTON, self.on_cancel)
+        self.Bind(wx.EVT_CLOSE, self.on_cancel)
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
+
+    def on_key_down(self, event):
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_ESCAPE:
+            self.on_cancel(event)
+            return
+        event.Skip()
+
+    def on_buy(self, event):
+        self.result = "buy"
+        self.EndModal(wx.ID_OK)
+
+    def on_sell(self, event):
+        self.result = "sell"
+        self.EndModal(wx.ID_OK)
+
+    def on_cancel(self, event):
+        self.result = None
+        self.EndModal(wx.ID_CANCEL)
 
 
 class LandManagementDialog(wx.Dialog):
@@ -198,13 +244,8 @@ class LandManagementDialog(wx.Dialog):
                 self.parent.auto_save()
 
 
-# ============================================================
-# MENU SINIFLARI
-# ============================================================
-
 class MainMenu(wx.Dialog):
     def __init__(self, parent=None):
-        # Yüksekliği (size) yeni İletişim butonu sığacak şekilde 450'den 480'e çıkardık.
         super().__init__(parent, title="Karaborsa", size=(350, 480))
         self.parent = parent
         self.username = None
@@ -224,7 +265,6 @@ class MainMenu(wx.Dialog):
         title.SetFont(wx.Font(20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         sizer.Add(title, 0, wx.ALL | wx.CENTER, 15)
         
-        # Ana menü seçenekleri (İletişim eklendi)
         menu_items = [
             "Yeni Oyun",
             "Devam Et",
@@ -236,7 +276,6 @@ class MainMenu(wx.Dialog):
             "Çıkış"
         ]
         
-        # Skor gönderimi durumunu gösteren seçenek (toggle)
         status = "Etkin" if leaderboard.is_score_submission_enabled() else "Devre Dışı"
         menu_items.insert(4, f"Skor Gönderimi: {status}")
         
@@ -289,16 +328,6 @@ class MainMenu(wx.Dialog):
             if idx == wx.NOT_FOUND:
                 idx = 0
         
-        # Menü indeksleri:
-        # 0: Yeni Oyun
-        # 1: Devam Et
-        # 2: Kullanıcı Adı Değiştir
-        # 3: Skor Tablosunu Görüntüle
-        # 4: Skor Gönderimi Toggle
-        # 5: Yardım
-        # 6: Yenilikler
-        # 7: İletişim
-        # 8: Çıkış
         
         if idx == 0:
             self.start_new_game()
@@ -371,13 +400,6 @@ class MainMenu(wx.Dialog):
             )
             speak(f"Kullanıcı adınız {info} olarak değiştirildi. İlerlemeniz korundu.")
 
-            # Skor tablosundaki ESKİ adı da güncellemeliyiz, yoksa orada
-            # eski adınızla kalmış görünürsünüz ve biri sizi başka bir
-            # oyuncu sanabilir. Bu ağ üzerinden (Gist) yapıldığı için
-            # arka planda çalıştırıyoruz ki pencere kilitlenmesin;
-            # başarısız olsa bile (internet yok, isim çakışması vb.)
-            # yerel kullanıcı adı değişikliğini etkilemez, sadece geçmişe
-            # (F3) not düşülür.
             def rename_leaderboard_async():
                 try:
                     lb_success, lb_msg = leaderboard.rename_leaderboard_entry(
@@ -745,7 +767,6 @@ class HistoryDialog(wx.Dialog):
         event.Skip()
 
     def _load_entries(self):
-        # Döngüsel import'tan kaçınmak için burada import ediyoruz.
         from history_log import get_history
         entries = get_history()
 
@@ -760,7 +781,6 @@ class HistoryDialog(wx.Dialog):
             lines.append(f"{entry['time']}  {gun_str}{entry['text']}")
 
         self.text_ctrl.SetValue("\n".join(lines))
-        # İmleci en sona (en yeni mesaja) götür.
         self.text_ctrl.SetInsertionPointEnd()
 
 
@@ -793,7 +813,7 @@ class DailyMessageDialog(wx.Dialog):
 
         self.text_ctrl = wx.TextCtrl(
             panel, value=message_text,
-            style=wx.TE_READONLY | wx.TE_MULTILINE | wx.TE_WORDWRAP
+            style=wx.TE_READONLY | wx.TE_MULTILINE | wx.TE_WORDWRAP | wx.TE_AUTO_URL
         )
         self.text_ctrl.SetMinSize((470, 260))
         sizer.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
@@ -806,6 +826,18 @@ class DailyMessageDialog(wx.Dialog):
     def _bind_events(self):
         self.close_btn.Bind(wx.EVT_BUTTON, lambda e: self.EndModal(wx.ID_OK))
         self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
+        self.text_ctrl.Bind(wx.EVT_TEXT_URL, self.on_url_click)
+
+    def on_url_click(self, event: wx.TextUrlEvent):
+        # Sadece sol tık bırakıldığında (link üstünde) tarayıcıyı aç.
+        mouse_event = event.GetMouseEvent()
+        if mouse_event.LeftUp():
+            url = self.text_ctrl.GetRange(event.GetURLStart(), event.GetURLEnd())
+            try:
+                webbrowser.open(url)
+            except Exception:
+                pass
+        event.Skip()
 
     def on_key_down(self, event: wx.KeyEvent):
         if event.GetKeyCode() == wx.WXK_ESCAPE:
@@ -1100,7 +1132,6 @@ class EmployeeManagementDialog(wx.Dialog):
         self.city_combo.Bind(wx.EVT_COMBOBOX, self.on_city_selected)
 
     def _update_ui(self):
-        # Adam listesi
         self.employee_list.Clear()
         for e in self.state.employees:
             self.employee_list.Append(
@@ -1120,14 +1151,12 @@ class EmployeeManagementDialog(wx.Dialog):
             f"Nakit: {format_tl(self.state.cash)} TL"
         )
 
-        # Tutulabilecek kişiler
         self.person_combo.Clear()
         available_people = self.state.get_available_people()
         self.person_combo.AppendItems(available_people)
         if available_people:
             self.person_combo.SetSelection(0)
 
-        # Boş şehirler (düz liste, bölge yok)
         self.city_combo.Clear()
         self.available_cities = self.state.get_available_cities()
         self.city_combo.AppendItems(self.available_cities)
@@ -1621,9 +1650,6 @@ class GamblingDialog(wx.Dialog):
         ("sayi", "Tek Sayı 0-36 (36x)"),
     ]
 
-    # NOT: dosya adı ASCII tutuldu (diğer ses dosyalarıyla aynı kural:
-    # para.mp3, buy.ogg, button.wav...). "sounds/cark.mp3" dosyasını
-    # kendiniz eklemelisiniz (rulet çarkı dönüş sesi).
     SOUND_CARK = resource_path("sounds/cark.mp3")
 
     def __init__(self, parent, state):
@@ -1860,13 +1886,6 @@ class JailDialog(wx.Dialog):
         self._bind_events()
         self.CenterOnScreen()
 
-        # ÖNEMLİ: Bu pencere ShowModal() ile değil Show() ile (modsuz)
-        # açılıyor. wx.Dialog'un varsayılan davranışı ise Enter'a basınca
-        # EndModal(wx.ID_OK), Esc'e basınca EndModal(wx.ID_CANCEL)
-        # çağırmaktır. Modsuz açılmış bir dialogda EndModal() çağrılması
-        # (karşılığında bir modal event loop olmadığı için) pencerenin
-        # "yanıt vermiyor" durumuna düşmesine yol açıyordu. Aşağıdaki
-        # ayarlar bu varsayılan davranışı devre dışı bırakır.
         self.SetEscapeId(wx.ID_NONE)
         self.SetAffirmativeId(wx.ID_NONE)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
@@ -1905,15 +1924,21 @@ class JailDialog(wx.Dialog):
 
     def on_char_hook(self, event):
         keycode = event.GetKeyCode()
-        if keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER, wx.WXK_ESCAPE):
-            if self.is_running:
-                # Hapis sürerken Enter/Esc pencereyi kapatmaya/donmaya
-                # çalışmasın; sadece görmezden gel.
-                return
-            if keycode == wx.WXK_ESCAPE:
-                # Hapis bittiğinde Esc, "Çıkış" butonuyla aynı işi yapsın.
-                self.on_exit(event)
-                return
+
+        if self.is_running:
+            # Hapis süresi işlerken hiçbir tuşu dışarı (ana pencereye veya
+            # başka bir pencereye) sızdırma. Art arda hızlıca farklı
+            # tuşlara basılması, olayların birikip oyunun donmasına/"yanıt
+            # vermiyor" durumuna düşmesine neden oluyordu; artık bu süre
+            # boyunca tüm tuşlar burada tamamen yutulur (event.Skip()
+            # ÇAĞRILMAZ).
+            return
+
+        if keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            return
+        if keycode == wx.WXK_ESCAPE:
+            self.on_exit(event)
+            return
         event.Skip()
 
     def start(self):
@@ -1942,6 +1967,7 @@ class JailDialog(wx.Dialog):
         if self.parent:
             self.parent.audio.stop_music()
             self.parent.audio.play_music(self.sound_prison, loop=True)
+            self.parent.Disable()
 
         self.day_label.SetLabel(f"Kalan Gün: {days}")
         self.time_label.SetLabel(f"Kalan Süre: {self.total_seconds} saniye")
@@ -1953,6 +1979,7 @@ class JailDialog(wx.Dialog):
         self.timer.Start(1000)
         self.Show()
         self.Raise()
+        self.SetFocus()
 
     def on_timer(self, event):
         if not self.is_running:
@@ -2027,6 +2054,7 @@ class JailDialog(wx.Dialog):
             speak(summary)
 
         if self.parent:
+            self.parent.Enable()
             self.parent.refresh_product_list()
             self.parent.update_wallet_display()
             self.parent.set_jail_mode(False)
@@ -2047,6 +2075,7 @@ class JailDialog(wx.Dialog):
             if self.parent:
                 self.parent.audio.stop_music()
                 self.parent.audio.play_music(self.parent.get_current_music_track(), loop=True)
+                self.parent.Enable()
                 self.parent.refresh_product_list()
                 self.parent.update_wallet_display()
                 self.parent.set_jail_mode(False)
@@ -2055,17 +2084,8 @@ class JailDialog(wx.Dialog):
             if self.on_complete:
                 self.on_complete()
         else:
-            # Hapis daha bitmeden Alt+F4 / sistem kapatma tuşuyla
-            # kapatılmaya çalışılıyor. Eskiden burada hiçbir şey
-            # yapılmıyordu (ne kapatma ne de Veto); bu da EVT_CLOSE
-            # olayının yarım kalıp pencerenin tepkisiz görünmesine
-            # sebep oluyordu. Şimdi kullanıcıyı bilgilendirip olayı
-            # düzgünce iptal (Veto) ediyoruz.
             speak("Hapis cezası bitmeden çıkış yapamazsınız")
             if hasattr(event, "Veto"):
                 event.Veto()
 
 
-# ============================================================
-# ANA OYUN PENCERESI
-# ============================================================

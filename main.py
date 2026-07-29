@@ -1,6 +1,3 @@
-# main.py - Karaborsa Ticaret Simülasyonu (Görme Engelli Dostu)
-# Giriş noktası: MainFrame (ana pencere) ve App
-# -*- coding: utf-8 -*-
 
 import os
 import random
@@ -23,15 +20,10 @@ from game_state import GameState, resource_path, get_music_tracks, open_help, ID
 from dialogs import (
     LandManagementDialog, MainMenu, LoadGameDialog, CompanyDialog,
     InformantDialog, BankLoanDialog, LandLoanDialog, BankingDialog, JailDialog,
-    HistoryDialog, EmployeeManagementDialog, GamblingDialog, DailyMessageDialog
+    HistoryDialog, EmployeeManagementDialog, GamblingDialog, DailyMessageDialog,
+    ProductActionDialog
 )
 
-# Skor tablosu için import
-# ÖNEMLİ: skor_gonderimi_aktif'i "from leaderboard import skor_gonderimi_aktif"
-# ile almıyoruz; bu şekilde alınan isim sadece bu modülün kendi kopyası olur
-# ve leaderboard.py'deki gerçek değer değiştiğinde güncellenmez. Bunun yerine
-# modülün kendisini import edip leaderboard.is_score_submission_enabled()
-# üzerinden her seferinde güncel değeri okuyoruz.
 import leaderboard
 from leaderboard import send_score
 
@@ -70,6 +62,7 @@ class MainFrame(wx.Frame):
     SOUND_POLICE = resource_path("sounds/polis_siren.mp3")
     SOUND_JAIL_DOOR = resource_path("sounds/Prison Door Opening Sound.mp3")
     SOUND_CARK = resource_path("sounds/cark.mp3")
+    SOUND_MANI = resource_path("sounds/mani.mp3")
 
     def __init__(self, username=None, load_data=None):
         super().__init__(None, title=f"Karaborsa - {username}", size=(800, 650))
@@ -81,12 +74,11 @@ class MainFrame(wx.Frame):
         self.autosave_timer = None
         self._last_volume_speak_time = 0
         self._last_spoken_index = -1
+        self._advancing_day = False
+        self._last_day_advance_time = 0.0
         
-        # SKOR GÜNCELLEME: Her 3 günde bir skor gönderimi için sayaç
         self.days_since_last_score_update = 0
-        self.score_update_interval = 3  # Her 3 günde bir
-        # Arka planda hâlâ devam eden bir skor gönderimi var mı?
-        # Kapatma sırasında kullanıcıyı uyarmak için kullanılır.
+        self.score_update_interval = 3
         self._score_submission_in_progress = False
 
         self.music_tracks = get_music_tracks()
@@ -111,8 +103,6 @@ class MainFrame(wx.Frame):
         else:
             speak(f"Hoş geldiniz {username}")
 
-        # GÜNÜN MESAJI: arka planda (internete bağlı, oyunu bekletmeden)
-        # kontrol edilir; yeni bir mesaj varsa hazır olduğunda gösterilir.
         daily_message.check_for_new_message(self._on_daily_message_ready)
 
     def _on_daily_message_ready(self, date_str: str, message_text: str):
@@ -121,10 +111,6 @@ class MainFrame(wx.Frame):
         wx.CallAfter(self._show_daily_message, date_str, message_text)
 
     def _show_daily_message(self, date_str: str, message_text: str):
-        # Hapis penceresi her zaman en üstte kalacak şekilde (STAY_ON_TOP)
-        # açılıyor; bu sırada normal bir modal diyalog açarsak F3 hatasında
-        # olduğu gibi diyalog arkada kalıp oyunu tepkisiz hale getirebilir.
-        # Bu yüzden hapisteyken göstermeyi erteliyoruz.
         if self.state.in_jail:
             wx.CallLater(2000, self._show_daily_message, date_str, message_text)
             return
@@ -133,9 +119,6 @@ class MainFrame(wx.Frame):
         dlg = DailyMessageDialog(self, date_str, message_text)
         dlg.ShowModal()
         dlg.Destroy()
-        # Mesaj gerçekten gösterildikten sonra "okunmuş" olarak işaretle;
-        # böylece erteleme sırasında oyun kapatılsa bile mesaj kaybolmaz,
-        # bir dahaki açılışta tekrar gösterilir.
         daily_message.mark_seen(date_str)
 
     def _build_ui(self):
@@ -199,7 +182,7 @@ class MainFrame(wx.Frame):
     def _bind_events(self):
         self.buy_btn.Bind(wx.EVT_BUTTON, self.on_buy)
         self.sell_btn.Bind(wx.EVT_BUTTON, self.on_sell)
-        self.next_btn.Bind(wx.EVT_BUTTON, self.on_next_day)
+        self.next_btn.Bind(wx.EVT_BUTTON, self.request_next_day)
         self.company_btn.Bind(wx.EVT_BUTTON, self.on_company)
         self.informant_btn.Bind(wx.EVT_BUTTON, self.on_informant)
         self.loan_btn.Bind(wx.EVT_BUTTON, self.on_loan)
@@ -336,6 +319,33 @@ class MainFrame(wx.Frame):
 
     def on_autosave(self, event):
         self.auto_save()
+
+    def show_product_action_popup(self):
+        if self.state.in_jail:
+            speak("Hapistesiniz")
+            return
+
+        name = self.get_selected_product()
+        if not name:
+            speak("Ürün seçin")
+            return
+
+        price = self.state.prices[name]
+        qty = self.qty_spinner.GetValue()
+
+        self.play_sound(self.SOUND_BUTTON)
+        dlg = ProductActionDialog(self, name, price, qty)
+        result = dlg.ShowModal()
+        action = dlg.result
+        dlg.Destroy()
+
+        if result == wx.ID_OK:
+            if action == "buy":
+                self.on_buy(None)
+            elif action == "sell":
+                self.on_sell(None)
+
+        self.product_list.SetFocus()
 
     def on_buy(self, event):
         if self.state.in_jail:
@@ -500,9 +510,6 @@ class MainFrame(wx.Frame):
         self.play_sound(self.SOUND_BUTTON)
         dlg = GamblingDialog(self, self.state)
         dlg.ShowModal()
-        # GamblingDialog her çark sonucundan hemen sonra cüzdanı ve
-        # otomatik kaydı zaten kendi içinde güncelliyor; burada yalnızca
-        # dialog kapanırken son bir kez tazeliyoruz (envanteri etkilemez).
         self.update_wallet_display()
         self.auto_save()
         dlg.Destroy()
@@ -664,24 +671,19 @@ class MainFrame(wx.Frame):
         Skoru hesaplar ve GitHub Gist'e gönderir.
         Her 3 günde bir otomatik olarak çağrılır.
         """
-        # Skor gönderimi kapalıysa işlem yapma
         if not leaderboard.is_score_submission_enabled():
             return
         
-        # Kullanıcı adı yoksa işlem yapma
         if not self.username:
             return
         
-        # Hapisteyken skor gönderme
         if self.state.in_jail:
             return
         
-        # Toplam varlık sıfırsa skor gönderme
         total_wealth = self.state.cash
         if total_wealth <= 0:
             return
         
-        # Skor gönderimini arka planda yap (UI donmasın)
         def send_score_async():
             self._score_submission_in_progress = True
             try:
@@ -691,8 +693,6 @@ class MainFrame(wx.Frame):
                     self.state.day, 
                     0.0
                 )
-                # Sesle rahatsız etmemek için gönderim sonucu sadece
-                # geçmişe (F3) yazılıyor, sesli anons yapılmıyor.
                 if success:
                     total = self.state.cash
                     log_history(f"Skor tablosuna gönderildi: {format_tl(total)} TL")
@@ -707,20 +707,32 @@ class MainFrame(wx.Frame):
         thread.daemon = True
         thread.start()
 
+    def request_next_day(self, event):
+        """F5 tuşuna basılı tutulduğunda (tuş tekrarı) veya 'Gün Atla'
+        düğmesine art arda tıklandığında art arda birçok günün bir anda
+        işlenmesini engeller. Böylece tuşu basılı tutarak günleri hızlıca
+        atlayıp para kasmak mümkün olmaz; en fazla belirli bir aralıkla
+        (ve bir önceki gün işlemi bitmeden) yeni bir gün işlenir."""
+        now = time.time()
+        if self._advancing_day:
+            return
+        if now - self._last_day_advance_time < 0.6:
+            return
+        self._last_day_advance_time = now
+        self.on_next_day(event)
+
     def on_next_day(self, event):
         if self.state.in_jail:
             speak("Hapistesiniz. Bekleyin")
             return
 
+        if self._advancing_day:
+            return
+        self._advancing_day = True
+
         try:
             self._advance_day()
         except Exception as e:
-            # Önceden bu tür bir hata, gün işleme kodunun ortasında sessizce
-            # duruyordu: gün ilerliyor ama polis kontrolü ve rastgele olaylar
-            # (bunlar kodun daha sonraki kısımlarında) hiç çalışmıyordu -
-            # oyuncuya "hiçbir şey olmuyor" gibi görünüyordu. Artık hatayı
-            # yakalayıp hem geçmişe (F3) yazıyoruz hem de sesli bildiriyoruz,
-            # böylece hem fark edilir hem de bize bildirilebilir.
             import traceback
             print(traceback.format_exc())
             log_history(f"[HATA] Gün ilerletilirken beklenmeyen bir sorun oluştu: {e}")
@@ -732,16 +744,11 @@ class MainFrame(wx.Frame):
             self.refresh_product_list()
             self.update_wallet_display()
             self.auto_save()
+            self._advancing_day = False
 
     def _advance_day(self):
         self.play_sound(self.SOUND_TRANSITION)
 
-        # Ekran okuyucu, art arda hızlıca gelen speak() çağrılarında her
-        # yenisini bir öncekinin sözünü keserek başlatıyordu; bu yüzden
-        # gün başlangıcındaki tüm anonsları tek bir listede topluyoruz ve
-        # en sonda TEK bir speak() çağrısıyla birleştirip okutuyoruz. Böylece
-        # hiçbir mesaj bir sonraki mesaj tarafından yarıda kesilmiyor ve
-        # geçmiş (F3) ekranına bakmaya gerek kalmadan hepsi duyuluyor.
         narration = []
 
         self.state.day += 1
@@ -760,10 +767,21 @@ class MainFrame(wx.Frame):
             if profit_msg:
                 log_history(profit_msg)
 
-        # DÜN verilmiş bir muhbir uyarısı varsa, bugünkü ücret ödemesi
-        # başarısız olup muhbir kovulsa bile bu uyarı YOK SAYILMAMALI.
-        # Bu yüzden bayrağı, muhbiri kovabilecek ödeme işleminden ÖNCE
-        # okuyup saklıyoruz.
+        narrated_gain = 0.0
+
+        def _speak_narration(text_list):
+            """narration listesini tek seferde okutur; narrated_gain
+            (yalnızca banka faizi + muhbirden kaçış + rastgele olay
+            kazançlarının toplamı) sıfırdan büyükse mani.mp3 çalar."""
+            nonlocal narrated_gain
+            if not text_list:
+                narrated_gain = 0.0
+                return
+            if narrated_gain > 0:
+                self.play_sound(self.SOUND_MANI)
+            narrated_gain = 0.0
+            speak(" ".join(text_list))
+
         was_warned = getattr(self.state, "informant_warning_active", False)
 
         if self.state.has_informant:
@@ -775,7 +793,7 @@ class MainFrame(wx.Frame):
             if not success:
                 _, default_msg = self.state.default_loan()
                 narration.append(f"Kredi temerrüdü. {default_msg}")
-                speak(" ".join(narration))
+                _speak_narration(narration)
                 self.refresh_product_list()
                 self.update_wallet_display()
                 self.auto_save()
@@ -790,11 +808,12 @@ class MainFrame(wx.Frame):
             narration.append(employee_msg)
 
         bank_interest = self.state.apply_bank_interest()
+        if bank_interest > 0:
+            narration.append(f"Banka faizi: {format_tl(bank_interest)} TL")
+            narrated_gain += bank_interest
 
         informant_evaded = False
         if was_warned:
-            # Bu uyarı DÜN muhbir tarafından verildi (bkz. altta): bugün
-            # için geçerli, yani muhbir sizi bir gün önceden uyarmış oldu.
             self.state.informant_warning_active = False
             warn_msg = (
                 "MUHBİRİNİZ DÜN BİR POLİS OPERASYONU İÇİN SİZİ UYARMIŞTI!\n\n"
@@ -802,11 +821,8 @@ class MainFrame(wx.Frame):
                 "bazen yanılır). Elinizdeki malları hemen gerçek fiyatına "
                 "elden çıkarıp riski azaltmak ister misiniz?"
             )
-            # O ana kadarki günlük anonsları, diyalog açılmadan hemen önce
-            # tek seferde okutuyoruz ki oyuncu hiçbirini kaçırmasın; diyalog
-            # kutusunun kendi metnini ekran okuyucu zaten ayrıca duyurur.
             if narration:
-                speak(" ".join(narration))
+                _speak_narration(narration)
                 narration = []
             dlg = wx.MessageDialog(self, warn_msg, "MUHBİR UYARISI",
                                   wx.YES_NO | wx.ICON_WARNING)
@@ -817,6 +833,7 @@ class MainFrame(wx.Frame):
                     f"Mallarınızı hızlıca elden çıkardınız ({count} adet, "
                     f"{format_tl(earned)} TL kazandınız) ve polisi atlattınız!"
                 )
+                narrated_gain += earned
                 informant_evaded = True
             dlg.Destroy()
 
@@ -824,9 +841,6 @@ class MainFrame(wx.Frame):
             self.state.update_police_heat()
             police = {"caught": False}
         elif was_warned:
-            # Uyarıyı görmezden geldiniz. Muhbiriniz çoğunlukla haklı çıkar
-            # (yüzde 80 ihtimalle polis gerçekten gelir), ama bazen yanılır
-            # (yüzde 20 ihtimalle baskın hiç gerçekleşmez).
             self.state.update_police_heat()
             if random.random() < 0.8:
                 police = {"caught": True}
@@ -836,20 +850,16 @@ class MainFrame(wx.Frame):
                     "Neyse ki bu sefer muhbiriniz yanılmış: polis gelmedi."
                 )
         elif self.state.has_informant:
-            # Muhbiriniz doğrudan polisle bağlantılı: uyarı gelmediyse
-            # (dünkü tahmin "güvenli" demekti, ya da muhbir daha yeni
-            # tutuldu) bugün kesinlikle güvendesiniz - sürpriz baskın yok.
             self.state.update_police_heat()
             police = {"caught": False}
         else:
-            # Muhbiriniz yok: normal, rastgele polis kontrolü işler.
             police = self.state.police_check()
 
         if police["caught"]:
             self.audio.play_sound(self.SOUND_POLICE)
             jail_msg = self.state.go_to_jail(random.randint(1, 3))
             narration.append(f"POLİS SİZİ YAKALADI VE TUTUKLADI! {jail_msg}")
-            speak(" ".join(narration))
+            _speak_narration(narration)
             self.update_wallet_display()
             self.refresh_product_list()
             self.auto_save()
@@ -857,9 +867,6 @@ class MainFrame(wx.Frame):
             wx.CallAfter(self.start_jail_dialog)
             return
 
-        # Bugünü atlattıysanız, muhbir (varsa) doğrudan polisle bağlantılı
-        # olduğu için YARIN gerçekleşecek her baskını önceden haber verir -
-        # bu uyarı bir sonraki gün başında (yukarıdaki blok) işleme alınır.
         if self.state.has_informant and self.state.check_informant_warning():
             self.state.informant_warning_active = True
             narration.append(
@@ -867,25 +874,25 @@ class MainFrame(wx.Frame):
                 "elden çıkarmak isteyebilirsiniz."
             )
 
+        cash_before_events = self.state.cash
         events = self.state.trigger_random_events()
+        event_cash_delta = self.state.cash - cash_before_events
+        if event_cash_delta > 0:
+            narrated_gain += event_cash_delta
 
         self.refresh_product_list()
         self.update_wallet_display()
 
-        if bank_interest > 0:
-            narration.append(f"Banka faizi: {format_tl(bank_interest)} TL")
         if events:
             narration.extend(events)
         if narration:
-            speak(" ".join(narration))
+            _speak_narration(narration)
 
-        # SKOR GÜNCELLEME: Her 3 günde bir (buraya geldiğinde gün atlanmış oldu)
         self.days_since_last_score_update += 1
         if self.days_since_last_score_update >= self.score_update_interval:
             self.days_since_last_score_update = 0
             self.update_score()
 
-        # OTOMATİK KAYIT: Her gün sonunda kaydet
         self.auto_save()
 
     def check_game_over(self):
@@ -894,18 +901,23 @@ class MainFrame(wx.Frame):
         Oyun sınırsız (endless) modda çalışır.
         Skor her 3 günde bir otomatik güncellenir.
         """
-        pass  # Hiçbir şey yapma - oyun asla bitmez!
+        pass
 
     def on_key_down(self, event: wx.KeyEvent):
         key = event.GetKeyCode()
 
-        # --- GELİŞTİRİCİ HİLE KONSOLU (Ctrl+Alt+F) ---
-        # SADECE geliştirme/test kolaylığı içindir; menüde veya
-        # yardım dosyasında belgelenmez, oyunun normal akışının bir
-        # parçası değildir.
+        if self.state.in_jail:
+            event.Skip(False)
+            return
+
         if key in (ord('F'), ord('f')) and event.ControlDown() and event.AltDown():
             self.open_cheat_console()
             return
+
+        if key in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            if wx.Window.FindFocus() is self.product_list:
+                self.show_product_action_popup()
+                return
 
         if key == wx.WXK_F1:
             open_help()
@@ -917,7 +929,7 @@ class MainFrame(wx.Frame):
             self.on_history(event)
             return
         if key == wx.WXK_F5:
-            self.on_next_day(event)
+            self.request_next_day(event)
             return
         if key == wx.WXK_F6:
             self.on_land_management(event)
@@ -971,9 +983,6 @@ class MainFrame(wx.Frame):
         event.Skip()
 
     def on_close(self, event):
-        # Arka planda hâlâ devam eden bir skor gönderimi varsa
-        # (ör. az önce otomatik tetiklenen 3 günlük gönderim henüz
-        # bitmediyse), kapatmadan önce kullanıcıya sor.
         if self._score_submission_in_progress:
             if wx.MessageBox(
                 "Skor gönderimi yapılıyor. Çıkmak istediğinize emin misiniz?",
@@ -990,17 +999,12 @@ class MainFrame(wx.Frame):
         if self.autosave_timer:
             self.autosave_timer.Stop()
         
-        # Oyun kapanırken son skoru gönder
         if self.username and not self.state.in_jail:
             self.update_score()
             self.auto_save()
         
         event.Skip()
 
-
-# ============================================================
-# UYGULAMA
-# ============================================================
 
 class App(wx.App):
     def OnInit(self):
