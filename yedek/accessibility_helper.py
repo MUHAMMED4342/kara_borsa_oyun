@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 """
 accessibility_helper.py
 ------------------------
@@ -14,8 +14,8 @@ try:
     _speaker = ao.Auto()
     SCREEN_READER_AVAILABLE = True
 except Exception:
-    
-    
+    # accessible_output2 kurulu değilse veya başlatılamazsa
+    # sessizce devre dışı bırak; uygulama konsola yazarak çalışmaya devam eder.
     _speaker = None
     SCREEN_READER_AVAILABLE = False
 
@@ -33,18 +33,18 @@ def speak(text: str, interrupt: bool = True) -> None:
 
     if _speaker is not None:
         try:
-            
-            
+            # interrupt=True parametresi sayesinde SAPI5 konuşmayı biriktirmez, 
+            # yeni tuş vuruşunda eski konuşmayı keser.
             _speaker.output(text, interrupt=interrupt)
             return
         except Exception:
-            
-            
+            # Eğer kütüphane veya kullanılan sürücü interrupt parametresini desteklemezse
+            # hata vermeden normal şekilde okumaya çalışması için fallback:
             try:
                 _speaker.output(text)
                 return
             except Exception:
                 pass
 
-    
+    # Fallback: ekran okuyucu yoksa ya da hata verdiyse konsola yaz.
     print(f"[Seslendirme]: {text}")

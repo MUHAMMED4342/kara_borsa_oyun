@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 """
 leaderboard.py
 --------------
@@ -16,7 +16,7 @@ from typing import List, Dict, Optional, Tuple
 
 from formatting import format_tl
 
-
+# Gist bilgileri
 GIST_ID = "5cde0d504dec8aac37cdfc211d91a891"
 GIST_URL = f"https://api.github.com/gists/{GIST_ID}"
 
@@ -40,7 +40,7 @@ def _get_base_dir() -> str:
 
 BASE_DIR = _get_base_dir()
 TOKEN_FILE = os.path.join(BASE_DIR, "token.txt")
-SCORE_FILE = "skorlar.json"  
+SCORE_FILE = "skorlar.json"  # Bu, gist İÇİNDEKİ dosya adı; yerel yol değil.
 
 
 def _get_appdata_dir() -> str:
@@ -56,13 +56,13 @@ def _get_appdata_dir() -> str:
     if appdata:
         base = os.path.join(appdata, "KaraborsaSimulasyonu")
     else:
-        
+        # Windows dışı bir ortam ya da APPDATA tanımsızsa yedek konum.
         base = os.path.join(os.path.expanduser("~"), ".karaborsa_simulasyonu")
     try:
         os.makedirs(base, exist_ok=True)
         return base
     except Exception:
-        
+        # Klasör oluşturulamazsa (izin vb.) en azından exe'nin yanına düş.
         return BASE_DIR
 
 
@@ -70,8 +70,8 @@ APPDATA_DIR = _get_appdata_dir()
 SETTINGS_FILE = os.path.join(APPDATA_DIR, "skor_ayarlari.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "skor_log.txt")
 
-
-
+# Aynı process içinde iki gönderimin aynı anda gist'i okuyup
+# birbirinin yazdığını ezmesini engelleyen kilit.
 _score_lock = threading.Lock()
 _log_lock = threading.Lock()
 
@@ -90,7 +90,7 @@ def _log(msg: str) -> None:
             with open(LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}  {msg}\n")
     except Exception:
-        
+        # Log dosyasına yazılamaması gönderimi engellememeli.
         pass
 
 
@@ -112,8 +112,8 @@ def _save_settings(settings: Dict) -> None:
         _log(f"[Hata] Ayarlar kaydedilemedi: {e}")
 
 
-
-
+# Global değişken: Skor gönderimi aktif mi?
+# Başlangıç değeri diskteki ayardan okunur (yoksa varsayılan: aktif).
 skor_gonderimi_aktif = _load_settings().get("skor_gonderimi_aktif", True)
 
 
@@ -157,8 +157,8 @@ def get_token() -> Optional[str]:
     except Exception as e:
         _log(f"[Hata] Gömülü token okunamadı: {e}")
 
-    
-    
+    # PyInstaller onefile modunda veri dosyaları (datas=[...]) çalışma
+    # anında sys._MEIPASS altına çıkarılır.
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         bundled_path = os.path.join(sys._MEIPASS, "token.txt")
         try:
@@ -256,7 +256,7 @@ def update_gist_content(data: Dict) -> bool:
     try:
         _log("[Bilgi] Gist güncelleniyor...")
 
-        
+        # Önce mevcut Gist'i al
         response = requests.get(GIST_URL, headers=headers, timeout=10)
         if response.status_code != 200:
             _log(f"[Hata] Gist bilgileri alınamadı. HTTP {response.status_code}")
@@ -265,7 +265,7 @@ def update_gist_content(data: Dict) -> bool:
         gist_data = response.json()
         existing_files = gist_data.get("files", {})
 
-        
+        # Güncellenecek dosya listesini hazırla
         files_to_update = {}
         for filename, file_info in existing_files.items():
             if filename == SCORE_FILE:
@@ -273,18 +273,18 @@ def update_gist_content(data: Dict) -> bool:
                     "content": json.dumps(data, ensure_ascii=False, indent=2)
                 }
             else:
-                
+                # Diğer dosyaları olduğu gibi bırak
                 files_to_update[filename] = {
                     "content": file_info.get("content", "")
                 }
 
-        
+        # Eğer skorlar.json yoksa ekle
         if SCORE_FILE not in files_to_update:
             files_to_update[SCORE_FILE] = {
                 "content": json.dumps(data, ensure_ascii=False, indent=2)
             }
 
-        
+        # Gist'i güncelle
         payload = {"files": files_to_update}
         update_response = requests.patch(GIST_URL, headers=headers, json=payload, timeout=10)
 
@@ -317,16 +317,16 @@ def get_leaderboard() -> Optional[List[Dict]]:
     _log("[Bilgi] Skor tablosu çekiliyor...")
     data = get_gist_content()
     if data is None:
-        
-        
+        # Veri çekilemedi (ağ hatası, token hatası, vb.) — bunu boş
+        # tablo ile karıştırmamak için None döndürüyoruz.
         _log("[Bilgi] Skor tablosu çekilemedi (bağlantı/erişim hatası).")
         return None
     if "score_data" in data:
         entries = data["score_data"]
 
         def _cash_of(entry: Dict) -> float:
-            
-            
+            # Eski kayıtlarda "cash" alanı olmayabilir; bu durumda geriye
+            # dönük uyumluluk için "total"/"score" alanına düş.
             if "cash" in entry:
                 return entry.get("cash", 0)
             if "total" in entry:
@@ -360,9 +360,9 @@ def _merge_entry(score_data: List[Dict], username: str,
                 "clean_money": clean_money,
                 "last_updated": __import__("datetime").datetime.now().isoformat()
             })
-            
-            
-            
+            # Eski formülle hesaplanmış "total"/"score" alanları varsa
+            # temizle, karışıklık olmasın (cash zaten kirli+temiz+etiketsiz
+            # paranın toplamı; ayrıca bir "total" tutmaya gerek yok).
             entry.pop("total", None)
             entry.pop("score", None)
             _log(f"[Bilgi] Kullanıcı güncellendi: {username} -> Yeni nakit: {format_tl(cash)} TL")
@@ -386,18 +386,18 @@ def _entry_matches(score_data: List[Dict], username: str, cash: float) -> bool:
     for entry in score_data:
         if entry.get("username") == username:
             current = entry.get("cash", entry.get("total", entry.get("score", 0)))
-            
+            # Küçük ondalık farkları tolere et.
             return abs(current - cash) < 0.01
     return False
 
 
 
-
-
-
-
-
-
+# Farklı bilgisayarlardan aynı anda gelen gönderimlerde, iki process aynı
+# gist'i okuyup ikisi de kendi haliyle PATCH atarsa biri diğerini ezebilir
+# (GitHub Gist API "conditional/atomic update" desteklemiyor). Bunun
+# etkisini azaltmak için: PATCH sonrası tekrar okuyup bizim girdimizin
+# gerçekten orada olduğunu doğruluyoruz; değilse kısa bir bekleme ile
+# baştan (fetch -> merge -> patch) deniyoruz.
 _MAX_RETRIES = 4
 
 
@@ -442,9 +442,9 @@ def rename_leaderboard_entry(old_username: str, new_username: str) -> Tuple[bool
                     break
 
             if old_entry is None:
-                
-                
-                
+                # Skor tablosunda hiç kaydı yokmuş (ör. hiç skor
+                # göndermemiş); değiştirilecek bir şey yok, bu bir hata
+                # değil.
                 return True, "Skor tablosunda bu isimde bir kayıt bulunamadı."
 
             if any(e is not old_entry and e.get("username") == new_username
@@ -504,29 +504,29 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
         last_error = "Gönderilemedi. Bağlantı hatası."
 
         for attempt in range(1, _MAX_RETRIES + 1):
-            
+            # 1) Güncel veriyi çek
             data = get_gist_content()
             if data is None:
                 return False, "Gist verileri alınamadı. Token kontrol edin."
 
             score_data = data.get("score_data", [])
 
-            
+            # 2) Kendi girdimizi ekle/güncelle
             score_data, changed, msg = _merge_entry(score_data, username, cash, day, clean_money)
             if not changed:
-                
+                # Zaten aynı nakit kaydımız var, gönderime gerek yok.
                 return True, msg
 
             data["score_data"] = score_data
 
-            
+            # 3) Gist'e yaz
             if not update_gist_content(data):
                 last_error = "Gönderilemedi. Bağlantı hatası."
                 time.sleep(0.5 + random.random())
                 continue
 
-            
-            
+            # 4) Doğrula: gerçekten bizim yazdığımız veri orada mı?
+            #    (Aramızda başka bir bilgisayar yazıp bizi ezmiş olabilir.)
             verify_data = get_gist_content()
             if verify_data and _entry_matches(verify_data.get("score_data", []), username, cash):
                 return True, msg

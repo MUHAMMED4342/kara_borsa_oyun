@@ -14,7 +14,7 @@ from accessibility_helper import speak as _tts_speak
 from history_log import log_history
 from formatting import format_tl
 from audio_manager import AudioManager
-from save_manager import save_game, load_game, apply_one_time_heat_reset
+from save_manager import save_game, load_game
 
 from game_state import GameState, resource_path, get_music_tracks, open_help, ID_LOAD, ID_NEW
 from dialogs import (
@@ -63,7 +63,6 @@ class MainFrame(wx.Frame):
     SOUND_JAIL_DOOR = resource_path("sounds/Prison Door Opening Sound.mp3")
     SOUND_CARK = resource_path("sounds/cark.mp3")
     SOUND_MANI = resource_path("sounds/mani.mp3")
-    SOUND_TYPING = resource_path("sounds/typing.wav")
 
     def __init__(self, username=None, load_data=None):
         super().__init__(None, title=f"Karaborsa - {username}", size=(800, 650))
@@ -140,7 +139,6 @@ class MainFrame(wx.Frame):
         qty_sizer = wx.BoxSizer(wx.HORIZONTAL)
         qty_sizer.Add(wx.StaticText(panel, label="Adet:"), 0, wx.ALL | wx.CENTER, 5)
         self.qty_spinner = wx.SpinCtrl(panel, value="1", min=1, max=1000000)
-        self.bind_typing_sound(self.qty_spinner)
         qty_sizer.Add(self.qty_spinner, 0, wx.ALL | wx.CENTER, 5)
         sizer.Add(qty_sizer, 0, wx.LEFT | wx.TOP, 5)
 
@@ -270,10 +268,6 @@ class MainFrame(wx.Frame):
         edilirse hiçbir şey değişmez.
         """
         dlg = wx.TextEntryDialog(self, "Hile komutu girin:", "Geliştirici Konsolu")
-        for child in dlg.GetChildren():
-            if isinstance(child, wx.TextCtrl):
-                self.bind_typing_sound(child)
-                break
         try:
             if dlg.ShowModal() != wx.ID_OK:
                 return
@@ -318,15 +312,6 @@ class MainFrame(wx.Frame):
     def play_sound(self, sound_path):
         if os.path.exists(sound_path):
             self.audio.play_sound(sound_path)
-
-    def bind_typing_sound(self, ctrl):
-        """Verilen metin giriş kontrolüne (TextCtrl, SpinCtrl vb.) her
-        karakter yazıldığında typing.wav çalacak şekilde bağlanır."""
-        ctrl.Bind(wx.EVT_TEXT, self._on_typing_sound)
-
-    def _on_typing_sound(self, event):
-        self.play_sound(self.SOUND_TYPING)
-        event.Skip()
 
     def auto_save(self):
         if self.username and not self.state.in_jail:
@@ -770,8 +755,7 @@ class MainFrame(wx.Frame):
         log_history(f"Gün {self.state.day} başladı.")
 
         if self.state.has_company:
-            monthly_company_msgs = self.state.advance_companies_day()
-            narration.extend(monthly_company_msgs)
+            self.state.advance_companies_day()
 
         self.state.fluctuate_prices()
 
@@ -858,7 +842,7 @@ class MainFrame(wx.Frame):
             police = {"caught": False}
         elif was_warned:
             self.state.update_police_heat()
-            if self.state.roll_police_catch():
+            if random.random() < 0.8:
                 police = {"caught": True}
             else:
                 police = {"caught": False}
@@ -968,9 +952,6 @@ class MainFrame(wx.Frame):
         if key == ord('E') or key == ord('e'):
             speak(self.state.inventory_summary_text())
             return
-        if key == ord('I') or key == ord('i'):
-            speak(self.state.inventory_items_text())
-            return
         
         if key == wx.WXK_PAGEUP:
             vol = self.audio.volume_up()
@@ -1056,8 +1037,6 @@ class App(wx.App):
 
 if __name__ == "__main__":
     updater.check_for_update_async(ask_user_callback=_ask_update_confirmation)
-
-    apply_one_time_heat_reset()
 
     app = App()
     app.MainLoop()

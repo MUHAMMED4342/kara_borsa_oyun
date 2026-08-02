@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 """
 history_log.py
 ---------------
@@ -14,7 +14,7 @@ import threading
 import datetime
 from typing import List, Dict
 
-# Bellekte tutulacak maksimum kayıt sayısı (sınırsız büyümesin diye).
+
 MAX_ENTRIES = 500
 
 _lock = threading.Lock()
@@ -31,7 +31,7 @@ def log_history(text: str, day: int = None) -> None:
             "day": day,
             "text": text,
         })
-        # Çok büyümesin diye en eski kayıtları at.
+        
         if len(_entries) > MAX_ENTRIES:
             del _entries[0: len(_entries) - MAX_ENTRIES]
 

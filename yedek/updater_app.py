@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 """
 updater_app.py
 --------------
@@ -110,9 +110,9 @@ def _wait_for_pid_exit(pid: int, timeout: float = 60.0) -> bool:
         finally:
             kernel32.CloseHandle(handle)
     except Exception:
-        
-        
-        
+        # ctypes/WinAPI bir sebeple çalışmazsa, yine de devam edebilmek
+        # için "kapanmış say" diyoruz; kopyalama denemeleri zaten
+        # kilitliyse kendi retry mekanizmasıyla bekleyecek.
         return True
 
 
@@ -163,7 +163,7 @@ def main() -> None:
         with open(task_path, "r", encoding="utf-8") as f:
             task = json.load(f)
     except Exception as e:
-        
+        # Görev dosyası okunamadıysa bile artık bunu bir yere yazıyoruz.
         _log(fallback_log, f"gorev dosyasi okunamadi ({task_path}): {e}")
         return
 
@@ -231,9 +231,9 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        
-        
-        
+        # Buraya kadar hiçbir try/except yakalayamadıysa (ör. os/sys
+        # modül seviyesinde beklenmedik bir durum), en azından bunu
+        # exe'nin yanındaki sabit log dosyasına yazalım.
         try:
             _log(_fallback_log_path(), f"beklenmeyen kritik hata: {e}")
         except Exception:

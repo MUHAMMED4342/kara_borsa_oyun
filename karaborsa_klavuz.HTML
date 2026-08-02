@@ -1,0 +1,542 @@
+<h1>KARABORSA TİCARET SİMÜLASYONU — OYUNCU KILAVUZU</h1>
+
+<p>Bu kılavuz, oyunun tüm sistemlerini (ticaret, şirketler, adamlar, arsalar, krediler, muhbir, rulet, hapis, skor tablosu ve kayıt sistemi) baştan sona anlatır. Oyun ekran okuyucu dostu tasarlanmıştır; hemen hemen her işlem hem görsel olarak hem de sesli olarak bildirilir.</p>
+
+<hr>
+
+<h2>1. Genel Bakış</h2>
+
+<p>Karaborsa'da amacınız, karaborsa ürünleri alıp satarak, şirketler kurarak, arsa yatırımı yaparak, adam tutarak ve gerekirse kredi çekerek servetinizi büyütmektir. Oyun <strong>sınırsız (endless)</strong> modda çalışır; belirlenmiş bir "oyunu kazanma" günü yoktur ama skorunuz düzenli olarak skor tablosuna gönderilebilir ve isteğe bağlı hedefler (aşağıda "Hedefler" bölümüne bakın) size bir ilerleme çıtası sunar.</p>
+
+<p>Her oyun günü ilerlediğinizde (F5 / "Gün Atla"): fiyatlar dalgalanır, şirketleriniz kâr eder, adamlarınız üretim yapar, krediler/taksitler işlenir, muhbir varsa polis uyarısı gelebilir ve polis sizi yakalayabilir. Her önemli olay ekran okuyucuya sesli olarak bildirilir ve aynı zamanda geçmiş kaydına (F3) da düşer.</p>
+
+<hr>
+
+<h2>2. Başlarken: Kullanıcı Adı ve Tek Hesap Kuralı</h2>
+
+<p>Oyunu ilk açtığınızda ana menü karşınıza çıkar (yukarı/aşağı ok ile gezinip Enter ile seçim yaparsınız):</p>
+
+<ul>
+    <li><strong>Yeni Oyun</strong> — Bir kullanıcı adı girip yeni bir kayıt oluşturursunuz.</li>
+    <li><strong>Devam Et</strong> — Var olan kaydınızı yükler.</li>
+    <li><strong>Kullanıcı Adı Değiştir</strong> — Kaydınızın adını değiştirir; nakit, envanter, şirketler, arsalar, adamlar, kredi, hapis durumu gibi HİÇBİR ilerleme kaybolmaz, sadece isim güncellenir.</li>
+    <li><strong>Skor Tablosunu Görüntüle</strong></li>
+    <li><strong>Skor Gönderimi: Etkin/Devre Dışı</strong> — Skorunuzın genel skor tablosuna gönderilip gönderilmeyeceğini açar/kapatır.</li>
+    <li><strong>Yardım</strong> — Oyun içi yardım sayfasını tarayıcıda açar.</li>
+    <li><strong>Yenilikler</strong> — Güncelleme notlarını gösterir.</li>
+    <li><strong>İletişim</strong> — Geliştiriciye ulaşmak için web sayfasını açar.</li>
+    <li><strong>Çıkış</strong></li>
+</ul>
+
+<blockquote>
+    <strong>Tek Hesap Kuralı:</strong> Aynı bilgisayarda aynı anda yalnızca bir kayıt tutulabilir. Yeni bir hesapla başlamak isterseniz önce "Devam Et" ekranından mevcut kaydı silmeniz gerekir; isim yanlış girildiyse kaydı silmek yerine "Kullanıcı Adı Değiştir" seçeneğini kullanmanız yeterlidir.
+</blockquote>
+
+<p>Oyun kayıtları düzenli aralıklarla (30 saniyede bir ve her gün ilerlediğinizde) otomatik olarak kaydedilir, elle "kaydet" yapmanıza gerek yoktur.</p>
+
+<hr>
+
+<h2>3. Ana Ekran</h2>
+
+<p>Ana pencerede sırasıyla şunlar bulunur:</p>
+
+<ul>
+    <li><strong>Üstte nakit/durum satırı</strong> — Gün, nakit, şirket sayısı ve konumları, adam sayısı, muhbir durumu gibi özet bilgiler.</li>
+    <li><strong>Ürün listesi</strong> — Fiyata göre sıralı tüm ürünler, her birinin yanında güncel fiyatı ve elinizdeki miktarı görünür.</li>
+    <li><strong>Adet</strong> kutusu — Alım/satımda kullanılacak miktarı buradan girersiniz (yazarken klavye tıklama sesi de duyulur).</li>
+    <li><strong>Satın Al / Sat / Gün Atla</strong> düğmeleri</li>
+    <li><strong>Şirket Yönetimi / Adamlarım / Muhbir Yönetimi / Kredi Çek</strong> düğmeleri</li>
+    <li><strong>Bankacılık / Arsa Yönetimi / Durum Raporu / Kumar Oyna</strong> düğmeleri</li>
+</ul>
+
+<p>Ürün listesinde bir ürün seçiliyken <strong>Enter</strong> tuşuna basarsanız hızlı bir "Satın Al / Sat / İptal" penceresi açılır.</p>
+
+<hr>
+
+<h2>4. Klavye Kısayolları</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Tuş</th>
+            <th>İşlev</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>F1</strong></td>
+            <td>Yardım sayfasını tarayıcıda açar</td>
+        </tr>
+        <tr>
+            <td><strong>F2</strong></td>
+            <td>Durum Raporu (nakit, şirketler, arsalar, krediler, adamlar — tam özet, sesli okunur)</td>
+        </tr>
+        <tr>
+            <td><strong>F3</strong></td>
+            <td>Geçmiş — bugüne kadar sesli okunmuş tüm mesajların listesi</td>
+        </tr>
+        <tr>
+            <td><strong>F5</strong></td>
+            <td>Gün Atla</td>
+        </tr>
+        <tr>
+            <td><strong>F6</strong></td>
+            <td>Arsa Yönetimi</td>
+        </tr>
+        <tr>
+            <td><strong>F7</strong></td>
+            <td>Adamlarım (Adam Yönetimi)</td>
+        </tr>
+        <tr>
+            <td><strong>Enter</strong></td>
+            <td>Ürün listesinde seçiliyken hızlı alım/satım penceresini açar</td>
+        </tr>
+        <tr>
+            <td><strong>C</strong></td>
+            <td>Güncel nakit miktarını sesli söyler</td>
+        </tr>
+        <tr>
+            <td><strong>D</strong></td>
+            <td>Seçili ürünün hangi kategoride olduğunu söyler</td>
+        </tr>
+        <tr>
+            <td><strong>E</strong></td>
+            <td>Envanter özeti + gün/nakit/şirket/adam/muhbir özetini birlikte okur</td>
+        </tr>
+        <tr>
+            <td><strong>I</strong></td>
+            <td><strong>Sadece</strong> envanterdeki ürünleri okur (diğer bilgiler olmadan, hızlı dinleme için)</td>
+        </tr>
+        <tr>
+            <td><strong>PageUp / PageDown</strong></td>
+            <td>Ses seviyesini artırır / azaltır</td>
+        </tr>
+        <tr>
+            <td><strong>Home / End</strong></td>
+            <td>Önceki / sonraki müzik parçasına geçer</td>
+        </tr>
+        <tr>
+            <td><strong>Yukarı / Aşağı ok</strong></td>
+            <td>Ürün listesinde gezinme (her adımda kısa bir tık sesi çalar)</td>
+        </tr>
+    </tbody>
+</table>
+
+<blockquote>
+    <strong>Not:</strong> E tuşu, envanterle birlikte gün/nakit/şirket/adam özetini de okur; I tuşu ise sadece envanterdeki ürünleri okur — elinizde ne olduğunu hızlıca kontrol etmek istediğinizde I daha pratiktir.
+</blockquote>
+
+<hr>
+
+<h2>5. Ticaret Sistemi</h2>
+
+<p>Oyunda 5 ana ürün kategorisi ve toplam 41 farklı ürün bulunur. Her ürünün bir başlangıç fiyatı ile bir alt/üst fiyat sınırı vardır; fiyatlar her gün rastgele dalgalanır (kategoriye özel küçük ek dalgalanmalarla birlikte).</p>
+
+<h3>Kategoriler</h3>
+
+<ul>
+    <li><strong>Karanlık Maddeler:</strong> Esrar, Eroin, Kokain, Amfetamin, Metamfetamin, Captagon, LSD, Ekstazi, Fentanil, Ketamin</li>
+    <li><strong>Mühimmat &amp; Silahlar:</strong> Tabanca, Tüfek, Mermi, El Bombası, Susturucu, Zırh Yeleği, Av Tüfeği, Pompalı Tüfek, Gece Görüş Dürbünü, Bıçak</li>
+    <li><strong>Döviz &amp; Değerli Metaller:</strong> Dolar, Euro, Sterlin, Altın, Gümüş, Platin, İsviçre Frangı, Paladyum, Elmas</li>
+    <li><strong>Kripto &amp; Dijital Varlıklar:</strong> Bitcoin, Ethereum, Monero, Solana, Ripple, Litecoin</li>
+    <li><strong>Kaçak Eşya &amp; Elektronik:</strong> Sahte Pasaport, Çalıntı Telefon, Kaçak Sigara, Kaçak İçki, Çalıntı Araç Parçası, Kaçak İlaç, Sahte Marka Ürün, Çalıntı Laptop</li>
+</ul>
+
+<h3>Alım / Satım</h3>
+
+<ol>
+    <li>Ürün listesinden bir ürün seçin (yukarı/aşağı ok).</li>
+    <li>"Adet" kutusuna miktar girin (veya Enter'la hızlı işlem penceresini açın).</li>
+    <li>"Satın Al" ya da "Sat" düğmesine basın.</li>
+</ol>
+
+<h3>Polis Riski</h3>
+
+<p>Elinizdeki <strong>yasa dışı ürünlerin</strong> (Karanlık Maddeler + Mühimmat &amp; Silahlar) toplam piyasa değeri arttıkça, gün sonunda polis tarafından yakalanma riskiniz de artar. Risk karekök ölçekiyle hesaplanır: büyük tek seferlik alımlarda risk artar ama doğrusal bir artış gibi anında tavana sıçramaz (üst sınır aşağı yukarı %22'dir, muhbir/uyarı gibi faktörlerle bu değişebilir). Yakalanırsanız nakdinizin %10'una el konulur ve 1-3 gün hapis cezası alırsınız (bkz. "Hapis" bölümü).</p>
+
+<hr>
+
+<h2>6. Şirketler</h2>
+
+<p>Ana ekrandaki <strong>"Şirket Yönetimi"</strong> penceresinden şirket kurabilir ve yönetebilirsiniz. Kurallar:</p>
+
+<ul>
+    <li>Her <strong>il</strong> için en fazla <strong>bir</strong> il-seviyesi şirketiniz olabilir.</li>
+    <li>Bir ilde şirketiniz varsa, o ilin <strong>ilçelerinde</strong> (her ilçe için ayrı ayrı) ek şirketler açabilirsiniz.</li>
+    <li>Farklı illerde istediğiniz kadar şirket açabilirsiniz.</li>
+    <li>Her şirket <strong>her gün otomatik olarak kâr üretir</strong> ve kendi kredi notunu yükseltir (kâr arttıkça kredi notu da artar).</li>
+    <li>Şirket kurarken bir isim ve konum (il/ilçe) belirlemeniz gerekir.</li>
+</ul>
+
+<h3>Şirket Tipleri</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Şirket</th>
+            <th style="text-align: right;">Kuruluş Maliyeti</th>
+            <th style="text-align: right;">Günlük Gider</th>
+            <th style="text-align: right;">Günlük Kâr Aralığı</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Oto Yıkama</td>
+            <td style="text-align: right;">5.000 TL</td>
+            <td style="text-align: right;">60 TL</td>
+            <td style="text-align: right;">80–220 TL</td>
+        </tr>
+        <tr>
+            <td>İnternet Kafe</td>
+            <td style="text-align: right;">6.000 TL</td>
+            <td style="text-align: right;">70 TL</td>
+            <td style="text-align: right;">90–250 TL</td>
+        </tr>
+        <tr>
+            <td>Tekstil Atölyesi</td>
+            <td style="text-align: right;">8.000 TL</td>
+            <td style="text-align: right;">80 TL</td>
+            <td style="text-align: right;">100–300 TL</td>
+        </tr>
+        <tr>
+            <td>Restoran</td>
+            <td style="text-align: right;">10.000 TL</td>
+            <td style="text-align: right;">150 TL</td>
+            <td style="text-align: right;">200–500 TL</td>
+        </tr>
+        <tr>
+            <td>Emlak Ofisi</td>
+            <td style="text-align: right;">18.000 TL</td>
+            <td style="text-align: right;">180 TL</td>
+            <td style="text-align: right;">260–650 TL</td>
+        </tr>
+        <tr>
+            <td>Nakliyat Şirketi</td>
+            <td style="text-align: right;">20.000 TL</td>
+            <td style="text-align: right;">220 TL</td>
+            <td style="text-align: right;">300–750 TL</td>
+        </tr>
+        <tr>
+            <td>Market Zinciri</td>
+            <td style="text-align: right;">22.000 TL</td>
+            <td style="text-align: right;">240 TL</td>
+            <td style="text-align: right;">330–800 TL</td>
+        </tr>
+        <tr>
+            <td>Gece Kulübü</td>
+            <td style="text-align: right;">25.000 TL</td>
+            <td style="text-align: right;">250 TL</td>
+            <td style="text-align: right;">400–900 TL</td>
+        </tr>
+        <tr>
+            <td>Kripto Madenciliği</td>
+            <td style="text-align: right;">30.000 TL</td>
+            <td style="text-align: right;">500 TL</td>
+            <td style="text-align: right;">600–1.400 TL</td>
+        </tr>
+        <tr>
+            <td>İnşaat Firması</td>
+            <td style="text-align: right;">35.000 TL</td>
+            <td style="text-align: right;">450 TL</td>
+            <td style="text-align: right;">550–1.300 TL</td>
+        </tr>
+        <tr>
+            <td>Otel</td>
+            <td style="text-align: right;">40.000 TL</td>
+            <td style="text-align: right;">550 TL</td>
+            <td style="text-align: right;">700–1.600 TL</td>
+        </tr>
+    </tbody>
+</table>
+
+<p><strong>Öneri:</strong> Düşük sermayeyle başlamak için Oto Yıkama, İnternet Kafe, Tekstil Atölyesi veya Restoran uygundur. Daha yüksek günlük kâr isterseniz Otel, İnşaat Firması, Kripto Madenciliği veya Gece Kulübü daha kârlıdır ama günlük giderleri de yüksektir. Oto Galeri, Emlak Ofisi, Nakliyat Şirketi ve Market Zinciri dengeli orta seçeneklerdir.</p>
+
+<h3>Aylık Kâr Duyurusu</h3>
+
+<p>Her şirketiniz kendi kuruluş gününden itibaren kendi 30 günlük takvimine göre ilerler. Her 30 günde bir (adamlarınızın maaş döngüsüyle aynı mantıkla), o ay boyunca o şirketin ürettiği <strong>toplam kâr</strong> sesli olarak duyurulur ("... bu ay X TL kâr elde ettiniz") ve sonraki ay için sayaç sıfırlanır. Günlük kâr birikimi kendisi sessizce işlenir (sadece geçmiş kaydına -F3- düşer); duyuru yalnızca ay tamamlandığında yapılır.</p>
+
+<h3>Şirket Giderleri ve İflas</h3>
+
+<p>Her gün, her şirket için ayrı ayrı işletme gideri (günlük upkeep) otomatik olarak nakdinizden düşülür. Nakdiniz yetmezse ilgili şirket kapanır (iflas eder).</p>
+
+<hr>
+
+<h2>7. Adamlar (Çalışanlar)</h2>
+
+<p><strong>"Adamlarım"</strong> penceresinden (F7) adam tutabilir ve şehirlere gönderebilirsiniz.</p>
+<ul>
+    <li>Tuttuğunuz her adam, gönderildiği şehirde <strong>kendi başına</strong> karaborsa işi çevirir;</li>
+    <li>Adam tutma maliyeti: <strong>5.000 TL</strong> (<code>EMPLOYEE_HIRE_FEE</code>)</li>
+    <li>Taban maaş: <strong>1.500 TL</strong> / 30 gün (<code>EMPLOYEE_BASE_SALARY</code>)</li>
+    <li>Her gün ürettiği kazanç <strong>150–600 TL</strong> arasında rastgeledir, tecrübe arttıkça (aktif gün sayısına bağlı, en fazla %50'ye kadar) bu üretim artar.</li>
+    <li>Her 30 günde bir adamın maaşı otomatik olarak hesabınızdan kesilir; maaş ödenemezse adam sizi terk eder.</li>
+    <li>Her il için en fazla bir adam gönderebilirsiniz (o il zaten doluysa başka adam gönderemezsiniz).</li>
+</ul>
+
+<p>Maaş ödendiğinde (30 günde bir) hem maaş tutarı hem de o dönem ürettiği toplam kazanç sesli olarak duyurulur.</p>
+
+<hr>
+
+<h2>8. Arsa Sistemi</h2>
+
+<p><strong>"Arsa Yönetimi"</strong> (F6) penceresinden arsa alıp satabilir, arsa teminatlı kredi çekebilirsiniz.</p>
+
+<h3>Arsa Tipleri</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Arsa Tipi</th>
+            <th style="text-align: right;">Başlangıç Fiyatı</th>
+            <th style="text-align: right;">Fiyat Aralığı</th>
+            <th>Açıklama</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Tarla</td>
+            <td style="text-align: right;">30.000 TL</td>
+            <td style="text-align: right;">15.000–100.000 TL</td>
+            <td>Tarım arazisi</td>
+        </tr>
+        <tr>
+            <td>Arsa</td>
+            <td style="text-align: right;">50.000 TL</td>
+            <td style="text-align: right;">25.000–150.000 TL</td>
+            <td>Standart inşaat arsası</td>
+        </tr>
+        <tr>
+            <td>Sanayi Arsa</td>
+            <td style="text-align: right;">80.000 TL</td>
+            <td style="text-align: right;">40.000–200.000 TL</td>
+            <td>Sanayi bölgesinde arsa</td>
+        </tr>
+        <tr>
+            <td>İmarlı Arsa</td>
+            <td style="text-align: right;">100.000 TL</td>
+            <td style="text-align: right;">50.000–300.000 TL</td>
+            <td>İmar izni olan değerli arsa</td>
+        </tr>
+        <tr>
+            <td>Sahil Arsa</td>
+            <td style="text-align: right;">200.000 TL</td>
+            <td style="text-align: right;">100.000–500.000 TL</td>
+            <td>Sahil şeridinde lüks arsa</td>
+        </tr>
+    </tbody>
+</table>
+
+<p>Arsa fiyatları her gün dalgalanır, ayrıca zaman zaman özel rastgele olaylar (deprem uyarısı, yeni metro hattı, imar affı, turizm bölgesi ilanı vb.) belirli arsa tiplerinin fiyatını ekstra etkileyebilir.</p>
+
+<ul>
+    <li><strong>Arsa satarken</strong> piyasa değerinden satarsınız (küçük bir komisyon kesintisiyle).</li>
+    <li><strong>Arsa teminatlı kredi</strong>, arsanın güncel değerine göre bir limitle (arsa tipine göre değişen bir çarpanla, örn. Arsa %70, Tarla %50) hesaplanır; taksitler her 30 günde bir otomatik çekilir. Taksit ödenemezse arsa bankaya devredilir (haciz).</li>
+</ul>
+
+<hr>
+
+<h2>9. Kredi ve Kredi Notu Sistemi</h2>
+
+<p>Kredi almak için önce en al az bir <strong>şirketiniz</strong> olmalı. Kredi notunuz, şirketlerinizin ortalama kredi notuna göre hesaplanır (şirketiniz yoksa 0'dır); kâr elde ettikçe kredi notunuz otomatik olarak yükselir.</p>
+
+<h3>Kredi Seviyeleri (Kredi Notu Kademeleri)</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Kademe</th>
+            <th style="text-align: right;">Min. Puan</th>
+            <th style="text-align: right;">Kredi Limiti Çarpanı</th>
+            <th style="text-align: right;">Faiz Oranı</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Sicil Bozuk</td>
+            <td style="text-align: right;">0</td>
+            <td style="text-align: right;">Kredi alınamaz</td>
+            <td style="text-align: right;">—</td>
+        </tr>
+        <tr>
+            <td>Başlangıç</td>
+            <td style="text-align: right;">50</td>
+            <td style="text-align: right;">1,5x</td>
+            <td style="text-align: right;">%35</td>
+        </tr>
+        <tr>
+            <td>Güvenilir İşletme</td>
+            <td style="text-align: right;">150</td>
+            <td style="text-align: right;">3,0x</td>
+            <td style="text-align: right;">%25</td>
+        </tr>
+        <tr>
+            <td>Kurumsal</td>
+            <td style="text-align: right;">300</td>
+            <td style="text-align: right;">5,0x</td>
+            <td style="text-align: right;">%15</td>
+        </tr>
+        <tr>
+            <td>Premium</td>
+            <td style="text-align: right;">500</td>
+            <td style="text-align: right;">8,0x</td>
+            <td style="text-align: right;">%8</td>
+        </tr>
+    </tbody>
+</table>
+
+<p><strong>Kredi limiti</strong>, şirketlerinizin aylık toplam gelirinin 2 katı çarpı kademe çarpanı olarak hesaplanır. "Banka Kredisi" penceresinden hazır paketler arasından seçim yaparsınız; taksitler her 30 günde bir otomatik olarak hesabınızdan çekilir. Krediyi istediğiniz zaman erken kapatabilirsiniz (kalan borcu tek seferde ödersiniz). Taksit ödenemezse kredi <strong>temerrüde</strong> düşer.</p>
+
+<hr>
+
+<h2>10. Muhbir Sistemi</h2>
+
+<p><strong>"Muhbir Yönetimi"</strong> penceresinden bir muhbir tutabilirsiniz:</p>
+
+<ul>
+    <li><strong>Tutma maliyeti:</strong> 8.000 TL</li>
+    <li><strong>Günlük ücret:</strong> 300 TL</li>
+</ul>
+
+<p>Muhbiriniz doğrudan polisle bağlantılıdır: gerçekleşecek <strong>her</strong> baskını bir gün öncesinden haber verir. Uyarı geldiğinde, ertesi gün mallarınızı hızlıca <strong>gerçek piyasa fiyatından</strong> elden çıkarıp o günkü polis kontrolünü tamamen atlatabilirsiniz.</p>
+<p>Günlük ücret ödenemezse muhbir sizi terk eder.</p>
+
+<hr>
+
+<h2>11. Rulet (Kumar)</h2>
+
+<p><strong>"Kumar Oyna"</strong> penceresinden standart Avrupa ruleti (0-36, 0 yeşil) oynayabilirsiniz. Aynı el içinde birden fazla bahis ekleyip hepsini birlikte oynatabilirsiniz:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Bahis Türü</th>
+            <th style="text-align: right;">Ödeme Katsayısı</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Kırmızı / Siyah</td>
+            <td style="text-align: right;">2x</td>
+        </tr>
+        <tr>
+            <td>Çift / Tek</td>
+            <td style="text-align: right;">2x</td>
+        </tr>
+        <tr>
+            <td>1-18 / 19-36</td>
+            <td style="text-align: right;">2x</td>
+        </tr>
+        <tr>
+            <td>1., 2., 3. Düzine (12'şer sayı)</td>
+            <td style="text-align: right;">3x</td>
+        </tr>
+        <tr>
+            <td>Tek Sayı (0-36 arası belirli bir sayı)</td>
+            <td style="text-align: right;">36x</td>
+        </tr>
+    </tbody>
+</table>
+
+<p>Bahislerinizi ekleyip "Bahisleri Bitir / Çarkı Çevir" düğmesine bastığınızda çark sesi çalar, sonuç (kazanan sayı/renk ve her bahsin durumu) sesli olarak bildirilir.</p>
+
+<hr>
+
+<h2>12. Hapis</h2>
+
+<p>Polis sizi yakalarsa (veya muhbir uyarısını görmezden gelip gerçekten baskın olursa) hapse girersiniz:</p>
+
+<ul>
+    <li>Nakdinizin <strong>%10'una</strong> el konulur.</li>
+    <li><strong>1-3 gün</strong> hapis cezası alırsınız (her gün ~15 saniye gerçek zamana denk gelir).</li>
+    <li>Hapisteyken şirketleriniz kâr üretmeye, adamlarınız çalışmaya, krediler işlemeye devam eder — ama alım/satım yapamaz, gün atlayamazsınız.</li>
+    <li>Hapis bitince biriken tüm olaylar (şirket kârı, adam maaşları, kredi taksitleri vb.) özetlenip sesli okunur.</li>
+</ul>
+
+<hr>
+
+<h2>13. Rastgele Olaylar</h2>
+
+<p>Her gün piyasayı etkileyen olaylar tetiklenebilir:</p>
+
+<ul>
+    <li><strong>Fiyat olayları:</strong> Belirli bir ürün kategorisinin (örn. Döviz &amp; Değerli Metaller) fiyatlarını toplu olarak yukarı/aşağı oynatan olaylar (ekonomik kriz, merkez bankası müdahalesi, dolar baskısı vb.)</li>
+    <li><strong>Arsa fiyatı olayları:</strong> Belirli arsa tiplerini etkileyen olaylar (deprem riski uyarısı, yeni metro hattı, imar affı, tarım desteklemesi, sahil kirliliği, organize sanayi bölgesi ilanı vb.)</li>
+    <li><strong>Nadir olaylar (çok düşük ihtimalli):</strong> Miras kalması, büyük ikramiye, gizli yatırımcı ortaklığı, kripto çılgınlığı gibi büyük kazanç olayları; yangın, sel felaketi, ortağın ihaneti gibi büyük kayıp olayları. Bu olaylar servetinizin belirli bir yüzdesi kadar (%8 ile %100 arasında değişen aralıklarla) ani kazanç/kayıp yaratır.</li>
+</ul>
+
+<hr>
+
+<h2>14. Günlük Mesaj ve Skor Tablosu</h2>
+
+<ul>
+    <li>Oyun her gün (gerçek takvim günü) sizi bir defaya mahsus <strong>"Günün Mesajı"</strong> ile karşılayabilir; bu, oyunla ilgili duyuru/ipucu niteliğindedir.</li>
+    <li>Skorunuz, her ~3 oyun gününde bir otomatik olarak güncellenir ve (ana menüden "Skor Gönderimi" açıksa) genel skor tablosuna gönderilir. Skor gönderimini ana menüden istediğiniz zaman açıp/kapatabilirsiniz.</li>
+    <li>Kullanıcı adınızı değiştirirseniz, skor tablosundaki isminiz de arka planda otomatik olarak güncellenir.</li>
+</ul>
+
+<hr>
+
+<h2>15. Hedefler (Referans Amaçlı)</h2>
+
+<p>Oyun sınırsız modda oynansa da, kendinize çıta koymak isterseniz aşağıdaki referans hedefleri kullanabilirsiniz:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Unvan</th>
+            <th>Süre</th>
+            <th style="text-align: right;">Hedef Nakit</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Çırak Tüccar</td>
+            <td>30 gün</td>
+            <td style="text-align: right;">25.000 TL</td>
+        </tr>
+        <tr>
+            <td>Usta Tüccar</td>
+            <td>45 gün</td>
+            <td style="text-align: right;">75.000 TL</td>
+        </tr>
+        <tr>
+            <td>Efsane Tüccar</td>
+            <td>60 gün</td>
+            <td style="text-align: right;">200.000 TL</td>
+        </tr>
+        <tr>
+            <td>Karaborsa Kralı</td>
+            <td>90 gün</td>
+            <td style="text-align: right;">500.000 TL</td>
+        </tr>
+    </tbody>
+</table>
+
+<hr>
+
+<h2>16. Ses ve Müzik</h2>
+
+<ul>
+    <li><strong>PageUp / PageDown</strong> ile ses seviyesini ayarlayabilirsiniz.</li>
+    <li><strong>Home / End</strong> ile müzik parçaları arasında geçiş yapabilirsiniz.</li>
+    <li>Metin/adet giriş alanlarına yazarken bir klavye tıklama sesi duyulur.</li>
+    <li>Önemli olaylarda (alım-satım, gün atlama, polis baskını, hapis kapısı, çark dönmesi vb.) ayrı efekt sesleri çalar.</li>
+</ul>
+
+<hr>
+
+<h2>17. Genel İpuçları</h2>
+
+<ul>
+    <li>Oyunun başında büyük risk almadan (Kaçak Eşya &amp; Elektronik veya Döviz &amp; Değerli Metaller gibi göreli düşük riskli kategoriler) küçük sermaye biriktirmek, sonra şirket/arsa/adam yatırımlarına geçmek mantıklıdır.</li>
+    <li>Karanlık Maddeler ve Mühimmat &amp; Silahlar kategorileri en yüksek kâr potansiyeline sahip olsa da polis riskini doğrudan artırır — büyük stoklar tutmak yerine sık sık elden çıkarmak riski dengeler.</li>
+    <li>Muhbir tutmak, özellikle yasa dışı ürün stoklarken düzenli baskın riskinden korunmanın en güvenli yoludur.</li>
+    <li>Birden fazla ilde/ilçede şirket ve adam açmak, günlük pasif geliri hızla katlar; ama her şirketin günlük gideri olduğunu, nakit akışını bozmamaya dikkat edin.</li>
+    <li>Kredi çekmeden önce kredi notunuzu (şirket kârlılığıyla) yükseltmek, hem daha yüksek limit hem daha düşük faiz sağlar.</li>
+    <li>F2 (Durum Raporu) ve F3 (Geçmiş) tuşları, uzun süre "Gün Atla" ile hızlı ilerlerken kaçırdığınız duyuruları yakalamak için en pratik araçlardır.</li>
+</ul>
+
+<hr>
+
+<p><em>Yasal Uyarı<br>
+Bu oyunda yer alan kara borsa, ticaret, yasa dışı işlemler ve ekonomik simülasyonlar tamamen kurgusaldır. Oyun içerisindeki hiçbir mekanik, senaryo veya yönlendirme gerçek hayattaki yasa dışı faaliyetleri özendirmez, teşvik etmez veya desteklemez. Tamamen eğlence amaçlı tasarlanmış kurgusal bir simülasyondur.</em></p>

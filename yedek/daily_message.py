@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 """
 daily_message.py
 -----------------
@@ -36,7 +36,7 @@ DATA_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
 LAST_SEEN_PATH = os.path.join(DATA_DIR, "gunun_mesaji_son_tarih.txt")
 
 MESSAGE_URL = "https://raw.githubusercontent.com/MUHAMMED4342/gunun_mesaji/main/mesaj"
-REQUEST_TIMEOUT = 6  
+REQUEST_TIMEOUT = 6  # saniye - internet yavaş/yoksa oyunu bekletmemek için
 
 
 def _parse_date(date_str: str):

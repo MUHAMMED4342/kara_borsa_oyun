@@ -24,29 +24,6 @@ def speak(text: str):
     log_history(text)
 
 
-SOUND_TYPING = resource_path("sounds/typing.wav")
-
-
-def bind_typing_sound(ctrl, audio_manager):
-    """Verilen metin giriş kontrolüne (TextCtrl, SpinCtrl vb.) her
-    karakter yazıldığında typing.wav çalacak şekilde bağlar."""
-    def _on_type(event):
-        if os.path.exists(SOUND_TYPING):
-            audio_manager.play_sound(SOUND_TYPING)
-        event.Skip()
-    ctrl.Bind(wx.EVT_TEXT, _on_type)
-
-
-def bind_typing_sound_to_dialog(dialog, audio_manager):
-    """wx.TextEntryDialog gibi içindeki TextCtrl'e doğrudan erişilemeyen
-    hazır pencerelerde, alt kontrolleri tarayıp bulunan TextCtrl'e ses
-    bağlar."""
-    for child in dialog.GetChildren():
-        if isinstance(child, wx.TextCtrl):
-            bind_typing_sound(child, audio_manager)
-            break
-
-
 SPIN_SOUND_FALLBACK_SECONDS = 4.0
 
 
@@ -403,7 +380,6 @@ class MainMenu(wx.Dialog):
             "Kullanıcı Adı Değiştir",
             value=current_username,
         )
-        bind_typing_sound_to_dialog(dlg, self.audio)
         result = dlg.ShowModal()
         new_username = dlg.GetValue().strip()
         dlg.Destroy()
@@ -457,7 +433,6 @@ class MainMenu(wx.Dialog):
             return
 
         dlg = wx.TextEntryDialog(self, "Kullanıcı adınız:", "Kullanıcı Adı")
-        bind_typing_sound_to_dialog(dlg, self.audio)
         if dlg.ShowModal() == wx.ID_OK:
             username = dlg.GetValue().strip()
             dlg.Destroy()
@@ -854,7 +829,7 @@ class DailyMessageDialog(wx.Dialog):
         self.text_ctrl.Bind(wx.EVT_TEXT_URL, self.on_url_click)
 
     def on_url_click(self, event: wx.TextUrlEvent):
-        
+        # Sadece sol tık bırakıldığında (link üstünde) tarayıcıyı aç.
         mouse_event = event.GetMouseEvent()
         if mouse_event.LeftUp():
             url = self.text_ctrl.GetRange(event.GetURLStart(), event.GetURLEnd())
@@ -939,7 +914,6 @@ class CompanyDialog(wx.Dialog):
         name_sizer = wx.BoxSizer(wx.HORIZONTAL)
         name_sizer.Add(wx.StaticText(panel, label="Şirket Adı:"), 0, wx.ALL | wx.CENTER, 5)
         self.name_input = wx.TextCtrl(panel)
-        bind_typing_sound(self.name_input, self.parent.audio)
         name_sizer.Add(self.name_input, 1, wx.ALL | wx.CENTER, 5)
         sizer.Add(name_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
@@ -1710,7 +1684,6 @@ class GamblingDialog(wx.Dialog):
         number_sizer.Add(wx.StaticText(panel, label="Sayı (yalnızca 'Tek Sayı' için, 0-36):"),
                           0, wx.ALL | wx.CENTER, 5)
         self.number_spinner = wx.SpinCtrl(panel, value="0", min=0, max=36)
-        bind_typing_sound(self.number_spinner, self.parent.audio)
         self.number_spinner.Disable()
         number_sizer.Add(self.number_spinner, 0, wx.ALL | wx.CENTER, 5)
         sizer.Add(number_sizer, 0, wx.EXPAND | wx.ALL, 5)
@@ -1718,7 +1691,6 @@ class GamblingDialog(wx.Dialog):
         amount_sizer = wx.BoxSizer(wx.HORIZONTAL)
         amount_sizer.Add(wx.StaticText(panel, label="Bahis Tutarı (TL):"), 0, wx.ALL | wx.CENTER, 5)
         self.amount_spinner = wx.SpinCtrl(panel, value="100", min=1, max=100000000)
-        bind_typing_sound(self.amount_spinner, self.parent.audio)
         amount_sizer.Add(self.amount_spinner, 0, wx.ALL | wx.CENTER, 5)
         sizer.Add(amount_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
@@ -1954,12 +1926,12 @@ class JailDialog(wx.Dialog):
         keycode = event.GetKeyCode()
 
         if self.is_running:
-            
-            
-            
-            
-            
-            
+            # Hapis süresi işlerken hiçbir tuşu dışarı (ana pencereye veya
+            # başka bir pencereye) sızdırma. Art arda hızlıca farklı
+            # tuşlara basılması, olayların birikip oyunun donmasına/"yanıt
+            # vermiyor" durumuna düşmesine neden oluyordu; artık bu süre
+            # boyunca tüm tuşlar burada tamamen yutulur (event.Skip()
+            # ÇAĞRILMAZ).
             return
 
         if keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):

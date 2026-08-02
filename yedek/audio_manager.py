@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 """
 audio_manager.py
 -----------------
@@ -27,13 +27,13 @@ except Exception:
 class AudioManager:
     """Arka plan müziği ve kısa efekt seslerini yöneten sınıf."""
 
-    
-    
-    
-    
-    
-    
-    
+    # Process genelinde TEK bir global pygame.mixer kaynağı var.
+    # Birden fazla AudioManager() oluşturulduğunda (her dialog kendi
+    # AudioManager'ını yaratıyor) pygame.mixer.init()'in tekrar tekrar
+    # çağrılması, özellikle Windows ses sürücülerinde (WASAPI/DirectSound)
+    # cihazın arka planda yeniden kurulmasına (teardown/rebuild) yol açıp
+    # ana thread'i birkaç saniye bloke edebiliyor. Bu yüzden init'i
+    # sınıf seviyesinde bir bayrakla SADECE BİR KEZ çalıştırıyoruz.
     _mixer_initialized = False
 
     def __init__(self, initial_music_volume: float = 0.5, initial_sfx_volume: float = 0.8):
@@ -45,9 +45,9 @@ class AudioManager:
 
         if _PYGAME_AVAILABLE:
             if AudioManager._mixer_initialized:
-                
-                
-                
+                # Mixer zaten başka bir AudioManager örneği tarafından
+                # başlatıldı; tekrar init etmeden mevcut global kaynağı
+                # kullan.
                 self.available = True
             else:
                 try:
@@ -69,7 +69,7 @@ class AudioManager:
             return
         
         try:
-            
+            # Eğer aynı müzik çalıyorsa tekrar yükleme
             if self.current_music == path and self.music_playing:
                 return
                 

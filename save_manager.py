@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 """
 save_manager.py
 ---------------
@@ -13,18 +13,18 @@ import re
 import hmac
 import hashlib
 
-# AppData klasörü
+
 APP_NAME = "KaraborsaSimulasyonu"
 APP_AUTHOR = "Karaborsa"
 SAVE_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
 
-# Kayıt dosyalarını imzalamak için kullanılan gizli anahtar.
-# NOT: Bu anahtar istemci koduyla birlikte dağıtıldığı için %100 gizli
-# tutulamaz; kararlı bir kullanıcı anahtarı koddan çıkarıp kayıtları
-# yeniden imzalayabilir. Bu mekanizma "dosyayı aç, düzenle, kaydet"
-# seviyesindeki kolay hile denemelerini engellemek içindir, tam bir
-# güvenlik garantisi vermez. Gerçek anti-cheat için sunucu taraflı
-# doğrulama gerekir.
+
+
+
+
+
+
+
 _SAVE_SECRET_KEY = b"KaraborsaSimulasyonu::save-integrity::v1::9f3a7c1e"
 
 
@@ -105,11 +105,11 @@ def save_game(username: str, game_state) -> bool:
             "prices": game_state.prices,
             "in_jail": getattr(game_state, "in_jail", False),
             "jail_days": getattr(game_state, "jail_days", 0),
-            # ÖNEMLİ: Oyun artık çoklu şirket sistemi (il + ilçe bazlı)
-            # kullanıyor; tüm şirketler bu listede saklanıyor. Aşağıdaki
-            # "company_*" tekil alanlar SADECE eski/harici araçlarla
-            # geriye dönük uyumluluk için tutuluyor ve artık gerçek veri
-            # taşımıyor - asıl kaynak her zaman "companies" listesidir.
+            
+            
+            
+            
+            
             "companies": getattr(game_state, "companies", []),
             "has_company": getattr(game_state, "has_company", False),
             "company_type": getattr(game_state, "company_type", ""),
@@ -162,10 +162,10 @@ def load_game(username: str) -> dict:
     except Exception:
         pass
 
-    # Geriye dönük uyumluluk: imza sistemi eklenmeden önce kaydedilmiş
-    # eski (düz base64+JSON) dosyaları da okuyabiliyoruz. Böyle bir kayıt
-    # bulunursa bir sonraki save_game() çağrısında otomatik olarak
-    # imzalı yeni formata dönüştürülür.
+    
+    
+    
+    
     try:
         with open(save_path, 'rb') as f:
             encoded_data = f.read()
@@ -252,3 +252,42 @@ def delete_all_saves() -> bool:
     except Exception as e:
         print(f"[Hata] Tüm kayıtlar silinemedi: {e}")
         return False
+
+
+_HEAT_RESET_FLAG_NAME = "_heat_reset_v1.flag"
+
+
+def apply_one_time_heat_reset() -> None:
+    """TEK SEFERLİK migrasyon: eski polis riski formülü police_heat'i
+    hiç düşürmediği için birçok oyuncunun kaydı 100'e (tavan) yapışmış
+    durumda kalmıştı. Bu fonksiyon her oyuncunun kendi makinesinde,
+    oyun ilk açıldığında (güncelleme sonrası) otomatik olarak bir kez
+    çalışır: o makinedeki TÜM kayıtların police_heat'ini 0'a çeker ve
+    SAVE_DIR içine bir işaret dosyası bırakır. İşaret dosyası varsa
+    hiçbir şey yapmadan hemen çıkar - yani sonraki her açılışta
+    (mevcut oyun akışını etkilemeden) sessizce atlanır.
+
+    main.py içinde, App.OnInit çağrılmadan önce bir kez çağrılması
+    yeterlidir."""
+    os.makedirs(SAVE_DIR, exist_ok=True)
+    flag_path = os.path.join(SAVE_DIR, _HEAT_RESET_FLAG_NAME)
+
+    if os.path.exists(flag_path):
+        return
+
+    for username in list_saves():
+        try:
+            data = load_game(username)
+            if data is None:
+                continue
+            if data.get("police_heat", 0):
+                data["police_heat"] = 0
+                _write_signed_save(get_save_path(username), data)
+        except Exception as e:
+            print(f"[Hata] '{username}' için police_heat sıfırlanamadı: {e}")
+
+    try:
+        with open(flag_path, 'w', encoding='utf-8') as f:
+            f.write("done")
+    except Exception as e:
+        print(f"[Hata] İşaret dosyası yazılamadı: {e}")

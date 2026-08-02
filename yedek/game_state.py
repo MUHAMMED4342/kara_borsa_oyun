@@ -1,5 +1,5 @@
-
-
+# game_state.py - Oyun durumu (GameState) ve yardımcı fonksiyonlar
+# -*- coding: utf-8 -*-
 
 import os
 import random
@@ -33,14 +33,14 @@ def resource_path(relative_path: str) -> str:
     return os.path.join(base_path, relative_path)
 
 
-
-
-
-
-
-
-
-
+# ---------------------------------------------------------------------------
+# ADAM TUTMA - isim/şehir havuzları
+# ---------------------------------------------------------------------------
+# insanlar.txt ve iller.txt TEK KAYNAKTIR (oyunun ana klasöründe,
+# resource_path ile bulunan yerde aranır). Dosya yoksa/bozuksa/boşsa
+# ilgili havuz boş liste olur; "Adam Yönetimi" ekranı bunu zaten
+# "Tutabileceğiniz kimse kalmadı" / "Boş şehir kalmadı" mesajlarıyla
+# gösteriyor, oyun çökmez.
 def _load_people_pool() -> list:
     return load_names_from_file(resource_path("insanlar.txt"))
 
@@ -118,9 +118,9 @@ ID_LOAD = wx.NewIdRef()
 ID_NEW = wx.NewIdRef()
 
 
-
-
-
+# ---------------------------------------------------------------------------
+# RULET (KUMAR) - standart Avrupa ruleti düzeni (tek sıfır, 0-36)
+# ---------------------------------------------------------------------------
 ROULETTE_RED_NUMBERS = {
     1, 3, 5, 7, 9, 12, 14, 16, 18,
     19, 21, 23, 25, 27, 30, 32, 34, 36,
@@ -150,9 +150,9 @@ def get_roulette_color(number: int) -> str:
 
 class GameState:
     STARTING_CASH = 15000.0
-    
-    
-    
+    # "Temiz para" / banka faizi mantığı tamamen kaldırıldı: kazanılan her
+    # şey doğrudan nakde (cash) geçer. Faiz artık SADECE kredi borcunda var
+    # (bkz. take_loan / take_land_loan içindeki interest_rate).
 
     def __init__(self, load_data=None):
         self.lands = []
@@ -160,8 +160,8 @@ class GameState:
         
         if load_data:
             self.cash = load_data.get("cash", self.STARTING_CASH)
-            
-            
+            # Eski kayıtlarda "clean_money" olabilir; artık ayrı bir para
+            # etiketi olmadığı için doğrudan nakde katılır.
             self.cash += load_data.get("clean_money", 0.0)
             self.day = load_data.get("day", 1)
             self.inventory = load_data.get("inventory", {name: 0 for name in PRODUCTS})
@@ -169,11 +169,11 @@ class GameState:
             self.in_jail = load_data.get("in_jail", False)
             self.jail_days = load_data.get("jail_days", 0)
 
-            
-            
-            
-            
-            
+            # ŞİRKETLER: artık tekil alanlar yerine bir liste (self.companies)
+            # kullanılıyor; böylece aynı anda farklı şehirlerde birden fazla
+            # şirket sahibi olunabiliyor. Eski kayıtlarda (companies alanı
+            # olmayan) tekil "has_company/company_type/..." alanları varsa,
+            # bunlar otomatik olarak tek elemanlı bir listeye çevrilir.
             self.companies = load_data.get("companies")
             if self.companies is None:
                 self.companies = []
@@ -191,12 +191,12 @@ class GameState:
                         "upkeep_paid": load_data.get("company_upkeep_paid", 0.0),
                     })
 
-            
-            
-            
-            
-            
-            
+            # Eski kayıtlarda "province"/"district" alanları yoktur (ilçe
+            # bazlı şirket sistemi sonradan eklendi). Var olan "city"
+            # değerinden bunları geriye dönük olarak türetiyoruz; çözülemezse
+            # (ör. artık listede olmayan eski bir şehir) province olarak
+            # doğrudan city'yi, district'i None kabul ediyoruz - böylece
+            # eski kayıtlar bozulmadan çalışmaya devam eder.
             for c in self.companies:
                 if "province" not in c or "district" not in c:
                     valid, province, district = resolve_company_location(c.get("city", ""))
@@ -350,7 +350,7 @@ class GameState:
         used = [c.get("id", 0) for c in self.companies]
         return (max(used) + 1) if used else 1
 
-    
+    # ----- ARSA METOTLARI -----
     
     def get_land_price(self, land_type: str) -> float:
         if land_type in self.land_prices:
@@ -473,9 +473,9 @@ class GameState:
         total_debt = round(amount * (1 + interest_rate), 2)
         installment_amount = round(total_debt / installments, 2)
         
-        
-        
-        
+        # Kredi tutarı doğrudan nakde (cash) eklenir. Artık ayrı bir
+        # "temiz para" etiketi yok; kredi borcu üzerindeki %15 faiz tek
+        # faiz kaynağıdır.
         self.cash += amount
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
@@ -599,9 +599,7 @@ class GameState:
         if self.in_jail:
             base += f" | HAPİSTE {self.jail_days} gün"
         if self.police_heat > 0:
-            illegal_value = self._illegal_inventory_value()
-            display_risk = min(30, calculate_police_risk(illegal_value) * (1 + self.police_heat / 100) * 100)
-            base += f" | Polis riski: %{display_risk:.0f}"
+            base += f" | Polis riski: %{self.police_heat:.0f}"
         return base
 
     def get_average_credit_score(self) -> int:
@@ -637,20 +635,6 @@ class GameState:
             total_monthly_income += (c.get("monthly_revenue", 0.0) / days_this_month) * 30
         base_limit = total_monthly_income * 2
         return base_limit * tier["loan_limit_multiplier"]
-
-    def inventory_items_text(self) -> str:
-        """Sadece envanterdeki ürünleri okur; nakit, gün, şirket, arsa,
-        adam gibi diğer bilgileri İÇERMEZ. 'I' kısayolu bunu kullanır."""
-        parts = ["Envanter özeti:"]
-        has_item = False
-        for category, names in PRODUCT_CATEGORIES.items():
-            owned = [f"{name}: {self.inventory.get(name, 0)} adet" for name in names if self.inventory.get(name, 0) > 0]
-            if owned:
-                has_item = True
-                parts.append(f"{category}: " + ", ".join(owned))
-        if not has_item:
-            parts.append("Envanterinizde ürün yok.")
-        return " ".join(parts)
 
     def inventory_summary_text(self) -> str:
         parts = [self.wallet_text(), "Envanter özeti:"]
@@ -716,7 +700,7 @@ class GameState:
         speak(f"{quantity} adet {name} satıldı, {format_tl(total_price)} TL kazanıldı")
         return True, total_price, f"{quantity} adet {name} satıldı"
 
-    
+    # ----- RULET / KUMAR -----
 
     def evaluate_roulette_bet(self, bet: dict, winning_number: int, winning_color: str) -> tuple:
         """Tek bir bahsin kazanıp kazanmadığını ve TOPLAM geri ödeme
@@ -811,7 +795,7 @@ class GameState:
             "bet_results": bet_results,
         }
 
-    
+    # ----- ADAM TUTMA METOTLARI (Şirketten TAMAMEN bağımsız) -----
 
     def get_available_people(self) -> list:
         """Henüz kimse tarafından tutulmamış isimlerin listesi."""
@@ -914,7 +898,7 @@ class GameState:
         for e in self.employees:
             e["days_active"] += 1
 
-            
+            # Deneyim arttıkça (maks +%50) biraz daha fazla üretir.
             experience_bonus = min(0.5, e["days_active"] / 200)
             gross = round(random.uniform(EMPLOYEE_DAILY_MIN, EMPLOYEE_DAILY_MAX) * (1 + experience_bonus), 2)
 
@@ -949,7 +933,7 @@ class GameState:
         return messages
 
     def go_to_jail(self, days: int) -> str:
-        seized = round(self.cash * 0.10, 2)
+        seized = round(self.cash * 0.25, 2)
         if seized > 0:
             self.cash -= seized
             if self.cash < 0:
@@ -957,7 +941,7 @@ class GameState:
         self.in_jail = True
         self.jail_days = days
         if seized > 0:
-            return f"{days} gün hapis cezası. Ayrıca paranızın yüzde 10'una ({format_tl(seized)} TL) el konuldu"
+            return f"{days} gün hapis cezası. Ayrıca paranızın çeyreğine ({format_tl(seized)} TL) el konuldu"
         return f"{days} gün hapis cezası"
 
     def setup_company(self, company_type: str, company_name: str, city: str = "") -> tuple:
@@ -1043,21 +1027,13 @@ class GameState:
             return
         self.cash -= amount
 
-    def advance_companies_day(self) -> list:
+    def advance_companies_day(self):
         """Her şirket için aktif gün sayısını artırır ve 30 günde bir
-        (adamlardaki maaş duyurusuyla aynı mantıkla) o ayki toplam kârı
-        seslendirilmek üzere bildirip aylık ciroyu sıfırlar. Her şirket
-        kendi takvimine göre ilerler."""
-        messages = []
+        aylık ciroyu sıfırlar. Her şirket kendi takvimine göre ilerler."""
         for c in self.companies:
             c["days_active"] = c.get("days_active", 0) + 1
             if c["days_active"] % 30 == 0:
-                monthly_revenue = c.get("monthly_revenue", 0.0)
-                messages.append(
-                    f"{c['name']} ({c['city']}): bu ay {format_tl(monthly_revenue)} TL kâr elde ettiniz"
-                )
                 c["monthly_revenue"] = 0.0
-        return messages
 
     def process_company_daily(self) -> str:
         """Her gün: sahip olduğunuz HER şirket ayrı ayrı rastgele bir
@@ -1086,7 +1062,7 @@ class GameState:
 
         return " ".join(messages)
 
-    
+    # ----- MUHBİR METOTLARI -----
 
     def hire_informant(self) -> tuple:
         if self.has_informant:
@@ -1246,8 +1222,8 @@ class GameState:
         self.loan_installment_amount = round(self.loan_total_debt / installments, 2)
         self.loan_days_remaining = installments * 30
         self.loan_days_until_installment = 30
-        
-        
+        # Şirketle ilgili temiz para (clean_money) mantığı kaldırıldı:
+        # kredi tutarı sadece cash'e eklenir.
         self.cash += amount
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
@@ -1342,15 +1318,10 @@ class GameState:
 
     def update_police_heat(self) -> None:
         """Günlük olarak çağrılır: elde bulunan yasa dışı malın değerine
-        göre birikimli polis riskini (heat) büyütür. Envanter düşükse ya
-        da yoksa heat zamanla geriler. Bir yakalanma zarı atmaz, sadece
-        heat'i günceller."""
+        göre birikimli polis riskini (heat) büyütür. Bir yakalanma zarı
+        atmaz, sadece heat'i günceller."""
         illegal_value = self._illegal_inventory_value()
-        if illegal_value > 0:
-            gain = min(12, 5 * ((illegal_value / 130000) ** 0.5))
-            self.police_heat = min(100, self.police_heat + gain)
-        else:
-            self.police_heat = max(0, self.police_heat - 10)
+        self.police_heat = min(100, self.police_heat + (illegal_value / 50000) * 10)
 
     def roll_police_catch(self) -> bool:
         """Heat'i DEĞİŞTİRMEDEN, mevcut duruma göre bir yakalanma zarı
@@ -1359,7 +1330,7 @@ class GameState:
         gerçekte olacak baskınla birebir aynı ihtimali kullanmış olur."""
         illegal_value = self._illegal_inventory_value()
         risk = calculate_police_risk(illegal_value) * (1 + self.police_heat / 100)
-        return random.random() < min(0.30, risk)
+        return random.random() < risk
 
     def police_check(self) -> dict:
         """Muhbiri olmayan oyuncular için: heat güncellenir ve aynı anda
@@ -1412,9 +1383,9 @@ class GameState:
                 self.highest_cash = self.cash
             return event["message_template"].format(amount=f"{format_tl(amount)}")
         elif etype == "cash_loss":
-            
-            
-            
+            # Artık sabit bir TL aralığı değil, toplam servetin yüzdesi
+            # kadar kayıp (bkz. game_data.py). Yeterli nakit olmasa bile
+            # tutar tam olarak düşülür; bakiye eksiye düşebilir.
             wealth = self._total_wealth()
             pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
             amount = round(wealth * pct, 2)
@@ -1433,18 +1404,18 @@ class GameState:
                 return event.get("zero_message", f"{event['name']}: kayıp yok")
             return event["message_template"].format(category=category, count=total_lost)
         elif etype == "inventory_gain":
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+            # GERÇEKÇİLİK DÜZELTMESİ: Eskiden kazanılan miktar SADECE mevcut
+            # stoğun yüzdesi olarak hesaplanıyordu; elinizde o kategoriden
+            # hiç ürün yoksa (0 * yüzde = 0) tedarikçi "mal getirdi" deyip
+            # aslında hiçbir şey vermiyordu. Gerçek hayatta bir tedarikçi,
+            # elinizde o üründen hiç olmasa bile size mal getirebilir/teslim
+            # edebilir. Bu yüzden artık iki durum ayrı ele alınıyor:
+            #   - Elinizde zaten stok varsa: eskisi gibi stoğunuza ORANLI
+            #     bonus (düzenli müşteriye daha fazla mal gelir mantığı).
+            #   - Elinizde hiç yoksa: ürünün güncel fiyatına göre ölçeklenen,
+            #     makul bir TABAN miktar verilir (ucuz ürünlerden daha çok,
+            #     pahalı ürünlerden daha az adet gelir) - böylece tedarikçi
+            #     gerçekten mal teslim etmiş olur.
             category = event["category"]
             pct = random.uniform(event["min_pct"], event["max_pct"])
             total_gained = 0
@@ -1454,9 +1425,9 @@ class GameState:
                     gained = max(1, int(round(qty * pct)))
                 else:
                     price = self.prices.get(name) or PRODUCTS.get(name, {}).get("base_price", 500)
-                    
-                    
-                    
+                    # Yaklaşık 300-1500 TL değerinde mal, birim fiyata göre
+                    # adede çevrilir (ör. ucuz mermi -> çok adet, pahalı
+                    # tüfek -> az adet).
                     baseline_value = random.uniform(300, 1500) * (pct / event["max_pct"])
                     gained = max(1, int(round(baseline_value / max(price, 1))))
                 self.inventory[name] = qty + gained
@@ -1465,8 +1436,8 @@ class GameState:
                 return event.get("zero_message", f"{event['name']}: kazanç yok")
             return event["message_template"].format(category=category, count=total_gained)
         elif etype == "raid_combo":
-            
-            
+            # Nakit kısmı toplam servetin yüzdesi kadar çekiliyor (bkz.
+            # game_data.py); yetersiz nakit varsa bakiye eksiye düşebilir.
             wealth = self._total_wealth()
             cash_pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
             cash_loss = round(wealth * cash_pct, 2)
@@ -1483,9 +1454,9 @@ class GameState:
                 return event.get("zero_message", f"{event['name']}: kayıp yok")
             return event["message_template"].format(amount=f"{format_tl(cash_loss)}", category=category, count=total_lost)
         elif etype == "company_audit":
-            
-            
-            
+            # Şirketle ilgili temiz para (clean_money) mantığı tamamen
+            # kaldırıldı: bu olayın artık hiçbir mali etkisi yok, sadece
+            # bilgilendirme amaçlı geçiyor.
             return "Maliye denetimi geçti"
         elif etype == "company_reputation":
             if self.companies:
@@ -1502,12 +1473,12 @@ class GameState:
                 return event["message_template"]
             return f"{event['name']}: Şirketiniz olmadığı için etkilenmediniz"
         elif etype == "land_price":
-            
-            
-            
-            
-            
-            
+            # GERÇEKÇİLİK DÜZELTMESİ: Eskiden bu olay mesajda "Tarla" veya
+            # "Sahil arsa" gibi belirli bir tür söylese bile, kod HER ZAMAN
+            # bütün arsa türlerinin fiyatını birden değiştiriyordu. Artık
+            # olay isteğe bağlı bir "land_type" alanı (tek tür ya da liste)
+            # belirtebiliyor; belirtilmemişse (gerçekten genel olaylarda)
+            # eskisi gibi tüm türleri etkiler.
             pct = random.uniform(event["min_pct"], event["max_pct"])
             land_type_filter = event.get("land_type")
             if land_type_filter is None:
@@ -1531,8 +1502,8 @@ class GameState:
                 self.highest_cash = self.cash
             return event["message_template"].format(amount=f"{format_tl(amount)}")
         elif etype == "disaster":
-            
-            
+            # RARE_EVENTS'teki "Büyük Felaket": toplam servetin bir
+            # yüzdesi kadar nakit kaybı.
             wealth = self._total_wealth()
             pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
             amount = round(wealth * pct, 2)
@@ -1547,12 +1518,12 @@ class GameState:
         if random.random() >= probability:
             return []
         
-        
+        # Normal olaylar
         count = random.randint(min_events, min(max_events, len(EVENTS)))
         chosen = random.sample(EVENTS, count)
         results = [self.apply_event(event) for event in chosen]
         
-        
+        # Nadir olaylar (bağımsız kontrol)
         for rare in RARE_EVENTS:
             if random.random() < rare.get("chance", 0.001):
                 results.append(self.apply_event(rare))
@@ -1660,5 +1631,6 @@ def create_help_file(path):
         f.write(help_content)
 
 
-
-
+# ============================================================
+# ARSA YÖNETİM DİALOGU (Mevduat KALDIRILDI)
+# ============================================================

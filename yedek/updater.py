@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 """
 updater.py
 ----------
@@ -66,15 +66,15 @@ import subprocess
 import appdirs
 import wx
 
-CURRENT_VERSION = "1.0.0"  
+CURRENT_VERSION = "1.0.0"  # SADECE ilk sürüm için başlangıç değeri; bkz. aşağıdaki not
 VERSION_URL = "https://github.com/MUHAMMED4342/kara_borsa_oyun/raw/refs/heads/main/versiyon.txt"
 DOWNLOAD_URL = (
     "https://github.com/MUHAMMED4342/kara_borsa_oyun/releases/latest/"
     "download/KaraborsaSimulasyonu.exe"
 )
 
-
-
+# save_manager.py ile aynı uygulama kimliği — aynı AppData klasörünü
+# paylaşıyoruz (ayrı bir alt klasörde, kayıt dosyalarıyla karışmasın).
 _APP_NAME = "KaraborsaSimulasyonu"
 _APP_AUTHOR = "Karaborsa"
 
@@ -97,8 +97,8 @@ def _version_tuple(v: str):
     try:
         return tuple(int(p) for p in v.strip().split("."))
     except Exception:
-        
-        
+        # Sunucudan beklenmeyen bir formatta veri gelirse güncelleme
+        # yokmuş gibi davranmak için en düşük değeri döndür.
         return (0,)
 
 
@@ -174,9 +174,9 @@ def _ensure_helper_exe_ready():
     dest = _get_helper_exe_path()
 
     if not bundled:
-        
-        
-        
+        # Gömülü kopya yok (script modu ya da eski bir build). Daha
+        # önce kopyalanmış bir yardımcı zaten varsa onu kullanmaya
+        # devam edelim.
         return dest if os.path.exists(dest) else None
 
     try:
@@ -313,7 +313,7 @@ def _check_and_download(ask_user_callback=None) -> None:
     if not success:
         return
 
-    
+    # Yarım/bozuk bir indirmeyi kabul etme (çok küçük dosya şüphelidir)
     try:
         size = os.path.getsize(temp_path)
         _log(f"indirilen dosya boyutu: {size} byte")
@@ -330,11 +330,11 @@ def _check_and_download(ask_user_callback=None) -> None:
         _update_ready = {"path": temp_path, "version": remote_version, "applied": False}
     _log("guncelleme hazir olarak isaretlendi, kapanis bildirimi gonderiliyor")
 
-    
-    
-    
-    
-    
+    # Kullanıcıya "indirildi, kapanıp yeniden başlayacak" bilgisi ver ve
+    # açık pencereleri kapat. Pencereler kapanıp MainLoop bittikten sonra
+    # main.py zaten apply_pending_update_if_ready()'yi çağırıyor; o da
+    # ayrı yardımcı güncelleyici exe'yi başlatıp güncellemeyi kurup
+    # programı yeniden açacak.
     wx.CallAfter(_notify_download_complete_and_close)
 
 
@@ -462,10 +462,10 @@ def _notify_download_complete_and_close():
     except Exception:
         pass
 
-    
-    
-    
-    
+    # Pencereler bir sebeple kapanmasa/MainLoop düzgün bitmese bile
+    # süreç kesin olarak sonlansın diye kısa bir gecikmeyle zorla çık.
+    # (Yardımcı güncelleyici exe zaten bağımsız bir süreç olarak
+    # başlatıldı, bizim sürecimiz kapanması onu etkilemez.)
     def _force_exit():
         _log("guvenlik agi: surec zorla sonlandiriliyor")
         try:
@@ -539,9 +539,9 @@ def apply_pending_update_if_ready() -> None:
 
         _log(f"yardimci guncelleyici baslatiliyor: {helper_exe} (gorev: {task_path})")
 
-        
-        
-        
+        # PyInstaller --onefile Job Object'inden kopmak için breakaway
+        # bayrağı; olmazsa normal modla dene. Burada artık cmd.exe /
+        # bat betiği YOK — doğrudan derlenmiş yardımcı exe çalıştırılıyor.
         flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_BREAKAWAY_FROM_JOB
         try:
             subprocess.Popen([helper_exe, task_path], creationflags=flags, close_fds=True)
@@ -558,7 +558,7 @@ def apply_pending_update_if_ready() -> None:
             _update_ready["applied"] = True
     except Exception as e:
         _log(f"yardimci guncelleyici baslatilamadi: {e}")
-        
-        
-        
+        # Güncelleme uygulanamadı; bir sonraki açılışta tekrar
+        # denenecek (temp_update.exe kalıntısı varsa yeniden indirilip
+        # üzerine yazılacaktır).
         pass
