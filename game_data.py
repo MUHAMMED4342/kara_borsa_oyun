@@ -969,7 +969,7 @@ EVENTS = [
         "name": "Siber Dolandırıcılık",
         "type": "cash_loss",
         "min_pct_of_wealth": 0.015, "max_pct_of_wealth": 0.04,
-        "message_template": "Kripto cüzdanınızın şifresini bir oltalama (phishing) sitesine kaptırdınız! {amount} TL kaybettiniz.",
+        "message_template": "Kripto cüzdanınızın şifresini bir oltalama sitesine kaptırdınız! {amount} TL kaybettiniz.",
     },
     {
         "name": "Haraç Kesilmesi",
