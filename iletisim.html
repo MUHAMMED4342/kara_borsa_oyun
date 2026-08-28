@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>İletişim - Programlar Sitesi</title>
+</head>
+<body>
+
+    <header>
+        <h1>Programlar Sitesi</h1>
+        <p>Ücretsiz yazılımlar ve NVDA eklentileri</p>
+        <nav aria-label="Ana gezinme">
+            <ul>
+                <li><a href="index.html">Ana Sayfa</a></li>
+                <li><a href="iletisim.html" aria-current="page">İletişim</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h2>İletişim</h2>
+        <p>Bir sorunuz mu var ya da programlarımızla ilgili bir sorunla mı karşılaştınız? Aşağıdaki formu doldurarak bize ulaşabilirsiniz, en kısa sürede size dönüş yapmaya çalışırız.</p>
+
+        <form action="https://api.web3forms.com/submit" method="POST">
+            <!-- web3forms.com üzerinden aldığınız access key ile değiştirin -->
+            <input type="hidden" name="access_key" value="56a9509f-7b30-46e7-a000-86dd6bc0daed">
+            <input type="hidden" name="redirect" value="https://bilgisayar-xi.vercel.app/tesekkur.html">
+            <input type="hidden" name="subject" value="Programlar Sitesi - Yeni İletişim Mesajı">
+
+            <!-- Spam koruması: görme engelli kullanıcıları etkilemeyen gizli bir kontrol alanı -->
+            <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+
+            <p>
+                <label for="isim">Adınız:</label><br>
+                <input type="text" id="isim" name="name" required autocomplete="name">
+            </p>
+
+            <p>
+                <label for="email">E-posta:</label><br>
+                <input type="email" id="email" name="email" required autocomplete="email">
+            </p>
+
+            <details>
+                <summary>Neden e-postanızı istiyoruz?</summary>
+                <p>E-posta adresinizi, mesajınızı inceledikten sonra size geri dönüp sorunuz veya sorununuz hakkında bilgi verebilmek için istiyoruz. Gerekirse ek soru sormak veya çözüm sürecini sizinle paylaşmak için de kullanılır.</p>
+                <p><strong>E-posta adresiniz hiçbir şekilde üçüncü taraflarla paylaşılmaz</strong> ve yalnızca bu iletişim formu kapsamında, size dönüş yapmak amacıyla kullanılır.</p>
+            </details>
+
+            <p>
+                <label for="mesaj">Mesajınız:</label><br>
+                <textarea id="mesaj" name="message" rows="4" required></textarea>
+            </p>
+
+            <p>
+                <button type="submit">Gönder</button>
+            </p>
+        </form>
+    </main>
+
+    <footer>
+        <p><a href="index.html">Ana sayfaya</a> dönmek için tıklayabilirsiniz.</p>
+    </footer>
+
+</body>
+</html>
