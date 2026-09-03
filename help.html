@@ -2,394 +2,690 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Karaborsa Ticaret Simülasyonu - Yardım</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karaborsa Simülasyonu — Oyuncu Dosyası</title>
 <style>
-    body {
-        font-family: Arial, Helvetica, sans-serif;
-        max-width: 850px;
-        margin: 40px auto;
-        padding: 0 20px 60px 20px;
-        line-height: 1.7;
-        color: #1a1a1a;
-        background: #fdfdfd;
-    }
-    h1 {
-        color: #1b2a3d;
-        border-bottom: 3px solid #3498db;
-        padding-bottom: 12px;
-    }
-    h2 {
-        color: #1b2a3d;
-        margin-top: 40px;
-        border-left: 5px solid #3498db;
-        padding-left: 10px;
-    }
-    h3 {
-        color: #2c3e50;
-        margin-top: 22px;
-    }
-    .shortcut {
-        display: inline-block;
-        background: #2c3e50;
-        color: #fff;
-        padding: 2px 10px;
-        border-radius: 4px;
-        font-family: "Consolas", monospace;
-        font-weight: bold;
-    }
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 12px 0 20px 0;
-    }
-    caption {
-        text-align: left;
-        font-weight: bold;
-        margin-bottom: 6px;
-        color: #2c3e50;
-    }
-    th, td {
-        border: 1px solid #ccc;
-        padding: 8px 10px;
-        text-align: left;
-    }
-    th {
-        background: #eef4fa;
-    }
-    ul, ol {
-        padding-left: 24px;
-    }
-    li {
-        margin: 6px 0;
-    }
-    .note {
-        background: #fff8e1;
-        border-left: 4px solid #f5b400;
-        padding: 10px 15px;
-        margin: 15px 0;
-    }
-    .tip {
-        background: #eaf7ea;
-        border-left: 4px solid #2ecc71;
-        padding: 10px 15px;
-        margin: 15px 0;
-    }
-    .warn {
-        background: #fdecea;
-        border-left: 4px solid #e74c3c;
-        padding: 10px 15px;
-        margin: 15px 0;
-    }
-    nav {
-        background: #eef4fa;
-        border: 1px solid #d3e2ef;
-        border-radius: 6px;
-        padding: 15px 20px;
-        margin-bottom: 30px;
-    }
-    nav ul {
-        columns: 2;
-    }
-    footer {
-        margin-top: 50px;
-        padding-top: 15px;
-        border-top: 1px solid #ddd;
-        font-size: 0.9em;
-        color: #555;
-    }
+  :root{
+    --bg: #14110d;
+    --panel: #1d1811;
+    --panel-2: #241d14;
+    --hairline: #3d3423;
+    --gold: #c9a227;
+    --gold-soft: #a98a2c;
+    --red: #9a3324;
+    --green: #4f7a4a;
+    --text: #ece4d3;
+    --text-muted: #a89b83;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+
+  /* Skip link: gizli, sadece klavye odağı aldığında görünür */
+  .skip-link{
+    position:absolute; left:0; top:0;
+    transform:translateY(-120%);
+    background:var(--gold); color:#14110d;
+    padding:12px 18px; font-weight:700; font-family:var(--sans);
+    z-index:200; border-radius:0 0 6px 0; text-decoration:none;
+  }
+  .skip-link:focus{ transform:translateY(0); }
+
+  /* Sadece ekran okuyucular için, görsel olarak gizli metin */
+  .sr-only{
+    position:absolute; width:1px; height:1px;
+    padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+
+  :focus-visible{
+    outline:3px solid var(--gold);
+    outline-offset:3px;
+    border-radius:2px;
+  }
+  a:focus-visible, summary:focus-visible{
+    outline:3px solid var(--gold);
+    outline-offset:2px;
+  }
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at top left, rgba(201,162,39,0.06), transparent 45%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.55;
+  }
+  a{color:var(--gold);}
+
+  /* ---------- layout ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns: 250px 1fr;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  @media (max-width: 860px){
+    .shell{ grid-template-columns: 1fr; }
+    nav.toc{ position:static; border-right:none; border-bottom:1px solid var(--hairline); }
+  }
+
+  nav.toc{
+    position:sticky; top:0; align-self:start; height:100vh;
+    overflow-y:auto;
+    border-right:1px solid var(--hairline);
+    padding:28px 14px 40px;
+  }
+  .toc-brand{
+    font-family:var(--serif); font-weight:700; font-size:15px;
+    letter-spacing:0.3px; color:var(--gold);
+    padding:0 10px 18px; border-bottom:1px solid var(--hairline); margin-bottom:14px;
+  }
+  .toc-brand small{display:block; color:var(--text-muted); font-family:var(--sans); font-weight:400; font-size:11px; margin-top:4px;}
+  nav.toc ol{list-style:none; margin:0; padding:0; counter-reset:sec;}
+  nav.toc li{counter-increment:sec;}
+  nav.toc a{
+    display:flex; gap:10px; align-items:baseline;
+    text-decoration:none; color:var(--text-muted);
+    font-size:13.5px; padding:6px 10px; border-radius:3px;
+  }
+  nav.toc a:hover{ color:var(--text); background:var(--panel); }
+  nav.toc a[aria-current="location"]{
+    color:var(--text); background:var(--panel-2);
+    box-shadow:inset 3px 0 0 var(--gold);
+  }
+  nav.toc a::before{
+    content: counter(sec, decimal-leading-zero);
+    font-family:var(--mono); color:var(--gold-soft); font-size:11px;
+  }
+
+  main{ padding: 0 0 80px; min-width:0; }
+
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative;
+    padding:64px 56px 44px;
+    border-bottom:1px solid var(--hairline);
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 26px);
+  }
+  @media (max-width:640px){ .hero{padding:48px 22px 32px;} }
+  .hero h1{
+    font-family:var(--serif); font-weight:700;
+    font-size:clamp(30px, 4.4vw, 46px);
+    margin:0 0 8px; letter-spacing:-0.5px; color:var(--text);
+  }
+  .hero p.sub{ color:var(--text-muted); font-size:16px; max-width:52ch; margin:0 0 26px;}
+  .stamp{
+    position:absolute; top:56px; right:56px;
+    border:2.5px solid var(--red); color:var(--red);
+    font-family:var(--serif); font-weight:700; font-size:13px;
+    letter-spacing:2px; padding:6px 14px; border-radius:4px;
+    transform: rotate(6deg);
+    opacity:0.85;
+  }
+  @media (max-width:640px){ .stamp{display:none;} }
+  .stat-row{ display:flex; flex-wrap:wrap; gap:28px; margin-top:8px;}
+  .stat{ min-width:120px; }
+  .stat .num{ font-family:var(--mono); font-size:22px; color:var(--gold); }
+  .stat .lab{ font-size:12px; color:var(--text-muted); margin-top:2px;}
+
+  /* ---------- sections ---------- */
+  section{ padding:46px 56px; border-bottom:1px solid var(--hairline); }
+  @media (max-width:640px){ section{padding:34px 22px;} }
+  section h2{
+    font-family:var(--serif); font-size:26px; font-weight:700;
+    margin:0 0 6px; color:var(--text);
+    display:flex; align-items:baseline; gap:12px;
+  }
+  section h2 .idx{ font-family:var(--mono); color:var(--gold-soft); font-size:16px; }
+  section > .lede{ color:var(--text-muted); margin:0 0 22px; max-width:65ch; }
+  h3{ font-family:var(--serif); font-size:17px; margin:26px 0 10px; color:var(--gold); }
+
+  p{ max-width:70ch; }
+  ul,ol.plain{ max-width:70ch; padding-left:22px; }
+  li{ margin-bottom:6px; }
+
+  .callout{
+    border-left:3px solid var(--gold);
+    background:var(--panel);
+    padding:14px 18px;
+    margin:18px 0;
+    max-width:65ch;
+    border-radius:0 4px 4px 0;
+    font-size:14.5px;
+  }
+  .callout.warn{ border-left-color:var(--red); }
+  .callout b{ color:var(--gold); }
+  .callout.warn b{ color:#d98a76; }
+
+  table{ width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:14px; }
+  th,td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th{ color:var(--gold-soft); font-weight:600; font-size:12.5px; text-transform:none; }
+  td.num, th.num{ font-family:var(--mono); white-space:nowrap; }
+  tr:hover td{ background:rgba(201,162,39,0.04); }
+
+  details{
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    border-radius:6px;
+    margin:10px 0;
+    padding:0;
+    max-width:75ch;
+  }
+  details summary{
+    cursor:pointer; list-style:none; padding:13px 16px;
+    font-family:var(--serif); color:var(--gold); font-size:15px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  details summary::-webkit-details-marker{ display:none; }
+  details summary::after{ content:"+"; font-family:var(--mono); color:var(--text-muted); font-size:16px; }
+  details[open] summary::after{ content:"–"; }
+  details .inner{ padding:0 16px 16px; }
+
+  .kbd-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap:8px 22px; max-width:900px;}
+  .kbd-row{ display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px dashed var(--hairline); font-size:14px;}
+  kbd{
+    font-family:var(--mono); background:var(--panel-2); border:1px solid var(--hairline);
+    border-bottom-width:2px; padding:2px 8px; border-radius:4px; font-size:12.5px; color:var(--text);
+  }
+
+  .pill-row{ display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 22px;}
+  .pill{
+    font-family:var(--mono); font-size:12.5px; color:var(--text-muted);
+    border:1px solid var(--hairline); border-radius:20px; padding:4px 12px;
+  }
+
+  footer{ padding:40px 56px 60px; color:var(--text-muted); font-size:13px; }
+  @media (max-width:640px){ footer{padding:32px 22px 48px;} }
+  footer a{ color:var(--gold); }
 </style>
 </head>
 <body>
 
-<h1>Karaborsa Ticaret Simülasyonu — Yardım Kılavuzu</h1>
+<a class="skip-link" href="#main-content">İçeriğe geç</a>
 
-<p>
-Karaborsa, ekonomi ve risk yönetimi üzerine kurulu, <strong>görme engelli
-dostu</strong> (ekran okuyucu ile tam uyumlu) bir ticaret simülasyonudur.
-Ürün alıp satarak, şirket kurarak, arsa yatırımı yaparak ve adamlar
-tutarak servetinizi büyütürken polisten kaçmaya çalışırsınız. Oyun
-sınırsızdır: bitiş yoktur, hedef sürekli daha zengin olmaktır.
-</p>
+<div class="shell">
+  <nav class="toc" aria-label="İçindekiler">
+    <div class="toc-brand" aria-hidden="true">KARABORSA SİMÜLASYONU<small>Oyuncu Dosyası</small></div>
+    <h2 class="sr-only">Bölümler</h2>
+    <ol>
+      <li><a href="#baslarken">Başlarken</a></li>
+      <li><a href="#ana-ekran">Ana Ekran</a></li>
+      <li><a href="#ticaret">Alım-Satım</a></li>
+      <li><a href="#sirketler">Şirketler</a></li>
+      <li><a href="#adamlar">Adamlarınız</a></li>
+      <li><a href="#muhbir">Muhbir</a></li>
+      <li><a href="#arsa">Arsa</a></li>
+      <li><a href="#banka">Banka &amp; Kredi</a></li>
+      <li><a href="#risk">Polis Riski &amp; Hapis</a></li>
+      <li><a href="#olaylar">Beklenmedik Olaylar</a></li>
+      <li><a href="#rulet">Rulet</a></li>
+      <li><a href="#destek">Destek / Bilet</a></li>
+      <li><a href="#kisayollar">Klavye Kısayolları</a></li>
+      <li><a href="#erisilebilirlik">Erişilebilirlik</a></li>
+      <li><a href="#skor">Skor Tablosu</a></li>
+    </ol>
+  </nav>
 
-<nav aria-label="İçindekiler">
-<strong>İçindekiler</strong>
-<ul>
-    <li><a href="#kisayollar">Klavye Kısayolları</a></li>
-    <li><a href="#temel">Temel Oynanış</a></li>
-    <li><a href="#urunler">Ürün Kategorileri</a></li>
-    <li><a href="#sirket">Şirket Sistemi</a></li>
-    <li><a href="#kredi">Kredi Notu ve Banka Kredisi</a></li>
-    <li><a href="#arsa">Arsa Sistemi</a></li>
-    <li><a href="#muhbir">Muhbir Sistemi</a></li>
-    <li><a href="#adamlar">Adam Tutma Sistemi</a></li>
-    <li><a href="#kumar">Kumar (Rulet)</a></li>
-    <li><a href="#polis">Polis Riski ve Hapis</a></li>
-    <li><a href="#olaylar">Rastgele Olaylar</a></li>
-    <li><a href="#skor">Skor Tablosu</a></li>
-    <li><a href="#kayit">Kayıt Sistemi</a></li>
-    <li><a href="#hedefler">Oyun Hedefleri</a></li>
-    <li><a href="#ipuclari">İpuçları</a></li>
-</ul>
-</nav>
+  <main id="main-content">
+    <div class="hero">
+      <div class="stamp" aria-hidden="true">DOSYA NO. 01</div>
+      <h1>Karaborsa Simülasyonu</h1>
+      <p class="sub">Bu dosya, işinizi sıfırdan kurup büyütmeniz — ve batırmamanız — için
+      bilmeniz gereken her şeyi içerir. Sırayla okuyun, ya da sol menüden doğrudan
+      ilgilendiğiniz bölüme atlayın.</p>
+      <div class="stat-row">
+        <div class="stat"><div class="num">15.000 TL</div><div class="lab">Başlangıç Sermayesi</div></div>
+        <div class="stat"><div class="num">39</div><div class="lab">Ticareti Yapılabilen Ürün</div></div>
+        <div class="stat"><div class="num">12</div><div class="lab">Kurulabilecek Şirket Tipi</div></div>
+        <div class="stat"><div class="num">5</div><div class="lab">Arsa Türü</div></div>
+      </div>
+    </div>
 
-<h2 id="kisayollar">Klavye Kısayolları</h2>
-<table>
-<caption>Genel kısayollar</caption>
-<tr><th>Tuş</th><th>İşlev</th></tr>
-<tr><td><span class="shortcut">F1</span></td><td>Bu yardım dosyasını açar</td></tr>
-<tr><td><span class="shortcut">F2</span></td><td>Durum raporu (nakit, polis riski, şirketler, arsalar, adamlar, krediler)</td></tr>
-<tr><td><span class="shortcut">F3</span></td><td>Geçmiş ekranı — söylenmiş tüm anonsları tekrar okutur</td></tr>
-<tr><td><span class="shortcut">F5</span></td><td>Gün atla (Gün Atla düğmesiyle aynı)</td></tr>
-<tr><td><span class="shortcut">F6</span></td><td>Arsa yönetimi ekranını açar</td></tr>
-<tr><td><span class="shortcut">F7</span></td><td>Adamlarım (çalışan yönetimi) ekranını açar</td></tr>
-<tr><td><span class="shortcut">C</span></td><td>Anlık nakit durumunu sesli okur</td></tr>
-<tr><td><span class="shortcut">D</span></td><td>Seçili ürünün kategorisini sesli okur</td></tr>
-<tr><td><span class="shortcut">E</span></td><td>Envanter özetini sesli okur</td></tr>
-<tr><td><span class="shortcut">Sayfa Yukarı (PgUp)</span></td><td>Ses seviyesini artırır</td></tr>
-<tr><td><span class="shortcut">Sayfa Aşağı (PgDn)</span></td><td>Ses seviyesini azaltır</td></tr>
-<tr><td><span class="shortcut">Home</span></td><td>Önceki müzik parçasına geçer</td></tr>
-<tr><td><span class="shortcut">End</span></td><td>Sonraki müzik parçasına geçer</td></tr>
-<tr><td><span class="shortcut">Yukarı / Aşağı Ok</span></td><td>Ürün listesinde gezinme (sesli geri bildirimle)</td></tr>
-</table>
-<p>Ana ekrandaki düğmeler ile de tüm işlemlere ulaşabilirsiniz: Satın Al,
-Sat, Gün Atla, Şirket Yönetimi, Adamlarım, Muhbir Yönetimi, Kredi Çek,
-Bankacılık, Arsa Yönetimi, Durum Raporu ve Kumar Oyna.</p>
+    <!-- 1 -->
+    <section id="baslarken" aria-labelledby="baslarken-title">
+      <h2 id="baslarken-title"><span class="idx" aria-hidden="true">01</span> Başlarken</h2>
+      <p class="lede">Hesabınız, ilerlemenizin tek güvencesi. Doğru kurun, gerisi kolay.</p>
 
-<h2 id="temel">Temel Oynanış</h2>
-<ul>
-    <li>Oyuna <strong>15.000 TL</strong> nakit ile başlarsınız.</li>
-    <li>Ürün listesinden bir ürün seçip <strong>Adet</strong> kutusuna
-        miktar girerek <strong>Satın Al</strong> veya <strong>Sat</strong>
-        düğmesine basarsınız.</li>
-    <li><strong>Gün Atla</strong> düğmesi (veya F5) zamanı bir gün ileri
-        alır: fiyatlar dalgalanır, şirket/kredi/arsa/çalışan işlemleri
-        günlük olarak yürütülür, rastgele olaylar tetiklenir ve polis
-        kontrolü yapılır.</li>
-    <li>Her ürünün fiyatı her gün rastgele %10'a kadar dalgalanır; bazı
-        kategoriler ek olarak özel olaylardan (ekonomik kriz, çete
-        savaşları, kripto balinası vb.) de etkilenir.</li>
-    <li>Oyun <strong>sınırsızdır</strong> — kaybetme ya da "oyun bitti"
-        durumu yoktur, amaç sürekli servetinizi büyütmektir.</li>
-    <li>Oyun her 30 saniyede bir ve her gün sonunda <strong>otomatik
-        olarak kaydedilir</strong>.</li>
-</ul>
+      <h3>Giriş Ekranı</h3>
+      <ul>
+        <li><b>Giriş Yap</b> — daha önce hesap açtıysanız kullanıcı adı ve şifrenizle girin.</li>
+        <li><b>Hesap Oluştur</b> — yeni bir kullanıcı adı, şifre ve isteğe bağlı e-posta ile hesap açın.</li>
+        <li><b>Çıkış</b> — oyundan çıkar.</li>
+      </ul>
 
-<h2 id="urunler">Ürün Kategorileri</h2>
-<p>Toplam 5 kategori ve 33 farklı ürün bulunur. Fiyatlar günden güne
-değişir; ucuzken alıp pahalıyken satmak temel stratejidir.</p>
+      <div class="callout">
+        <b>Tek hesap kuralı:</b> İlerlemeniz hesabınıza bağlı olarak buluta senkronize
+        edilir — hangi cihazda giriş yaparsanız yapın kaydınız sizi bekler.
+        Kullanıcı adınızı yanlış yazdıysanız kaygılanmayın: Kayıtlı Oyunlar
+        ekranından kaydınızı yeniden adlandırabilirsiniz, nakit / şirket / arsa
+        gibi tüm ilerlemeniz olduğu gibi korunur.
+      </div>
 
-<h3>Karanlık Maddeler <span style="font-weight:normal">(yasa dışı — polis riski taşır)</span></h3>
-<p>Esrar, Eroin, Kokain, Amfetamin, Metamfetamin, Captagon, LSD</p>
+      <h3>Kayıtlı Oyunlar</h3>
+      <div class="kbd-grid">
+        <div class="kbd-row"><kbd>↑ / ↓</kbd> Kayıt seç</div>
+        <div class="kbd-row"><kbd>Enter</kbd> / çift tık — kaydı yükle</div>
+        <div class="kbd-row"><kbd>Delete</kbd> Seçili kaydı sil</div>
+        <div class="kbd-row"><kbd>Esc</kbd> Vazgeç</div>
+      </div>
+    </section>
 
-<h3>Mühimmat &amp; Silahlar <span style="font-weight:normal">(yasa dışı — polis riski taşır)</span></h3>
-<p>Tabanca, Tüfek, Mermi, El Bombası, Susturucu, Zırh Yeleği, Av Tüfeği</p>
+    <!-- 2 -->
+    <section id="ana-ekran" aria-labelledby="ana-ekran-title">
+      <h2 id="ana-ekran-title"><span class="idx" aria-hidden="true">02</span> Ana Ekran</h2>
+      <p class="lede">Oyunun kalbi burası — her şeye buradan ulaşırsınız.</p>
+      <table>
+        <tr><th scope="col">Buton</th><th scope="col">Ne işe yarar</th></tr>
+        <tr><td>Satın Al / Sat</td><td>Seçili üründen belirttiğiniz adette alım/satım yapar</td></tr>
+        <tr><td>Gün Atla</td><td>Bir sonraki güne geçer — fiyatlar ve olaylar güncellenir</td></tr>
+        <tr><td>Şirket Yönetimi</td><td>Şirket kurma, kapatma, kredi</td></tr>
+        <tr><td>Adamlarım</td><td>İşçi kiralama, kovma, şehre gönderme</td></tr>
+        <tr><td>Muhbir Yönetimi</td><td>Muhbir tutma / kovma</td></tr>
+        <tr><td>Kredi Çek</td><td>Şirketiniz için banka kredisi</td></tr>
+        <tr><td>Bankacılık</td><td>Paranızı saklayabileceğiniz güvenli alan</td></tr>
+        <tr><td>Arsa Yönetimi</td><td>Arsa alım/satım ve arsa kredisi</td></tr>
+        <tr><td>Durum Raporu</td><td>Anlık mali durumunuzun tam özeti</td></tr>
+        <tr><td>Kumar Oyna</td><td>Rulet masası</td></tr>
+        <tr><td>Destek / Bilet</td><td>Oyun içinden destek talebi açma</td></tr>
+      </table>
+      <p>Ürün listesinde bir ürün seçiliyken <kbd>Enter</kbd>, hızlı Al/Sat penceresini açar.</p>
+    </section>
 
-<h3>Döviz &amp; Değerli Metaller</h3>
-<p>Dolar, Euro, Sterlin, Altın, Gümüş, Platin</p>
+    <!-- 3 -->
+    <section id="ticaret" aria-labelledby="ticaret-title">
+      <h2 id="ticaret-title"><span class="idx" aria-hidden="true">03</span> Alım-Satım</h2>
+      <p class="lede">İşin can damarı: ucuzken al, pahalıyken sat. Fiyatlar her gün dalgalanır.</p>
+      <p>Piyasada beş kategoride toplam 39 ürün bulunur. Her ürünün kendi
+      taban/tavan fiyat aralığı vardır — aşağıdan kategorilere göz atabilirsiniz.</p>
 
-<h3>Kripto &amp; Dijital Varlıklar <span style="font-weight:normal">(yüksek volatilite)</span></h3>
-<p>Bitcoin, Ethereum, Monero</p>
+      <details>
+        <summary>Karanlık Maddeler <span class="pill">yasa dışı — risk üretir</span></summary>
+        <div class="inner">
+          <table>
+            <tr><th scope="col">Ürün</th><th scope="col" class="num">Taban Fiyat</th><th scope="col" class="num">Min–Maks</th></tr>
+            <tr><td>Esrar</td><td class="num">150 TL</td><td class="num">50 – 500</td></tr>
+            <tr><td>Eroin</td><td class="num">900 TL</td><td class="num">300 – 3.000</td></tr>
+            <tr><td>Kokain</td><td class="num">1.200 TL</td><td class="num">400 – 4.000</td></tr>
+            <tr><td>Amfetamin</td><td class="num">400 TL</td><td class="num">150 – 1.200</td></tr>
+            <tr><td>Metamfetamin</td><td class="num">1.100 TL</td><td class="num">400 – 3.500</td></tr>
+            <tr><td>Captagon</td><td class="num">600 TL</td><td class="num">200 – 2.000</td></tr>
+            <tr><td>LSD</td><td class="num">750 TL</td><td class="num">250 – 2.500</td></tr>
+            <tr><td>Ekstazi</td><td class="num">500 TL</td><td class="num">180 – 1.500</td></tr>
+            <tr><td>Fentanil</td><td class="num">1.400 TL</td><td class="num">500 – 4.500</td></tr>
+            <tr><td>Ketamin</td><td class="num">550 TL</td><td class="num">200 – 1.700</td></tr>
+          </table>
+        </div>
+      </details>
 
-<h3>Kaçak Eşya &amp; Elektronik</h3>
-<p>Sahte Pasaport, Çalıntı Telefon, Kaçak Sigara, Kaçak İçki, Çalıntı Araç Parçası</p>
+      <details>
+        <summary>Mühimmat &amp; Silahlar <span class="pill">yasa dışı — risk üretir</span></summary>
+        <div class="inner">
+          <table>
+            <tr><th scope="col">Ürün</th><th scope="col" class="num">Taban Fiyat</th><th scope="col" class="num">Min–Maks</th></tr>
+            <tr><td>Tabanca</td><td class="num">2.500 TL</td><td class="num">1.000 – 6.000</td></tr>
+            <tr><td>Tüfek</td><td class="num">5.000 TL</td><td class="num">2.000 – 12.000</td></tr>
+            <tr><td>Mermi</td><td class="num">25 TL</td><td class="num">10 – 80</td></tr>
+            <tr><td>El Bombası</td><td class="num">1.800 TL</td><td class="num">700 – 4.500</td></tr>
+            <tr><td>Susturucu</td><td class="num">1.200 TL</td><td class="num">500 – 3.000</td></tr>
+            <tr><td>Zırh Yeleği</td><td class="num">3.000 TL</td><td class="num">1.200 – 7.000</td></tr>
+            <tr><td>Av Tüfeği</td><td class="num">4.000 TL</td><td class="num">1.500 – 9.000</td></tr>
+            <tr><td>Pompalı Tüfek</td><td class="num">3.200 TL</td><td class="num">1.400 – 7.000</td></tr>
+            <tr><td>Gece Görüş Dürbünü</td><td class="num">2.200 TL</td><td class="num">900 – 5.000</td></tr>
+            <tr><td>Bıçak</td><td class="num">300 TL</td><td class="num">100 – 800</td></tr>
+          </table>
+        </div>
+      </details>
 
-<div class="warn">
-<strong>Dikkat:</strong> Yalnızca <em>Karanlık Maddeler</em> ve
-<em>Mühimmat &amp; Silahlar</em> kategorilerindeki ürünler polis
-yakalanma riskinizi etkiler. Elinizde bu kategorilerden ne kadar çok
-mal (ve değer) varsa, yakalanma ihtimaliniz o kadar artar.
+      <details>
+        <summary>Döviz &amp; Değerli Metaller <span class="pill">yasal</span></summary>
+        <div class="inner">
+          <table>
+            <tr><th scope="col">Ürün</th><th scope="col" class="num">Taban Fiyat</th><th scope="col" class="num">Min–Maks</th></tr>
+            <tr><td>Dolar</td><td class="num">33 TL</td><td class="num">20 – 60</td></tr>
+            <tr><td>Euro</td><td class="num">36 TL</td><td class="num">22 – 65</td></tr>
+            <tr><td>Sterlin</td><td class="num">42 TL</td><td class="num">25 – 75</td></tr>
+            <tr><td>İsviçre Frangı</td><td class="num">38 TL</td><td class="num">24 – 68</td></tr>
+            <tr><td>Altın</td><td class="num">2.400 TL</td><td class="num">1.500 – 4.000</td></tr>
+            <tr><td>Gümüş</td><td class="num">35 TL</td><td class="num">20 – 70</td></tr>
+            <tr><td>Platin</td><td class="num">1.100 TL</td><td class="num">700 – 2.200</td></tr>
+            <tr><td>Paladyum</td><td class="num">1.300 TL</td><td class="num">800 – 2.600</td></tr>
+            <tr><td>Elmas</td><td class="num">5.000 TL</td><td class="num">2.500 – 12.000</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Kripto &amp; Dijital Varlıklar <span class="pill">yalanal — yüksek oynaklık</span></summary>
+        <div class="inner">
+          <table>
+            <tr><th scope="col">Ürün</th><th scope="col" class="num">Taban Fiyat</th><th scope="col" class="num">Min–Maks</th></tr>
+            <tr><td>Bitcoin</td><td class="num">50.000 TL</td><td class="num">10.000 – 200.000</td></tr>
+            <tr><td>Ethereum</td><td class="num">15.000 TL</td><td class="num">3.000 – 60.000</td></tr>
+            <tr><td>Monero</td><td class="num">8.000 TL</td><td class="num">1.500 – 30.000</td></tr>
+            <tr><td>Solana</td><td class="num">2.500 TL</td><td class="num">400 – 12.000</td></tr>
+            <tr><td>Ripple</td><td class="num">15 TL</td><td class="num">3 – 60</td></tr>
+            <tr><td>Litecoin</td><td class="num">900 TL</td><td class="num">200 – 4.000</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Kaçak Eşya &amp; Elektronik <span class="pill">yasal görünür</span></summary>
+        <div class="inner">
+          <table>
+            <tr><th scope="col">Ürün</th><th scope="col" class="num">Taban Fiyat</th><th scope="col" class="num">Min–Maks</th></tr>
+            <tr><td>Sahte Pasaport</td><td class="num">5.000 TL</td><td class="num">2.000 – 12.000</td></tr>
+            <tr><td>Çalıntı Telefon</td><td class="num">800 TL</td><td class="num">300 – 2.500</td></tr>
+            <tr><td>Kaçak Sigara</td><td class="num">60 TL</td><td class="num">20 – 150</td></tr>
+            <tr><td>Kaçak İçki</td><td class="num">90 TL</td><td class="num">30 – 250</td></tr>
+            <tr><td>Çalıntı Araç Parçası</td><td class="num">1.500 TL</td><td class="num">500 – 4.000</td></tr>
+            <tr><td>Kaçak İlaç</td><td class="num">700 TL</td><td class="num">250 – 2.200</td></tr>
+            <tr><td>Sahte Marka Ürün</td><td class="num">400 TL</td><td class="num">150 – 1.200</td></tr>
+            <tr><td>Çalıntı Laptop</td><td class="num">3.500 TL</td><td class="num">1.200 – 8.000</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <div class="callout warn">
+        <b>Dikkat:</b> "Karanlık Maddeler" ve "Mühimmat &amp; Silahlar"
+        kategorisindeki ürünler elinizde ne kadar çok ve ne kadar değerliyse,
+        polis riskiniz o kadar hızlı yükselir. Diğer üç kategori bu riski
+        etkilemez.
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sirketler" aria-labelledby="sirketler-title">
+      <h2 id="sirketler-title"><span class="idx" aria-hidden="true">04</span> Şirketler</h2>
+      <p class="lede">Şirketler sadece kâr getirmez — kredi imkânı da açar.
+      Aynı anda farklı şehirlerde birden fazla şirketiniz olabilir.</p>
+
+      <table>
+        <tr><th scope="col">Tip</th><th scope="col" class="num">Kuruluş</th><th scope="col" class="num">Günlük Gider</th><th scope="col" class="num">Günlük Kâr</th><th scope="col" class="num">Kredi Çarpanı</th></tr>
+        <tr><td>Oto Yıkama</td><td class="num">5.000</td><td class="num">60</td><td class="num">80 – 220</td><td class="num">0.70</td></tr>
+        <tr><td>İnternet Kafe</td><td class="num">6.000</td><td class="num">70</td><td class="num">90 – 250</td><td class="num">0.75</td></tr>
+        <tr><td>Tekstil Atölyesi</td><td class="num">8.000</td><td class="num">80</td><td class="num">100 – 300</td><td class="num">0.80</td></tr>
+        <tr><td>Restoran</td><td class="num">10.000</td><td class="num">150</td><td class="num">200 – 500</td><td class="num">1.20</td></tr>
+        <tr><td>Emlak Ofisi</td><td class="num">18.000</td><td class="num">180</td><td class="num">260 – 650</td><td class="num">1.30</td></tr>
+        <tr><td>Oto Galeri</td><td class="num">15.000</td><td class="num">100</td><td class="num">150 – 400</td><td class="num">1.00</td></tr>
+        <tr><td>Nakliyat Şirketi</td><td class="num">20.000</td><td class="num">220</td><td class="num">300 – 750</td><td class="num">1.40</td></tr>
+        <tr><td>Market Zinciri</td><td class="num">22.000</td><td class="num">240</td><td class="num">330 – 800</td><td class="num">1.30</td></tr>
+        <tr><td>Gece Kulübü</td><td class="num">25.000</td><td class="num">250</td><td class="num">400 – 900</td><td class="num">1.50</td></tr>
+        <tr><td>Kripto Madenciliği</td><td class="num">30.000</td><td class="num">500</td><td class="num">600 – 1.400</td><td class="num">2.00</td></tr>
+        <tr><td>İnşaat Firması</td><td class="num">35.000</td><td class="num">450</td><td class="num">550 – 1.300</td><td class="num">1.80</td></tr>
+        <tr><td>Otel</td><td class="num">40.000</td><td class="num">550</td><td class="num">700 – 1.600</td><td class="num">2.20</td></tr>
+      </table>
+
+      <div class="callout warn">
+        Günlük giderleri karşılayamazsanız şirketiniz <b>iflas eder</b> ve
+        kapanır — bu, hapisteyken bile işler, o yüzden nakit akışınızı takip
+        etmeden uzun süre uzakta kalmayın.
+      </div>
+
+      <h3>Kredi Notu Seviyeleri</h3>
+      <p>Şirketinizin kredi notu yükseldikçe hem çekebileceğiniz kredi limiti
+      büyür hem de faiz oranınız düşer.</p>
+      <table>
+        <tr><th scope="col">Seviye</th><th scope="col" class="num">Min. Puan</th><th scope="col">Açıklama</th><th scope="col" class="num">Limit Çarpanı</th><th scope="col" class="num">Faiz</th></tr>
+        <tr><td>Sicil Bozuk</td><td class="num">0</td><td>Henüz kredi geçmişi yok — kredi çekilemez</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>Başlangıç</td><td class="num">50</td><td>Yeni kurulmuş şirket</td><td class="num">1.5×</td><td class="num">%35</td></tr>
+        <tr><td>Güvenilir İşletme</td><td class="num">150</td><td>Düzenli ciro oluşmaya başlamış</td><td class="num">3.0×</td><td class="num">%25</td></tr>
+        <tr><td>Kurumsal</td><td class="num">300</td><td>Sektörde saygın konumda</td><td class="num">5.0×</td><td class="num">%15</td></tr>
+        <tr><td>Premium</td><td class="num">500</td><td>Bankanın en prestijli müşterisi</td><td class="num">8.0×</td><td class="num">%8</td></tr>
+      </table>
+    </section>
+
+    <!-- 5 -->
+    <section id="adamlar" aria-labelledby="adamlar-title">
+      <h2 id="adamlar-title"><span class="idx" aria-hidden="true">05</span> Adamlarınız</h2>
+      <p class="lede">Şirketlerden tamamen bağımsız bir gelir kalemi: adamlarınızı
+      şehirlere gönderin, onlar sizin için çalışsın.</p>
+      <div class="pill-row">
+        <span class="pill">Kiralama ücreti: 5.000 TL</span>
+        <span class="pill">Taban maaş: 1.500 TL / 30 gün</span>
+        <span class="pill">Günlük üretim: 150 – 600 TL</span>
+      </div>
+      <ul>
+        <li>Her adam bulunduğu şehirde günlük 150–600 TL arası nakit üretir;
+        ne kadar uzun süredir sizinle çalışıyorsa üretimi o kadar artar
+        (deneyim bonusu, en fazla %50'ye kadar).</li>
+        <li>30 günde bir maaşı otomatik kasanızdan düşer. Maaşını
+        <b>ödeyemezseniz sizi terk eder</b> — bu yüzden nakdinizi boş
+        bırakmayın.</li>
+        <li><b>Kov</b> butonuyla istediğiniz zaman bir adamı işten
+        çıkarabilirsiniz.</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section id="muhbir" aria-labelledby="muhbir-title">
+      <h2 id="muhbir-title"><span class="idx" aria-hidden="true">06</span> Muhbir</h2>
+      <p class="lede">Polis baskınlarına karşı sizi önceden uyaran, tehlikeli
+      bir yatırım.</p>
+      <div class="pill-row">
+        <span class="pill">Tutma ücreti: 8.000 TL</span>
+        <span class="pill">Günlük gider: 300 TL</span>
+      </div>
+      <p>Muhbiriniz varken bir sonraki gün için baskın ihtimalini önceden
+      görürsünüz — aynı ihtimal gerçek polis kontrolünde de kullanılır,
+      yani muhbirinizin tahmini gerçeği birebir yansıtır. Günlük
+      ücretini ödeyemezseniz muhbiriniz sizi terk eder.</p>
+    </section>
+
+    <!-- 7 -->
+    <section id="arsa" aria-labelledby="arsa-title">
+      <h2 id="arsa-title"><span class="idx" aria-hidden="true">07</span> Arsa</h2>
+      <p class="lede">Uzun vadeli değer biriktirme aracı; fiyatlar zamanla
+      (ve bazı olaylarla) dalgalanır.</p>
+      <table>
+        <tr><th scope="col">Tür</th><th scope="col">Açıklama</th><th scope="col" class="num">Taban Fiyat</th><th scope="col" class="num">Min–Maks</th><th scope="col" class="num">Kredi Çarpanı</th></tr>
+        <tr><td>Tarla</td><td>Tarım arazisi</td><td class="num">30.000</td><td class="num">15.000 – 100.000</td><td class="num">0.50</td></tr>
+        <tr><td>Sanayi Arsa</td><td>Sanayi bölgesinde arsa</td><td class="num">80.000</td><td class="num">40.000 – 200.000</td><td class="num">0.65</td></tr>
+        <tr><td>Arsa</td><td>Standart inşaat arsası</td><td class="num">50.000</td><td class="num">25.000 – 150.000</td><td class="num">0.70</td></tr>
+        <tr><td>İmarlı Arsa</td><td>İmar izni olan değerli arsa</td><td class="num">100.000</td><td class="num">50.000 – 300.000</td><td class="num">0.75</td></tr>
+        <tr><td>Sahil Arsa</td><td>Sahil şeridinde lüks arsa</td><td class="num">200.000</td><td class="num">100.000 – 500.000</td><td class="num">0.60</td></tr>
+      </table>
+      <p>Arsa için de kredi çekmek isterseniz ana ekrandaki <b>Kredi Çek</b>
+      butonunu kullanın; kredi çarpanı, o arsa türünün değerinin ne kadarına
+      kadar kredi çekebileceğinizi belirler.</p>
+    </section>
+
+    <!-- 8 -->
+    <section id="banka" aria-labelledby="banka-title">
+      <h2 id="banka-title"><span class="idx" aria-hidden="true">08</span> Banka &amp; Kredi</h2>
+      <p class="lede">İki farklı sistem: paranızı saklamak, ve borç almak.</p>
+
+      <div class="callout">
+        <b>Bankacılık faizsizdir.</b> Kasanızda para büyümez — kazandığınız
+        her kuruş doğrudan nakde geçer. Bankacılık burada sadece parayı
+        güvenli tutmak içindir, yatırım aracı değildir.
+      </div>
+
+      <p>Tek faiz kaynağı, aldığınız <b>kredi borcudur</b>. Kredi notunuz
+      yükseldikçe (bkz. Şirketler bölümü) daha yüksek limitli ve daha düşük
+      faizli kredilere erişirsiniz. Krediyi 30 günlük taksitlerle geri
+      ödersiniz; isterseniz vadesinden önce <b>Erken Kapat</b> ile
+      bitirebilirsiniz. Taksidinizi ödeyemezseniz <b>kredi temerrüdüne</b>
+      düşersiniz.</p>
+    </section>
+
+    <!-- 9 -->
+    <section id="risk" aria-labelledby="risk-title">
+      <h2 id="risk-title"><span class="idx" aria-hidden="true">09</span> Polis Riski &amp; Hapis</h2>
+      <p class="lede">Karaborsanın bedeli budur — ne kadar riske girerseniz o
+      kadar dikkatli olun.</p>
+
+      <ul>
+        <li>Elinizde <b>Karanlık Maddeler</b> veya <b>Mühimmat &amp; Silahlar</b>
+        kategorisinden ürün tuttukça, o ürünlerin toplam piyasa değerine göre
+        polis riskiniz birikimli olarak yükselir.</li>
+        <li>Bu ürünlerden elinizde hiç kalmazsa risk zamanla kendiliğinden
+        geriler.</li>
+        <li>Durum Raporu'nda ("F2") anlık polis riski yüzdenizi her zaman
+        görebilirsiniz.</li>
+      </ul>
+
+      <div class="callout warn">
+        <b>Yakalanırsanız:</b> nakdinizin <b>%10'una el konur</b> ve
+        belirlenen gün sayısı kadar hapse girersiniz. Hapisteyken şirket
+        giderleri, kredi taksitleri, adam maaşları ve muhbir ücreti işlemeye
+        devam eder — yani hapisten "işlerim de dursun" diye çıkamazsınız.
+      </div>
+
+      <p>Bir <b>muhbir</b> tutmak, riskinizi görünür kılıp önceden önlem
+      almanızı sağlayan en güvenilir yöntemdir.</p>
+    </section>
+
+    <!-- 10 -->
+    <section id="olaylar" aria-labelledby="olaylar-title">
+      <h2 id="olaylar-title"><span class="idx" aria-hidden="true">10</span> Beklenmedik Olaylar</h2>
+      <p class="lede">Piyasa sadece arz-talep değil; bazen şans da işin içine
+      girer.</p>
+      <ul>
+        <li><b>Piyasa/arsa olayları</b> — ekonomik durgunluk, deprem
+        uyarısı, yeni metro hattı, imar affı gibi haberler belirli ürün
+        veya arsa kategorilerinin fiyatlarını aniden yukarı ya da aşağı
+        oynatabilir.</li>
+        <li><b>Nadir olaylar</b> — çok küçük bir ihtimalle beklenmedik bir
+        miras, büyük ikramiye ya da gizli bir yatırımcı ortaklığı servetinizi
+        birden büyütebilir; yine küçük bir ihtimalle yangın, sel ya da bir
+        ortağın ihaneti servetinizden pay götürebilir.</li>
+      </ul>
+      <p>Bu olaylar her gün gerçekleşmez ve tamamen şansa bağlıdır — planınızı
+      bunlara göre kurmayın, sürpriz oldukları için değerlidirler.</p>
+    </section>
+
+    <!-- 11 -->
+    <section id="rulet" aria-labelledby="rulet-title">
+      <h2 id="rulet-title"><span class="idx" aria-hidden="true">11</span> Rulet</h2>
+      <p class="lede">Kumar Oyna ekranından standart Avrupa ruleti oynayabilirsiniz
+      (0 yeşil, kalan 36 sayı kırmızı/siyah).</p>
+      <ol class="plain">
+        <li>Bahis türünü seçin (aşağıdaki tablo).</li>
+        <li>"Tek Sayı" seçtiyseniz 0-36 arası bir sayı girin.</li>
+        <li>Bahis tutarını yazıp <b>Bahis Ekle</b> ile listeye ekleyin — birden
+        fazla bahis biriktirebilirsiniz.</li>
+        <li>Hazır olduğunuzda <b>Bahisleri Bitir / Çarkı Çevir</b>'e basın.</li>
+      </ol>
+      <table>
+        <tr><th scope="col">Bahis Türü</th><th scope="col">Kapsam</th></tr>
+        <tr><td>Kırmızı / Siyah</td><td>Çıkan sayının rengi</td></tr>
+        <tr><td>Tek / Çift</td><td>Sayının tek ya da çift olması</td></tr>
+        <tr><td>1-18 / 19-36</td><td>Sayı aralığı</td></tr>
+        <tr><td>1. / 2. / 3. Düzine</td><td>1-12, 13-24, 25-36 aralıkları</td></tr>
+        <tr><td>Tek Sayı</td><td>Belirttiğiniz tam sayı (0-36)</td></tr>
+      </table>
+    </section>
+
+    <!-- 12 -->
+    <section id="destek" aria-labelledby="destek-title">
+      <h2 id="destek-title"><span class="idx" aria-hidden="true">12</span> Destek / Bilet</h2>
+      <p class="lede">Bir sorun mu var? Oyundan çıkmadan bize ulaşın.</p>
+      <ol class="plain">
+        <li>Ana ekrandan <b>Destek / Bilet</b>'i açın.</li>
+        <li><b>Yeni Bilet Aç</b> ile konu ve mesajınızı yazıp gönderin.</li>
+        <li>Yanıt geldiğinde aynı ekrandan görebilirsiniz — mesajlar
+        <b>"SİZ"</b> ve <b>"YÖNETİM CEVABI"</b> başlıkları altında ayrı
+        gösterilir, kimin ne yazdığını karıştırmazsınız.</li>
+        <li>Bilet kapatılmadığı sürece aynı konu üzerinden tekrar yazıp
+        yanıt alabilirsiniz. Kapatılan bir bilete yeni yanıt eklenemez;
+        yeni bir konu için tekrar <b>Yeni Bilet Aç</b>'ı kullanın.</li>
+      </ol>
+    </section>
+
+    <!-- 13 -->
+    <section id="kisayollar" aria-labelledby="kisayollar-title">
+      <h2 id="kisayollar-title"><span class="idx" aria-hidden="true">13</span> Klavye Kısayolları</h2>
+      <p class="lede">Fare kullanmadan da oyunun tamamına hâkim olabilirsiniz.</p>
+      <div class="kbd-grid">
+        <div class="kbd-row"><kbd>F1</kbd> Yardım</div>
+        <div class="kbd-row"><kbd>F2</kbd> Durum Raporu</div>
+        <div class="kbd-row"><kbd>F3</kbd> Geçmiş (söylenen mesajlar)</div>
+        <div class="kbd-row"><kbd>F5</kbd> Gün Atla</div>
+        <div class="kbd-row"><kbd>F6</kbd> Arsa Yönetimi</div>
+        <div class="kbd-row"><kbd>F7</kbd> Adamlarım</div>
+        <div class="kbd-row"><kbd>Enter</kbd> Ürün listesinde hızlı Al/Sat</div>
+        <div class="kbd-row"><kbd>C</kbd> Nakit bakiyeyi duyur</div>
+        <div class="kbd-row"><kbd>D</kbd> Seçili ürünün kategorisini duyur</div>
+        <div class="kbd-row"><kbd>E</kbd> Envanter özetini duyur</div>
+        <div class="kbd-row"><kbd>I</kbd> Envanterdeki ürünleri tek tek duyur</div>
+        <div class="kbd-row"><kbd>Page Up / Down</kbd> Ses seviyesi</div>
+        <div class="kbd-row"><kbd>Home / End</kbd> Önceki / sonraki müzik parçası</div>
+        <div class="kbd-row"><kbd>↑ / ↓</kbd> Listelerde gezinme</div>
+        <div class="kbd-row"><kbd>Esc</kbd> Pencereyi kapat / vazgeç</div>
+      </div>
+    </section>
+
+    <!-- 14 -->
+    <section id="erisilebilirlik" aria-labelledby="erisilebilirlik-title">
+      <h2 id="erisilebilirlik-title"><span class="idx" aria-hidden="true">14</span> Erişilebilirlik</h2>
+      <p class="lede">Oyun, ekran okuyucu kullanan oyuncular gözetilerek
+      tasarlandı.</p>
+      <ul>
+        <li>Önemli her olay ve bilgi <b>sesli olarak</b> duyurulur.</li>
+        <li><b>F3 (Geçmiş)</b> ekranından, oyun boyunca söylenmiş tüm
+        mesajları yeniden okuyabilirsiniz. <kbd>Ctrl+A</kbd> ile tümünü
+        seçip kopyalayabilirsiniz.</li>
+        <li>Müzik ve ses ayarları <kbd>Page Up / Page Down</kbd> ve
+        <kbd>Home / End</kbd> ile kontrol edilir.</li>
+      </ul>
+    </section>
+
+    <!-- 15 -->
+    <section id="skor" aria-labelledby="skor-title" style="border-bottom:none;">
+      <h2 id="skor-title"><span class="idx" aria-hidden="true">15</span> Skor Tablosu</h2>
+      <p class="lede">Ana menüden <b>En İyi Skorlar</b> ekranını açarak diğer
+      oyuncularla karşılaştırmalı sıralamanızı görebilirsiniz.</p>
+      <p>Sıralama tamamen <b>nakit bakiyenize</b> göre yapılır — kirli para,
+      temiz para ve etiketsiz para dahil, o an elinizdeki toplam nakit.
+      Skorunuz, oyunu kapatırken otomatik olarak gönderilir.</p>
+    </section>
+
+    <footer>
+      İyi eğlenceler. Herhangi bir sorun yaşarsanız oyun içinden
+      <a href="#destek">Destek / Bilet</a> ekranını kullanarak bize ulaşabilirsiniz.
+    </footer>
+  </main>
 </div>
 
-<h2 id="sirket">Şirket Sistemi</h2>
-<p>Şirketler, para aklama yapmaz; sadece <strong>günlük düzenli kâr</strong>
-üretir ve <strong>kredi notunuzu</strong> büyütüp banka kredisi çekmenizi
-sağlar. Aynı anda farklı şehirlerde birden fazla şirketiniz olabilir.</p>
-<table>
-<caption>Şirket Tipleri</caption>
-<tr><th>Şirket</th><th>Kuruluş Maliyeti</th><th>Günlük Gider</th><th>Günlük Kâr Aralığı</th><th>Kredi Notu Çarpanı</th></tr>
-<tr><td>Tekstil Atölyesi</td><td>8.000 TL</td><td>80 TL</td><td>100 - 300 TL</td><td>0.8x</td></tr>
-<tr><td>Restoran</td><td>10.000 TL</td><td>150 TL</td><td>200 - 500 TL</td><td>1.2x</td></tr>
-<tr><td>Oto Galeri</td><td>15.000 TL</td><td>100 TL</td><td>150 - 400 TL</td><td>1.0x</td></tr>
-<tr><td>Gece Kulübü</td><td>25.000 TL</td><td>250 TL</td><td>400 - 900 TL</td><td>1.5x</td></tr>
-<tr><td>Kripto Madenciliği</td><td>30.000 TL</td><td>500 TL</td><td>600 - 1.400 TL</td><td>2.0x</td></tr>
-</table>
-<p>Her gün işletme giderini ödeyemezseniz şirketiniz kapanır. Şirket
-Yönetimi ekranından yeni şirket kurabilir, mevcut şirketlerinizi
-görüntüleyebilir veya kapatabilirsiniz.</p>
+<script>
+  // Görünür bölüme göre soldaki menüde aria-current="location" işaretler.
+  // Hem klavye/ekran okuyucu kullanıcılarına "şu an neredesiniz" bilgisini
+  // hem de görme engelli olmayan kullanıcılara görsel bir gösterge verir.
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a[href^="#"]'));
+    var map = {};
+    links.forEach(function (a) {
+      map[a.getAttribute('href').slice(1)] = a;
+    });
 
-<h2 id="kredi">Kredi Notu ve Banka Kredisi</h2>
-<p>Banka kredisi çekebilmek için önce en az bir şirket kurmanız gerekir.
-Kredi notunuz yükseldikçe hem çekebileceğiniz kredi limiti hem de faiz
-oranınız iyileşir.</p>
-<table>
-<caption>Kredi Notu Seviyeleri</caption>
-<tr><th>Seviye</th><th>Min. Puan</th><th>Kredi Limiti Çarpanı</th><th>Faiz Oranı</th><th>Kredi Çekilebilir mi?</th></tr>
-<tr><td>Sicil Bozuk</td><td>0</td><td>—</td><td>—</td><td>Hayır</td></tr>
-<tr><td>Başlangıç</td><td>50</td><td>1.5x</td><td>%35</td><td>Evet</td></tr>
-<tr><td>Güvenilir İşletme</td><td>150</td><td>3.0x</td><td>%25</td><td>Evet</td></tr>
-<tr><td>Kurumsal</td><td>300</td><td>5.0x</td><td>%15</td><td>Evet</td></tr>
-<tr><td>Premium</td><td>500</td><td>8.0x</td><td>%8</td><td>Evet</td></tr>
-</table>
-<p>Krediler taksitli olarak (30 günde bir taksit) geri ödenir. Taksitini
-ödeyemezseniz kredi <strong>temerrüde</strong> düşer ve ciddi
-yaptırımlarla karşılaşırsınız.</p>
+    if (!('IntersectionObserver' in window)) return;
 
-<h2 id="arsa">Arsa Sistemi</h2>
-<p>Arsa Yönetimi ekranından (F6) 6 farklı arsa tipinden satın alabilir,
-elinizdekileri piyasa değerinden satabilir veya arsanızı teminat
-göstererek kredi çekebilirsiniz. Arsa fiyatları her gün ekonomik
-olaylara bağlı olarak dalgalanır.</p>
-<table>
-<caption>Arsa Tipleri</caption>
-<tr><th>Arsa Tipi</th><th>Başlangıç Fiyatı</th><th>Fiyat Aralığı</th><th>Kredi Teminat Çarpanı</th></tr>
-<tr><td>Tarla</td><td>30.000 TL</td><td>15.000 - 100.000 TL</td><td>%50</td></tr>
-<tr><td>Arsa</td><td>50.000 TL</td><td>25.000 - 150.000 TL</td><td>%70</td></tr>
-<tr><td>Sanayi Arsa</td><td>80.000 TL</td><td>40.000 - 200.000 TL</td><td>%65</td></tr>
-<tr><td>İmarlı Arsa</td><td>100.000 TL</td><td>50.000 - 300.000 TL</td><td>%75</td></tr>
-<tr><td>Sahil Arsa</td><td>200.000 TL</td><td>100.000 - 500.000 TL</td><td>%60</td></tr>
-</table>
-<ul>
-    <li>Arsa satışında piyasa değerinin <strong>%5'i komisyon</strong>
-        olarak kesilir.</li>
-    <li>Arsa teminatlı krediler <strong>%15 sabit faiz</strong> ile verilir
-        ve arsa değerinin belirtilen yüzdesine kadar çekilebilir.</li>
-    <li>Arsa fiyatları imar düzenlemesi, metro hattı müjdesi, deprem
-        riski, sahil kirliliği gibi olaylardan etkilenip artabilir ya da
-        düşebilir.</li>
-</ul>
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var link = map[entry.target.id];
+        if (!link) return;
+        if (entry.isIntersecting) {
+          links.forEach(function (a) { a.removeAttribute('aria-current'); });
+          link.setAttribute('aria-current', 'location');
+        }
+      });
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
 
-<h2 id="muhbir">Muhbir Sistemi</h2>
-<p>Muhbir Yönetimi ekranından bir muhbir tutabilirsiniz:</p>
-<ul>
-    <li><strong>Tutma bedeli:</strong> 8.000 TL (bir defalık)</li>
-    <li><strong>Günlük ücret:</strong> 300 TL</li>
-</ul>
-<p>Muhbiriniz varken, yaklaşan bir polis baskınını önceden haber
-verebilir. Uyarı geldiğinde mallarınızı hemen elden çıkarırsanız polisi
-tamamen atlatırsınız; uyarıyı görmezden gelirseniz muhbir genellikle
-(%80 ihtimalle) haklı çıkar ve o gün kesin yakalanırsınız. Ücretini
-ödeyemezseniz muhbiriniz sizi terk eder.</p>
-
-<h2 id="adamlar">Adam Tutma Sistemi</h2>
-<p>Adamlarım ekranından (F7) güvendiğiniz kişileri farklı şehirlere
-gönderip oradaki karaborsa satışını sizin adınıza yönetmelerini
-sağlayabilirsiniz. Her şehirde yalnızca bir adamınız olabilir.</p>
-<ul>
-    <li><strong>Tutma bedeli:</strong> 5.000 TL (bir defalık)</li>
-    <li><strong>Maaş:</strong> 1.500 TL, her 30 günde bir ödenir</li>
-    <li><strong>Günlük üretim:</strong> 150 - 600 TL arasında rastgele,
-        doğrudan nakde eklenir</li>
-</ul>
-<p>Maaşını ödeyemezseniz adamınız sizi terk eder.</p>
-
-<h2 id="kumar">Kumar (Rulet)</h2>
-<p>Kumar Oyna düğmesi standart Avrupa ruleti (tek sıfır, 0-36) sunar.
-Kazanç oranları (bahsiniz dahil toplam ödeme):</p>
-<table>
-<caption>Rulet Bahis Türleri ve Ödemeleri</caption>
-<tr><th>Bahis</th><th>Ödeme Çarpanı</th></tr>
-<tr><td>Tek Sayı (0-36)</td><td>36x</td></tr>
-<tr><td>Düzine (1., 2. veya 3.)</td><td>3x</td></tr>
-<tr><td>Kırmızı / Siyah</td><td>2x</td></tr>
-<tr><td>Tek / Çift</td><td>2x</td></tr>
-<tr><td>1-18 / 19-36</td><td>2x</td></tr>
-</table>
-<p>Net kazancınız (kâr) suç geliri istatistiğinize eklenir; oyunun
-karaborsa temasıyla tutarlı bir detaydır.</p>
-
-<h2 id="polis">Polis Riski ve Hapis</h2>
-<ul>
-    <li>Polis riski yalnızca elinizdeki <em>Karanlık Maddeler</em> ve
-        <em>Mühimmat &amp; Silahlar</em> stoğunun piyasa değerine göre
-        hesaplanır. Bu ürünlerden ne kadar çok taşırsanız risk o kadar
-        artar (birikimli olarak da büyür).</li>
-    <li>Durum Raporu ekranından (F2) anlık <strong>Polis Riski</strong>
-        yüzdenizi görebilirsiniz.</li>
-    <li>Yakalanırsanız <strong>1 ila 3 gün</strong> hapis yatarsınız ve
-        elinizdeki nakdin <strong>%25'ine el konulur</strong>.</li>
-    <li>Hapisteyken alım/satım yapamazsınız ancak şirketleriniz,
-        krediniz, arsalarınız ve adamlarınız işlemeye devam eder.</li>
-</ul>
-
-<h2 id="olaylar">Rastgele Olaylar</h2>
-<p>Her gün %70 ihtimalle 1 ila 3 rastgele olay tetiklenir. Bu olaylar
-şunları içerebilir:</p>
-<ul>
-    <li>Kategoriye özel <strong>fiyat dalgalanmaları</strong> (ekonomik
-        kriz, çete savaşları, kripto çöküşü, gümrük denetimleri vb.)</li>
-    <li><strong>Nakit kazanç</strong> olayları (bahşiş, komisyon, şans
-        oyunu kazancı vb.)</li>
-    <li><strong>Nakit kayıp</strong> olayları (soygun, rüşvet, siber
-        dolandırıcılık, haraç vb.)</li>
-    <li><strong>Envanter müsaderesi</strong> (polis baskını, fare
-        istilası, köstebek ihaneti, gümrük el koyması)</li>
-    <li><strong>Büyük risk / kombo olaylar</strong> (rakip çete baskını
-        gibi hem nakit hem envanter kaybettiren olaylar)</li>
-    <li><strong>Şirket olayları</strong> (maliye denetimi, kredi notu
-        artışı/düşüşü)</li>
-    <li><strong>Arsa fiyat olayları</strong> (imar, metro, deprem, sahil
-        kirliliği)</li>
-</ul>
-<div class="note">
-Ayrıca çok düşük bir ihtimalle (ortalama ~250 günde bir) beklenmedik bir
-<strong>miras</strong> olayı tetiklenip hesabınıza 500.000 - 1.000.000 TL
-arası büyük bir meblağ yatabilir.
-</div>
-
-<h2 id="skor">Skor Tablosu</h2>
-<p>Her 3 günde bir, mevcut nakit miktarınız ve gününüz otomatik olarak
-çevrimiçi skor tablosuna gönderilir (arka planda, oyunu bekletmeden).
-Oyunu kapatırken de son bir skor gönderimi yapılır. Hapisteyken skor
-gönderimi yapılmaz.</p>
-
-<h2 id="kayit">Kayıt Sistemi</h2>
-<ul>
-    <li>Oyun her 30 saniyede bir ve her gün sonunda otomatik olarak
-        kaydedilir.</li>
-    <li>Ana menüden "Devam Et / Yükle" seçeneğiyle daha önceki kayıtlı
-        oyununuza dönebilirsiniz.</li>
-    <li>Hapisteyken otomatik kayıt yapılmaz; hapis bittiğinde kayıt
-        devam eder.</li>
-</ul>
-
-<h2 id="hedefler">Oyun Hedefleri</h2>
-<p>Oyun sınırsız olsa da, kendinizi ölçebileceğiniz referans hedefler
-şunlardır:</p>
-<table>
-<caption>Referans Hedefler</caption>
-<tr><th>Unvan</th><th>Gün</th><th>Hedef Nakit</th></tr>
-<tr><td>Çırak Tüccar</td><td>30</td><td>25.000 TL</td></tr>
-<tr><td>Usta Tüccar</td><td>45</td><td>75.000 TL</td></tr>
-<tr><td>Efsane Tüccar</td><td>60</td><td>200.000 TL</td></tr>
-<tr><td>Karaborsa Kralı</td><td>90</td><td>500.000 TL</td></tr>
-</table>
-
-<h2 id="ipuclari">İpuçları</h2>
-<div class="tip">
-<ul>
-    <li>Ucuzken alıp pahalıyken satmak temel kazanç yöntemidir; ürün
-        listesi fiyata göre sıralı gelir, en ucuz ürünler üstte
-        görünür.</li>
-    <li>Karanlık Maddeler ve Mühimmat/Silah stoklarınızı gereğinden
-        fazla biriktirmeyin — polis riskiniz katlanarak artar.</li>
-    <li>Muhbir tutmak, özellikle yasa dışı ürün ticareti yapıyorsanız
-        uzun vadede kendini fazlasıyla amorti eder.</li>
-    <li>Şirket kurmak hem düzenli pasif gelir hem de banka kredisi
-        yolunu açar; kredi notunuzu büyütmek için şirketinizi uzun süre
-        ayakta tutun.</li>
-    <li>Arsa piyasa değeri düşükken alıp yükseldiğinde satmak, ürün
-        ticaretinden bağımsız ek bir kazanç kaynağıdır.</li>
-    <li>Kredi taksitlerinizi zamanında ödeyin; temerrüt ciddi mali
-        zarara yol açar.</li>
-</ul>
-</div>
-
-<footer>
-<p>Karaborsa Ticaret Simülasyonu — görme engelli bireyler gözetilerek
-tasarlanmış, ekran okuyucu ile tam uyumlu bir ticaret simülasyonudur.
-Bu yardım dosyası oyun içinden <span class="shortcut">F1</span> tuşu ile
-her zaman tekrar açılabilir.</p>
-</footer>
+    document.querySelectorAll('main section[id]').forEach(function (sec) {
+      observer.observe(sec);
+    });
+  })();
+</script>
 
 </body>
 </html>

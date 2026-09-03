@@ -16,6 +16,8 @@ oyun mantığı bundan etkilenmez.
 
 import os
 
+import settings_manager
+
 try:
     import pygame
 
@@ -36,7 +38,18 @@ class AudioManager:
     
     _mixer_initialized = False
 
-    def __init__(self, initial_music_volume: float = 0.5, initial_sfx_volume: float = 0.8):
+    def __init__(self, initial_music_volume: float = None, initial_sfx_volume: float = None):
+        # Varsayılan olarak None bırakılıyor ki her yeni AudioManager()
+        # örneği (ana menü, oyun penceresi, ayarlar ekranı - her biri
+        # kendi örneğini yaratıyor) settings_manager'daki KAYITLI
+        # seviyeden başlasın. Sabit bir varsayılan (0.5/0.8) kullanılsa,
+        # ayarlar ekranında yapılan bir değişiklik bir sonraki
+        # AudioManager örneğinde (ör. oyun penceresi açılınca) kaybolurdu.
+        if initial_music_volume is None:
+            initial_music_volume = settings_manager.get_music_volume()
+        if initial_sfx_volume is None:
+            initial_sfx_volume = settings_manager.get_sfx_volume()
+
         self.music_volume = initial_music_volume
         self.sfx_volume = initial_sfx_volume
         self.available = False
@@ -129,25 +142,47 @@ class AudioManager:
             print(f"[Ses Hatası] Efekt çalınamadı: {exc}")
 
     def volume_up(self, step: float = 0.1) -> float:
-        """Müzik sesini bir kademe yükseltir, yeni seviyeyi döndürür."""
+        """Müzik sesini bir kademe yükseltir, yeni seviyeyi döndürür
+        ve kalıcı olması için diske de yazar."""
         self.music_volume = min(1.0, round(self.music_volume + step, 2))
         if self.available:
             try:
                 pygame.mixer.music.set_volume(self.music_volume)
             except Exception:
                 pass
+        settings_manager.set_music_volume(self.music_volume)
         return self.music_volume
 
     def volume_down(self, step: float = 0.1) -> float:
-        """Müzik sesini bir kademe düşürür, yeni seviyeyi döndürür."""
+        """Müzik sesini bir kademe düşürür, yeni seviyeyi döndürür
+        ve kalıcı olması için diske de yazar."""
         self.music_volume = max(0.0, round(self.music_volume - step, 2))
         if self.available:
             try:
                 pygame.mixer.music.set_volume(self.music_volume)
             except Exception:
                 pass
+        settings_manager.set_music_volume(self.music_volume)
         return self.music_volume
 
+    def sfx_volume_up(self, step: float = 0.1) -> float:
+        """Efekt (kısa ses) seviyesini bir kademe yükseltir, yeni
+        seviyeyi döndürür ve diske yazar. play_sound() her efekti
+        ANLIK olarak self.sfx_volume ile çaldığı için (pygame.mixer'da
+        efektler için tekil/kalıcı bir kanal olmadığından), burada
+        şu an çalmakta olan bir sesi güncellemeye gerek yok - bir
+        sonraki play_sound() çağrısı yeni seviyeyi otomatik kullanır."""
+        self.sfx_volume = min(1.0, round(self.sfx_volume + step, 2))
+        settings_manager.set_sfx_volume(self.sfx_volume)
+        return self.sfx_volume
+
+    def sfx_volume_down(self, step: float = 0.1) -> float:
+        """sfx_volume_up ile aynı mantık, ters yönde."""
+        self.sfx_volume = max(0.0, round(self.sfx_volume - step, 2))
+        settings_manager.set_sfx_volume(self.sfx_volume)
+        return self.sfx_volume
+
     def set_sfx_volume(self, volume: float) -> None:
-        """Efekt ses seviyesini ayarlar."""
+        """Efekt ses seviyesini doğrudan ayarlar (ve diske yazar)."""
         self.sfx_volume = max(0.0, min(1.0, volume))
+        settings_manager.set_sfx_volume(self.sfx_volume)

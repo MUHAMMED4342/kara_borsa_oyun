@@ -13,6 +13,10 @@ import re
 import hmac
 import hashlib
 
+import auth_manager
+import ticket_manager
+import settings_manager
+
 
 APP_NAME = "KaraborsaSimulasyonu"
 APP_AUTHOR = "Karaborsa"
@@ -93,58 +97,63 @@ def get_save_path(username: str) -> str:
     return os.path.join(SAVE_DIR, f"{username}.json")
 
 
+def build_save_data(username: str, game_state) -> dict:
+    """game_state'den, hem yerel dosyaya hem de (gerekirse) buluta
+    gönderilecek kayıt sözlüğünü üretir. save_game() ve çıkışta yapılan
+    buluta gönderim (main.py) bu fonksiyonu ortak kullanır."""
+    return {
+        "username": username,
+        "cash": game_state.cash,
+        "dirty_cash": getattr(game_state, "dirty_cash", 0.0),
+        "clean_money": getattr(game_state, "clean_money", 0.0),
+        "day": game_state.day,
+        "inventory": game_state.inventory,
+        "prices": game_state.prices,
+        "in_jail": getattr(game_state, "in_jail", False),
+        "jail_days": getattr(game_state, "jail_days", 0),
+        "companies": getattr(game_state, "companies", []),
+        "has_company": getattr(game_state, "has_company", False),
+        "company_type": getattr(game_state, "company_type", ""),
+        "company_name": getattr(game_state, "company_name", ""),
+        "company_city": getattr(game_state, "company_city", ""),
+        "company_credit_score": getattr(game_state, "company_credit_score", 0),
+        "company_total_laundered": getattr(game_state, "company_total_laundered", 0.0),
+        "company_monthly_revenue": getattr(game_state, "company_monthly_revenue", 0.0),
+        "company_days_active": getattr(game_state, "company_days_active", 0),
+        "company_upkeep_paid": getattr(game_state, "company_upkeep_paid", 0),
+        "loan_amount": getattr(game_state, "loan_amount", 0.0),
+        "loan_interest_rate": getattr(game_state, "loan_interest_rate", 0.0),
+        "loan_days_remaining": getattr(game_state, "loan_days_remaining", 0),
+        "loan_total_debt": getattr(game_state, "loan_total_debt", 0.0),
+        "loan_total_installments": getattr(game_state, "loan_total_installments", 0),
+        "loan_installments_paid": getattr(game_state, "loan_installments_paid", 0),
+        "loan_installment_amount": getattr(game_state, "loan_installment_amount", 0.0),
+        "loan_days_until_installment": getattr(game_state, "loan_days_until_installment", 0),
+        "laundering_in_progress": getattr(game_state, "laundering_in_progress", False),
+        "laundering_days_left": getattr(game_state, "laundering_days_left", 0),
+        "laundering_amount": getattr(game_state, "laundering_amount", 0.0),
+        "laundering_method": getattr(game_state, "laundering_method", ""),
+        "has_informant": getattr(game_state, "has_informant", False),
+        "informant_warning_active": getattr(game_state, "informant_warning_active", False),
+        "police_heat": getattr(game_state, "police_heat", 0),
+        "total_crime": getattr(game_state, "total_crime", 0.0),
+        "deaths_caused": getattr(game_state, "deaths_caused", 0),
+        "highest_cash": getattr(game_state, "highest_cash", game_state.cash),
+        "days_until_bank_interest": getattr(game_state, "days_until_bank_interest", 30),
+        "last_sent_score": getattr(game_state, "last_sent_score", 0.0),
+        "lands": getattr(game_state, "lands", []),
+        "land_prices": getattr(game_state, "land_prices", {}),
+        "employees": getattr(game_state, "employees", []),
+    }
+
+
 def save_game(username: str, game_state) -> bool:
+    """Oyunu SADECE yerel diske kaydeder (anında, ağ gerektirmez).
+    Buluta gönderim burada YAPILMAZ - kredi/kota tüketimini önlemek
+    için bulut senkronu sadece oyun kapatılırken (main.py ->
+    MainFrame.on_close) tek seferlik olarak yapılır."""
     try:
-        save_data = {
-            "username": username,
-            "cash": game_state.cash,
-            "dirty_cash": getattr(game_state, "dirty_cash", 0.0),
-            "clean_money": getattr(game_state, "clean_money", 0.0),
-            "day": game_state.day,
-            "inventory": game_state.inventory,
-            "prices": game_state.prices,
-            "in_jail": getattr(game_state, "in_jail", False),
-            "jail_days": getattr(game_state, "jail_days", 0),
-            
-            
-            
-            
-            
-            "companies": getattr(game_state, "companies", []),
-            "has_company": getattr(game_state, "has_company", False),
-            "company_type": getattr(game_state, "company_type", ""),
-            "company_name": getattr(game_state, "company_name", ""),
-            "company_city": getattr(game_state, "company_city", ""),
-            "company_credit_score": getattr(game_state, "company_credit_score", 0),
-            "company_total_laundered": getattr(game_state, "company_total_laundered", 0.0),
-            "company_monthly_revenue": getattr(game_state, "company_monthly_revenue", 0.0),
-            "company_days_active": getattr(game_state, "company_days_active", 0),
-            "company_upkeep_paid": getattr(game_state, "company_upkeep_paid", 0),
-            "loan_amount": getattr(game_state, "loan_amount", 0.0),
-            "loan_interest_rate": getattr(game_state, "loan_interest_rate", 0.0),
-            "loan_days_remaining": getattr(game_state, "loan_days_remaining", 0),
-            "loan_total_debt": getattr(game_state, "loan_total_debt", 0.0),
-            "loan_total_installments": getattr(game_state, "loan_total_installments", 0),
-            "loan_installments_paid": getattr(game_state, "loan_installments_paid", 0),
-            "loan_installment_amount": getattr(game_state, "loan_installment_amount", 0.0),
-            "loan_days_until_installment": getattr(game_state, "loan_days_until_installment", 0),
-            "laundering_in_progress": getattr(game_state, "laundering_in_progress", False),
-            "laundering_days_left": getattr(game_state, "laundering_days_left", 0),
-            "laundering_amount": getattr(game_state, "laundering_amount", 0.0),
-            "laundering_method": getattr(game_state, "laundering_method", ""),
-            "has_informant": getattr(game_state, "has_informant", False),
-            "informant_warning_active": getattr(game_state, "informant_warning_active", False),
-            "police_heat": getattr(game_state, "police_heat", 0),
-            "total_crime": getattr(game_state, "total_crime", 0.0),
-            "deaths_caused": getattr(game_state, "deaths_caused", 0),
-            "highest_cash": getattr(game_state, "highest_cash", game_state.cash),
-            "days_until_bank_interest": getattr(game_state, "days_until_bank_interest", 30),
-            "last_sent_score": getattr(game_state, "last_sent_score", 0.0),
-            "lands": getattr(game_state, "lands", []),
-            "land_prices": getattr(game_state, "land_prices", {}),
-            "employees": getattr(game_state, "employees", []),
-        }
-        
+        save_data = build_save_data(username, game_state)
         _write_signed_save(get_save_path(username), save_data)
         return True
     except Exception as e:
@@ -174,6 +183,21 @@ def load_game(username: str) -> dict:
     except Exception as e:
         print(f"[Hata] Kayıt yüklenemedi: {e}")
         return None
+
+
+def import_cloud_save(save_data: dict) -> str:
+    """PocketBase'den (auth_manager.fetch_cloud_save) gelen bir kayıt
+    verisini bu cihazın yerel diskine yazar. Giriş yapıldığında
+    main.py tarafından çağrılır, böylece hesaba bağlı ilerleme hangi
+    cihazda oturum açılırsa açılsın otomatik olarak kullanılabilir
+    hale gelir - "asla kaybolmaz" kuralını sağlayan asıl adım budur.
+    Kaydedilen (temizlenmiş) kullanıcı adını döner."""
+    username = save_data.get("username") or "Anonim"
+    try:
+        _write_signed_save(get_save_path(username), save_data)
+    except Exception as e:
+        print(f"[Hata] Bulut kaydı içeri aktarılamadı: {e}")
+    return username
 
 
 def rename_save(old_username: str, new_username: str) -> tuple:
@@ -215,6 +239,7 @@ def rename_save(old_username: str, new_username: str) -> tuple:
 
     try:
         _write_signed_save(new_path, data)
+        auth_manager.push_active_save_async(data)
     except Exception as e:
         print(f"[Hata] Kullanıcı adı değiştirilemedi: {e}")
         return False, f"Yeni kayıt yazılamadı: {e}"
@@ -227,10 +252,24 @@ def rename_save(old_username: str, new_username: str) -> tuple:
     return True, new_clean
 
 
+# SAVE_DIR; auth_manager (session.json), ticket_manager (tickets.json)
+# ve settings_manager (settings.json) TARAFINDAN DA paylaşılıyor (dördü
+# de aynı appdirs klasörünü kullanıyor). Bu yüzden list_saves() bu
+# dosyaları gerçek bir oyun kaydıymış gibi listeye eklememeli. Klasöre
+# başka bir sistem dosyası (*.json) eklenirse buraya da eklenmeli.
+_RESERVED_SAVE_FILENAMES = {
+    auth_manager.SESSION_FILENAME,
+    ticket_manager.TICKETS_FILENAME,
+    settings_manager.SETTINGS_FILENAME,
+}
+
+
 def list_saves() -> list:
     os.makedirs(SAVE_DIR, exist_ok=True)
     saves = []
     for file in os.listdir(SAVE_DIR):
+        if file in _RESERVED_SAVE_FILENAMES:
+            continue
         if file.endswith('.json'):
             saves.append(file[:-5])
     return saves

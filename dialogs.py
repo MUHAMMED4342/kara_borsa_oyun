@@ -17,6 +17,10 @@ from game_state import resource_path, open_help, open_release_notes, ID_LOAD, ID
 import leaderboard
 from leaderboard import get_leaderboard, get_gist_content
 
+import auth_manager
+import ticket_manager
+import settings_manager
+
 
 def speak(text: str):
     """Ekran okuyucuya seslendirir VE aynı mesajı geçmiş kaydına ekler."""
@@ -25,13 +29,17 @@ def speak(text: str):
 
 
 SOUND_TYPING = resource_path("sounds/typing.wav")
+SOUND_TICKET_SENT = resource_path("sounds/gonderim.mp3")
+SOUND_TICKET_REPLY = resource_path("sounds/yanit.mp3")
 
 
 def bind_typing_sound(ctrl, audio_manager):
     """Verilen metin giriş kontrolüne (TextCtrl, SpinCtrl vb.) her
-    karakter yazıldığında typing.wav çalacak şekilde bağlar."""
+    karakter yazıldığında typing.wav çalacak şekilde bağlar. Ayarlar
+    ekranından kapatılmışsa (settings_manager.is_typing_sound_enabled)
+    hiçbir şey çalmaz."""
     def _on_type(event):
-        if os.path.exists(SOUND_TYPING):
+        if settings_manager.is_typing_sound_enabled() and os.path.exists(SOUND_TYPING):
             audio_manager.play_sound(SOUND_TYPING)
         event.Skip()
     ctrl.Bind(wx.EVT_TEXT, _on_type)
@@ -267,6 +275,503 @@ class LandManagementDialog(wx.Dialog):
                 self.parent.auto_save()
 
 
+class AuthDialog(wx.Dialog):
+    """Uygulama açılışında ZORUNLU olarak gösterilen giriş / hesap
+    oluşturma ekranı (PocketBase, kullanıcı adı + şifre).
+
+    Kullanıcı ya başarıyla giriş yapar/hesap oluşturur (self.session
+    dolu döner, ShowModal() -> wx.ID_OK) ya da 'Çıkış'ı seçer
+    (self.session None, ShowModal() -> wx.ID_CANCEL). main.py bu
+    ekranı atlamadan hiçbir zaman ana menüyü/oyunu açmaz."""
+
+    def __init__(self, parent=None):
+        super().__init__(
+            parent, title="Karaborsa - Giriş",
+            size=(380, 430),
+        )
+        self.session = None
+        self.audio = AudioManager()
+        self._busy = False
+
+        self._build_ui()
+        self._bind_events()
+        self.CenterOnScreen()
+
+        speak(
+            "Karaborsa'ya hoş geldiniz. Devam etmek için kullanıcı adınız "
+            "ve şifrenizle giriş yapın ya da yeni bir hesap oluşturun. "
+            "Hesabınız olmadan oyuna devam edilemez."
+        )
+
+    def _build_ui(self):
+        panel = wx.Panel(self)
+        outer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label="KARABORSA - HESAP")
+        title.SetFont(wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        outer.Add(title, 0, wx.ALL | wx.CENTER, 12)
+
+        grid = wx.FlexGridSizer(3, 2, 8, 8)
+        grid.AddGrowableCol(1, 1)
+
+        user_label = wx.StaticText(panel, label="Kullanıcı adı:")
+        self.username_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
+        grid.Add(user_label, 0, wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.username_ctrl, 1, wx.EXPAND)
+
+        pass_label = wx.StaticText(panel, label="Şifre:")
+        self.password_ctrl = wx.TextCtrl(panel, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
+        grid.Add(pass_label, 0, wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.password_ctrl, 1, wx.EXPAND)
+
+        email_label = wx.StaticText(panel, label="E-posta\n(sadece yeni\nhesapta):")
+        self.email_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
+        grid.Add(email_label, 0, wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.email_ctrl, 1, wx.EXPAND)
+
+        outer.Add(grid, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 20)
+
+        bind_typing_sound(self.username_ctrl, self.audio)
+        bind_typing_sound(self.password_ctrl, self.audio)
+        bind_typing_sound(self.email_ctrl, self.audio)
+
+        hint = wx.StaticText(
+            panel,
+            label=(
+                "Kullanıcı adı: 3-20 karakter, harf/rakam/alt çizgi. Şifre: en az "
+                "8 karakter. E-posta sadece hesap oluştururken gereklidir, giriş "
+                "yaparken kullanıcı adınızı kullanırsınız."
+            )
+        )
+        hint.Wrap(330)
+        outer.Add(hint, 0, wx.LEFT | wx.RIGHT | wx.TOP, 20)
+
+        self.status_label = wx.StaticText(panel, label="")
+        self.status_label.Wrap(330)
+        outer.Add(self.status_label, 0, wx.ALL | wx.EXPAND, 10)
+
+        btn_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.btn_login = wx.Button(panel, label="Giriş Yap")
+        self.btn_signup = wx.Button(panel, label="Hesap Oluştur")
+        self.btn_forgot_password = wx.Button(panel, label="Şifremi Unuttum")
+        self.btn_quit = wx.Button(panel, label="Çıkış")
+        for b in (self.btn_login, self.btn_signup, self.btn_forgot_password, self.btn_quit):
+            btn_sizer.Add(b, 0, wx.EXPAND | wx.BOTTOM, 6)
+        outer.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 15)
+
+        panel.SetSizer(outer)
+        self.username_ctrl.SetFocus()
+
+    def _bind_events(self):
+        self.btn_login.Bind(wx.EVT_BUTTON, self.on_login)
+        self.btn_signup.Bind(wx.EVT_BUTTON, self.on_signup)
+        self.btn_forgot_password.Bind(wx.EVT_BUTTON, self.on_forgot_password)
+        self.btn_quit.Bind(wx.EVT_BUTTON, self.on_quit)
+        self.username_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_login)
+        self.password_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_login)
+        self.Bind(wx.EVT_CLOSE, self.on_quit)
+
+    def _set_busy(self, busy: bool, message: str = ""):
+        self._busy = busy
+        for b in (self.btn_login, self.btn_signup, self.btn_quit):
+            b.Enable(not busy)
+        self.username_ctrl.Enable(not busy)
+        self.password_ctrl.Enable(not busy)
+        self.email_ctrl.Enable(not busy)
+        self.status_label.SetLabel(message)
+        self.status_label.GetParent().Layout()
+
+    def _get_credentials(self):
+        username = self.username_ctrl.GetValue().strip()
+        password = self.password_ctrl.GetValue()
+        email = self.email_ctrl.GetValue().strip()
+        return username, password, email
+
+    def on_login(self, event):
+        if self._busy:
+            return
+        username, password, _email = self._get_credentials()
+        self._set_busy(True, "Giriş yapılıyor, lütfen bekleyin...")
+        speak("Giriş yapılıyor")
+
+        def worker():
+            try:
+                session = auth_manager.sign_in(username, password)
+                wx.CallAfter(self._on_login_success, session)
+            except auth_manager.AuthError as e:
+                wx.CallAfter(self._on_auth_error, e.message)
+            except Exception as e:
+                wx.CallAfter(self._on_auth_error, f"Beklenmeyen hata: {e}")
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_login_success(self, session):
+        self.session = session
+        self._set_busy(False, "")
+        speak("Giriş başarılı")
+        self.EndModal(wx.ID_OK)
+
+    def _on_auth_error(self, message):
+        self._set_busy(False, message)
+        speak(message)
+        wx.MessageBox(message, "Giriş Hatası", wx.OK | wx.ICON_ERROR)
+
+    def on_signup(self, event):
+        if self._busy:
+            return
+        username, password, email = self._get_credentials()
+        if not email or "@" not in email or "." not in email:
+            wx.MessageBox(
+                "Hesap oluşturmak için geçerli bir e-posta adresi girmeniz "
+                "gerekiyor (örn: isim@example.com).",
+                "E-posta Gerekli", wx.OK | wx.ICON_WARNING
+            )
+            return
+
+        self._set_busy(True, "Hesap oluşturuluyor, lütfen bekleyin...")
+        speak("Hesap oluşturuluyor")
+
+        def worker():
+            try:
+                session = auth_manager.sign_up(username, password, email)
+                wx.CallAfter(self._on_login_success, session)
+            except auth_manager.AuthError as e:
+                wx.CallAfter(self._on_auth_error, e.message)
+            except Exception as e:
+                wx.CallAfter(self._on_auth_error, f"Beklenmeyen hata: {e}")
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def on_quit(self, event):
+        if self._busy:
+            return
+        self.session = None
+        self.EndModal(wx.ID_CANCEL)
+
+    def on_forgot_password(self, event):
+        # Ana sayfanın menüsünde/gezinmesinde YER ALMAYAN, sadece bu
+        # bağlantı üzerinden erişilen bir sayfa (bkz. sifremi-unuttum.html).
+        webbrowser.open("https://bilgisayar-xi.vercel.app/sifremi-unuttum.html")
+        speak(
+            "Şifremi unuttum sayfası tarayıcıda açıldı. Kullanıcı adınızı "
+            "gönderdikten sonra size yeni bir şifre atayacağız."
+        )
+
+
+class ChangePasswordDialog(wx.Dialog):
+    """Ana menüden açılan 'Şifre Değiştir' ekranı. Mevcut şifre +
+    yeni şifre (+ tekrar) ister ve auth_manager.update_password ile
+    PocketBase'e gönderir. Başarılı olursa oturum otomatik olarak
+    yeni şifreyle tazelenir (bkz. auth_manager.update_password),
+    oyuncunun ayrıca tekrar giriş yapması GEREKMEZ."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent, title="Şifre Değiştir", size=(380, 340))
+        self.audio = AudioManager()
+        self._busy = False
+        self.success = False
+
+        self._build_ui()
+        self._bind_events()
+        self.CenterOnScreen()
+
+        speak("Şifre değiştir ekranı. Mevcut şifrenizi ve yeni şifrenizi girin.")
+
+    def _build_ui(self):
+        panel = wx.Panel(self)
+        outer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label="ŞİFRE DEĞİŞTİR")
+        title.SetFont(wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        outer.Add(title, 0, wx.ALL | wx.CENTER, 12)
+
+        grid = wx.FlexGridSizer(3, 2, 8, 8)
+        grid.AddGrowableCol(1, 1)
+
+        old_label = wx.StaticText(panel, label="Mevcut şifre:")
+        self.old_password_ctrl = wx.TextCtrl(panel, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
+        grid.Add(old_label, 0, wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.old_password_ctrl, 1, wx.EXPAND)
+
+        new_label = wx.StaticText(panel, label="Yeni şifre:")
+        self.new_password_ctrl = wx.TextCtrl(panel, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
+        grid.Add(new_label, 0, wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.new_password_ctrl, 1, wx.EXPAND)
+
+        confirm_label = wx.StaticText(panel, label="Yeni şifre\n(tekrar):")
+        self.confirm_password_ctrl = wx.TextCtrl(panel, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
+        grid.Add(confirm_label, 0, wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.confirm_password_ctrl, 1, wx.EXPAND)
+
+        outer.Add(grid, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 20)
+
+        bind_typing_sound(self.old_password_ctrl, self.audio)
+        bind_typing_sound(self.new_password_ctrl, self.audio)
+        bind_typing_sound(self.confirm_password_ctrl, self.audio)
+
+        hint = wx.StaticText(panel, label="Yeni şifre en az 8 karakter olmalı.")
+        hint.Wrap(330)
+        outer.Add(hint, 0, wx.LEFT | wx.RIGHT | wx.TOP, 20)
+
+        self.status_label = wx.StaticText(panel, label="")
+        self.status_label.Wrap(330)
+        outer.Add(self.status_label, 0, wx.ALL | wx.EXPAND, 10)
+
+        btn_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.btn_submit = wx.Button(panel, label="Şifreyi Değiştir")
+        self.btn_cancel = wx.Button(panel, label="Vazgeç")
+        for b in (self.btn_submit, self.btn_cancel):
+            btn_sizer.Add(b, 0, wx.EXPAND | wx.BOTTOM, 6)
+        outer.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 15)
+
+        panel.SetSizer(outer)
+        self.old_password_ctrl.SetFocus()
+
+    def _bind_events(self):
+        self.btn_submit.Bind(wx.EVT_BUTTON, self.on_submit)
+        self.btn_cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
+        self.old_password_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_submit)
+        self.new_password_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_submit)
+        self.confirm_password_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_submit)
+        self.Bind(wx.EVT_CLOSE, self.on_cancel)
+
+    def _set_busy(self, busy: bool, message: str = ""):
+        self._busy = busy
+        for b in (self.btn_submit, self.btn_cancel):
+            b.Enable(not busy)
+        self.old_password_ctrl.Enable(not busy)
+        self.new_password_ctrl.Enable(not busy)
+        self.confirm_password_ctrl.Enable(not busy)
+        self.status_label.SetLabel(message)
+        self.status_label.GetParent().Layout()
+
+    def on_submit(self, event):
+        if self._busy:
+            return
+
+        old_password = self.old_password_ctrl.GetValue()
+        new_password = self.new_password_ctrl.GetValue()
+        confirm_password = self.confirm_password_ctrl.GetValue()
+
+        if not old_password:
+            msg = "Mevcut şifrenizi girin."
+            self.status_label.SetLabel(msg)
+            speak(msg)
+            return
+        if len(new_password) < 8:
+            msg = "Yeni şifre en az 8 karakter olmalı."
+            self.status_label.SetLabel(msg)
+            speak(msg)
+            return
+        if new_password != confirm_password:
+            msg = "Yeni şifreler birbiriyle eşleşmiyor."
+            self.status_label.SetLabel(msg)
+            speak(msg)
+            return
+
+        self._set_busy(True, "Şifre değiştiriliyor, lütfen bekleyin...")
+        speak("Şifre değiştiriliyor")
+
+        def worker():
+            try:
+                auth_manager.update_password(old_password, new_password)
+                wx.CallAfter(self._on_success)
+            except auth_manager.AuthError as e:
+                wx.CallAfter(self._on_error, e.message)
+            except Exception as e:
+                wx.CallAfter(self._on_error, f"Beklenmeyen hata: {e}")
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_success(self):
+        self.success = True
+        self._set_busy(False, "")
+        speak("Şifreniz değiştirildi")
+        wx.MessageBox("Şifreniz başarıyla değiştirildi.", "Şifre Değiştirildi", wx.OK | wx.ICON_INFORMATION)
+        self.EndModal(wx.ID_OK)
+
+    def _on_error(self, message):
+        self._set_busy(False, message)
+        speak(message)
+        wx.MessageBox(message, "Şifre Değiştirilemedi", wx.OK | wx.ICON_ERROR)
+
+    def on_cancel(self, event):
+        if self._busy:
+            return
+        self.success = False
+        self.EndModal(wx.ID_CANCEL)
+
+
+class SettingsDialog(wx.Dialog):
+    """Ana menüden açılan 'Ayarlar' ekranı. Bu cihaza özel ayarları
+    (buluta yedekleme, skor gönderimi, günün mesajı, ses seviyesi)
+    tek bir yerden açıp kapatmayı sağlar. wx.CheckBox kullanıyoruz
+    çünkü ekran okuyucular "işaretli / işaretsiz" durumunu kendisi
+    anons ediyor - bu, önceki menüdeki "Skor Gönderimi: Etkin/Devre
+    Dışı" gibi metni elle güncellemekten (ve yanlış öğeyi güncelleme
+    riskinden) tamamen kaçınıyor."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent, title="Ayarlar", size=(420, 620))
+        self.audio = AudioManager()
+        self._build_ui()
+        self._bind_events()
+        self.CenterOnScreen()
+        speak("Ayarlar ekranı.")
+
+    def _build_ui(self):
+        panel = wx.Panel(self)
+        outer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label="AYARLAR")
+        title.SetFont(wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        outer.Add(title, 0, wx.ALL | wx.CENTER, 12)
+
+        # Hesap: kullanıcı adı/şifre değiştirme, MainMenu'nün kendi
+        # change_username/change_password metotlarına devrediyor (kod
+        # tekrarı yok - Ayarlar sadece bunun için bir kapı).
+        account_label = wx.StaticText(panel, label="Hesap")
+        account_label.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        outer.Add(account_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 15)
+
+        account_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.btn_change_username = wx.Button(panel, label="Kullanıcı Adı Değiştir")
+        self.btn_change_password = wx.Button(panel, label="Şifre Değiştir")
+        account_btn_sizer.Add(self.btn_change_username, 1, wx.EXPAND | wx.RIGHT, 6)
+        account_btn_sizer.Add(self.btn_change_password, 1, wx.EXPAND)
+        outer.Add(account_btn_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, 15)
+
+        outer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 15)
+
+        self.cb_cloud_backup = wx.CheckBox(panel, label="Buluta yedeklemeyi etkinleştir")
+        self.cb_cloud_backup.SetValue(settings_manager.is_cloud_backup_enabled())
+        outer.Add(self.cb_cloud_backup, 0, wx.LEFT | wx.RIGHT | wx.TOP, 15)
+
+        backup_hint = wx.StaticText(
+            panel,
+            label="Kapatılırsa oyun kapanırken/otomatik kayıtta kaydınız "
+                  "sunucuya gönderilmez; yerel kayıt bundan etkilenmez."
+        )
+        backup_hint.Wrap(360)
+        outer.Add(backup_hint, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
+        self.cb_score_submission = wx.CheckBox(panel, label="Skor gönderimini etkinleştir")
+        self.cb_score_submission.SetValue(leaderboard.is_score_submission_enabled())
+        outer.Add(self.cb_score_submission, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
+        self.cb_daily_message = wx.CheckBox(panel, label="Günün mesajının okunmasını etkinleştir")
+        self.cb_daily_message.SetValue(settings_manager.is_daily_message_enabled())
+        outer.Add(self.cb_daily_message, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
+        self.cb_typing_sound = wx.CheckBox(panel, label="Yazım alanlarında ses çal")
+        self.cb_typing_sound.SetValue(settings_manager.is_typing_sound_enabled())
+        outer.Add(self.cb_typing_sound, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
+        outer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 15)
+
+        # Müzik sesi
+        self.music_volume_label = wx.StaticText(
+            panel, label=f"Müzik sesi: %{int(self.audio.music_volume * 100)}"
+        )
+        outer.Add(self.music_volume_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 15)
+
+        music_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.btn_music_down = wx.Button(panel, label="Müziği Azalt")
+        self.btn_music_up = wx.Button(panel, label="Müziği Artır")
+        music_btn_sizer.Add(self.btn_music_down, 1, wx.EXPAND | wx.RIGHT, 6)
+        music_btn_sizer.Add(self.btn_music_up, 1, wx.EXPAND)
+        outer.Add(music_btn_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
+        # Efekt sesi
+        self.sfx_volume_label = wx.StaticText(
+            panel, label=f"Efekt sesi: %{int(self.audio.sfx_volume * 100)}"
+        )
+        outer.Add(self.sfx_volume_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 15)
+
+        sfx_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.btn_sfx_down = wx.Button(panel, label="Efekti Azalt")
+        self.btn_sfx_up = wx.Button(panel, label="Efekti Artır")
+        sfx_btn_sizer.Add(self.btn_sfx_down, 1, wx.EXPAND | wx.RIGHT, 6)
+        sfx_btn_sizer.Add(self.btn_sfx_up, 1, wx.EXPAND)
+        outer.Add(sfx_btn_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
+        self.btn_close = wx.Button(panel, label="Kapat")
+        outer.Add(self.btn_close, 0, wx.EXPAND | wx.ALL, 15)
+
+        panel.SetSizer(outer)
+        self.btn_change_username.SetFocus()
+
+    def _bind_events(self):
+        self.btn_change_username.Bind(wx.EVT_BUTTON, self.on_change_username)
+        self.btn_change_password.Bind(wx.EVT_BUTTON, self.on_change_password)
+        self.cb_cloud_backup.Bind(wx.EVT_CHECKBOX, self.on_toggle_cloud_backup)
+        self.cb_score_submission.Bind(wx.EVT_CHECKBOX, self.on_toggle_score_submission)
+        self.cb_daily_message.Bind(wx.EVT_CHECKBOX, self.on_toggle_daily_message)
+        self.cb_typing_sound.Bind(wx.EVT_CHECKBOX, self.on_toggle_typing_sound)
+        self.btn_music_up.Bind(wx.EVT_BUTTON, self.on_music_volume_up)
+        self.btn_music_down.Bind(wx.EVT_BUTTON, self.on_music_volume_down)
+        self.btn_sfx_up.Bind(wx.EVT_BUTTON, self.on_sfx_volume_up)
+        self.btn_sfx_down.Bind(wx.EVT_BUTTON, self.on_sfx_volume_down)
+        self.btn_close.Bind(wx.EVT_BUTTON, self.on_close_dialog)
+        self.Bind(wx.EVT_CLOSE, self.on_close_dialog)
+
+    def on_change_username(self, event):
+        # Ayarlar sadece bir kapı - gerçek işlemi (PocketBase + yerel
+        # dosya + skor tablosu adı güncellemesi) MainMenu.change_username
+        # zaten yapıyor, burada TEKRAR yazmıyoruz.
+        parent = self.GetParent()
+        if parent is not None and hasattr(parent, "change_username"):
+            parent.change_username()
+
+    def on_change_password(self, event):
+        parent = self.GetParent()
+        if parent is not None and hasattr(parent, "change_password"):
+            parent.change_password()
+
+    def on_toggle_cloud_backup(self, event):
+        enabled = self.cb_cloud_backup.GetValue()
+        settings_manager.set_cloud_backup_enabled(enabled)
+        speak(f"Buluta yedekleme {'etkin' if enabled else 'devre dışı'}")
+
+    def on_toggle_score_submission(self, event):
+        enabled = self.cb_score_submission.GetValue()
+        leaderboard.set_score_submission_enabled(enabled)
+        speak(f"Skor gönderimi {'etkin' if enabled else 'devre dışı'}")
+
+    def on_toggle_daily_message(self, event):
+        enabled = self.cb_daily_message.GetValue()
+        settings_manager.set_daily_message_enabled(enabled)
+        speak(f"Günün mesajının okunması {'etkin' if enabled else 'devre dışı'}")
+
+    def on_toggle_typing_sound(self, event):
+        enabled = self.cb_typing_sound.GetValue()
+        settings_manager.set_typing_sound_enabled(enabled)
+        speak(f"Yazım sesi {'etkin' if enabled else 'devre dışı'}")
+
+    def on_music_volume_up(self, event):
+        vol = self.audio.volume_up()
+        self.music_volume_label.SetLabel(f"Müzik sesi: %{int(vol * 100)}")
+        speak(f"Müzik sesi %{int(vol * 100)}")
+
+    def on_music_volume_down(self, event):
+        vol = self.audio.volume_down()
+        self.music_volume_label.SetLabel(f"Müzik sesi: %{int(vol * 100)}")
+        speak(f"Müzik sesi %{int(vol * 100)}")
+
+    def on_sfx_volume_up(self, event):
+        vol = self.audio.sfx_volume_up()
+        self.sfx_volume_label.SetLabel(f"Efekt sesi: %{int(vol * 100)}")
+        speak(f"Efekt sesi %{int(vol * 100)}")
+
+    def on_sfx_volume_down(self, event):
+        vol = self.audio.sfx_volume_down()
+        self.sfx_volume_label.SetLabel(f"Efekt sesi: %{int(vol * 100)}")
+        speak(f"Efekt sesi %{int(vol * 100)}")
+
+    def on_close_dialog(self, event):
+        self.EndModal(wx.ID_CLOSE)
+
+
 class MainMenu(wx.Dialog):
     def __init__(self, parent=None):
         super().__init__(parent, title="Karaborsa", size=(350, 480))
@@ -287,23 +792,40 @@ class MainMenu(wx.Dialog):
         title = wx.StaticText(panel, label="KARABORSA")
         title.SetFont(wx.Font(20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         sizer.Add(title, 0, wx.ALL | wx.CENTER, 15)
-        
-        menu_items = [
-            "Yeni Oyun",
-            "Devam Et",
-            "Kullanıcı Adı Değiştir",
-            "Skor Tablosunu Görüntüle",
-            "Yardım",
-            "Yenilikler",
-            "İletişim",
-            "Çıkış"
+
+        # (etiket, işleyici) çiftleri - liste, menünün TEK doğruluk
+        # kaynağıdır. Önceden execute_selection() sabit sayısal
+        # index'lerle (idx == 4 gibi) çalışıyordu; yeni bir öğe
+        # eklendiğinde ya da sıra değiştiğinde bu index'ler elle
+        # senkronize edilmek zorundaydı ve bir yerde unutulunca (Skor
+        # Gönderimi güncellemesinde olduğu gibi) menüde yanlış öğe
+        # güncenip iki "Skor Gönderimi" satırı görünür hale
+        # gelebiliyordu. Artık her öğe kendi işleyicisiyle birlikte
+        # taşınıyor, index kayması mümkün değil.
+        #
+        # NOT: "Skor Gönderimi: Etkin/Devre Dışı" artık burada ayrı bir
+        # metin-güncellenen menü öğesi DEĞİL - Ayarlar ekranındaki bir
+        # onay kutusuna taşındı (bkz. SettingsDialog). Böylece ayarlar
+        # tek bir yerde toplanıyor ve dinamik etiket senkron sorunu
+        # kökten ortadan kalkıyor.
+        # NOT: "Kullanıcı Adı Değiştir" ve "Şifre Değiştir" artık burada
+        # ayrı menü satırları DEĞİL - Ayarlar ekranındaki "Hesap"
+        # bölümüne taşındı (bkz. SettingsDialog). change_username ve
+        # change_password metotları burada duruyor; SettingsDialog
+        # bunları GetParent() üzerinden çağırıyor.
+        self._menu_actions = [
+            ("Yeni Oyun", self.start_new_game),
+            ("Devam Et", self.continue_game),
+            ("Skor Tablosunu Görüntüle", self.show_leaderboard),
+            ("Ayarlar", self.open_settings),
+            ("Yardım", open_help),
+            ("Yenilikler", open_release_notes),
+            ("Biletlerim", self.open_tickets_from_menu),
+            ("Çıkış", self._exit_menu),
         ]
-        
-        status = "Etkin" if leaderboard.is_score_submission_enabled() else "Devre Dışı"
-        menu_items.insert(4, f"Skor Gönderimi: {status}")
-        
+
         self.menu_list = wx.ListBox(panel, style=wx.LB_SINGLE)
-        self.menu_list.SetItems(menu_items)
+        self.menu_list.SetItems([label for label, _handler in self._menu_actions])
         self.menu_list.SetSelection(0)
         sizer.Add(self.menu_list, 1, wx.EXPAND | wx.ALL, 20)
         
@@ -318,6 +840,9 @@ class MainMenu(wx.Dialog):
         self.Bind(wx.EVT_CLOSE, self.on_close)
     
     def on_close(self, event):
+        self.EndModal(wx.ID_CANCEL)
+
+    def _exit_menu(self):
         self.EndModal(wx.ID_CANCEL)
     
     def on_key_down(self, event: wx.KeyEvent):
@@ -350,40 +875,58 @@ class MainMenu(wx.Dialog):
             idx = self.menu_list.GetSelection()
             if idx == wx.NOT_FOUND:
                 idx = 0
-        
-        
-        if idx == 0:
-            self.start_new_game()
-        elif idx == 1:
-            self.continue_game()
-        elif idx == 2:
-            self.change_username()
-        elif idx == 3:
-            self.show_leaderboard()
-        elif idx == 4:
-            self.toggle_score_submission()
-        elif idx == 5:
-            open_help()
-        elif idx == 6:
-            open_release_notes()
-        elif idx == 7:
-            self.open_contact_page()
-        elif idx == 8:
-            self.EndModal(wx.ID_CANCEL)
 
-    def open_contact_page(self):
-        """İletişim web sayfasını varsayılan tarayıcıda açar."""
-        webbrowser.open("https://bilgisayar-xi.vercel.app/iletisim.html")
-        speak("İletişim sayfası tarayıcınızda açılıyor.")
+        if 0 <= idx < len(self._menu_actions):
+            _label, handler = self._menu_actions[idx]
+            handler()
+
+    def change_password(self):
+        """Ana menüden 'Şifre Değiştir' seçilince açılır. Giriş
+        yapılmış olması gerekir (AuthDialog atlanamadığı için
+        buraya gelindiğinde zaten girişlidir)."""
+        if not auth_manager.is_logged_in():
+            wx.MessageBox(
+                "Şifre değiştirmek için giriş yapmış olmanız gerekiyor.",
+                "Giriş Gerekli", wx.OK | wx.ICON_INFORMATION
+            )
+            speak("Şifre değiştirmek için giriş yapmış olmanız gerekiyor.")
+            return
+
+        dlg = ChangePasswordDialog(self)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def open_settings(self):
+        dlg = SettingsDialog(self)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def open_tickets_from_menu(self):
+        """Ana menüden 'Biletlerim' seçilince açılır. Tek hesap kuralı
+        gereği bu makinede en fazla bir kayıt olabileceğinden,
+        kullanıcı adını mevcut kayıttan alır. Henüz hiç hesap
+        oluşturulmamışsa (ilk açılış), önce oyuna başlamasını ister."""
+        saves = list_saves()
+        if not saves:
+            wx.MessageBox(
+                "Bilet açabilmek için önce 'Yeni Oyun' ile bir hesap "
+                "oluşturmanız gerekiyor.",
+                "Hesap Bulunamadı", wx.OK | wx.ICON_INFORMATION
+            )
+            speak("Bilet açabilmek için önce bir hesap oluşturmanız gerekiyor.")
+            return
+
+        username = saves[0]
+        dlg = TicketsDialog(self, username, self.audio)
+        dlg.ShowModal()
+        dlg.Destroy()
     
     def change_username(self):
-        """Mevcut kayıtlı hesabın kullanıcı adını değiştirir. Nakit,
-        envanter, şirketler (il/ilçe dahil), arsalar, çalışanlar, kredi,
-        hapis durumu vb. HİÇBİR ilerleme kaybolmaz; sadece isim (ve
-        kayıt dosyasının adı) güncellenir. Böylece "tek hesap kuralı"
-        yüzünden bir oyuncu, adını yanlış yazmışsa ya da değiştirmek
-        istiyorsa, mevcut kaydını silip sıfırdan başlamak zorunda
-        kalmaz."""
+        """Mevcut kayıtlı hesabın kullanıcı adını değiştirir - HEM gerçek
+        PocketBase hesabının (giriş kimliğinin) adını HEM de yerel kayıt
+        dosyasının adını. Nakit, envanter, şirketler (il/ilçe dahil),
+        arsalar, çalışanlar, kredi, hapis durumu vb. HİÇBİR ilerleme
+        kaybolmaz; sadece isim (hesap + kayıt dosyası) güncellenir."""
         saves = list_saves()
         if not saves:
             wx.MessageBox(
@@ -414,6 +957,21 @@ class MainMenu(wx.Dialog):
             speak("Kullanıcı adı boş olamaz")
             return
 
+        # 1) ÖNCE gerçek hesabı (giriş kimliğini) PocketBase'de değiştir.
+        # Bu başarısız olursa (örn. ad başkası tarafından alınmışsa)
+        # yerel dosyalara hiç dokunmadan burada duruyoruz.
+        try:
+            new_username = auth_manager.update_username(new_username)
+        except auth_manager.AuthError as e:
+            wx.MessageBox(e.message, "Kullanıcı Adı Değiştirilemedi", wx.OK | wx.ICON_ERROR)
+            speak(e.message)
+            return
+        except Exception as e:
+            wx.MessageBox(f"Beklenmeyen hata: {e}", "Hata", wx.OK | wx.ICON_ERROR)
+            return
+
+        # 2) Hesap tarafı başarılıysa, yerel kayıt dosyasını da aynı isme
+        # taşı (nakit/envanter/vb. korunarak).
         success, info = rename_save(current_username, new_username)
         if success:
             wx.MessageBox(
@@ -561,23 +1119,9 @@ class MainMenu(wx.Dialog):
         dlg.CenterOnScreen()
         dlg.ShowModal()
         dlg.Destroy()
-    
-    def toggle_score_submission(self):
-        """Skor gönderimi toggle işlemi."""
-        yeni_durum = not leaderboard.is_score_submission_enabled()
-        leaderboard.set_score_submission_enabled(yeni_durum)
 
-        status = "Etkin" if yeni_durum else "Devre Dışı"
-        current_items = self.menu_list.GetItems()
-        if len(current_items) > 3:
-            current_items[3] = f"Skor Gönderimi: {status}"
-            self.menu_list.SetItems(current_items)
-            self.menu_list.SetSelection(3)
-            self.menu_list.SetFocus()
-        
-        msg = f"Skor gönderimi {status.lower()}"
-        speak(msg)
-        wx.MessageBox(msg, "Bilgi", wx.OK | wx.ICON_INFORMATION)
+    # NOT: Skor gönderimi toggle'ı artık SettingsDialog.on_toggle_score_submission
+    # içinde; burada ayrıca tutulmuyor (bkz. yukarıdaki _menu_actions notu).
     
     def play_sound(self, sound_path):
         if os.path.exists(sound_path):
@@ -1852,14 +2396,30 @@ class GamblingDialog(wx.Dialog):
             else:
                 lines.append(f"{label} bahsi kaybetti: {format_tl(br['amount'])} TL")
 
+        total_won = sum(br["payout"] for br in result["bet_results"] if br["won"])
+        if total_won > 0:
+            lines.append(f"Toplam kazanç: {format_tl(total_won)} TL")
         if net >= 0:
-            lines.append(f"Toplam net kazanç: {format_tl(net)} TL")
+            lines.append(f"Toplam kâr: {format_tl(net)} TL")
         else:
-            lines.append(f"Toplam net kayıp: {format_tl(abs(net))} TL")
+            lines.append(f"Toplam zarar: {format_tl(abs(net))} TL")
 
         summary = " ".join(lines)
         self.status_text.SetLabel(summary)
-        speak(summary)
+
+        # Sesli anons: çok sayıda bahiste her bir bahsin tek tek
+        # "kazandı / kaybetti" diye okunması uzun sürüyordu. Artık
+        # yalnızca hangi sayının geldiği ile toplam kazanç/kâr (ya da
+        # zarar) özet olarak seslendiriliyor; bahis bahis dökümü
+        # yukarıdaki status_text üzerinde (yazılı olarak) duruyor.
+        speech_parts = [f"Çark {winning_number} ({winning_color}) geldi."]
+        if total_won > 0:
+            speech_parts.append(f"Toplam kazanç: {format_tl(total_won)} TL.")
+        if net >= 0:
+            speech_parts.append(f"Toplam kâr: {format_tl(net)} TL")
+        else:
+            speech_parts.append(f"Toplam zarar: {format_tl(abs(net))} TL")
+        speak(" ".join(speech_parts))
 
         self._update_ui()
         if self.parent:
@@ -1887,6 +2447,342 @@ class GamblingDialog(wx.Dialog):
             if hasattr(event, "Veto"):
                 event.Veto()
             return
+        self.EndModal(wx.ID_OK)
+
+
+class NewTicketDialog(wx.Dialog):
+    """Yeni bir destek bileti (GitHub Issue) açmak için kullanılan pencere.
+    Konu ve mesaj girilir; gönderim arka planda yapılır, pencere bu
+    sırada kilitlenir ki oyuncu aynı bileti iki kez göndermesin."""
+
+    def __init__(self, parent, username, audio_manager, extra_info=None):
+        super().__init__(parent, title="Yeni Bilet Aç", size=(480, 420),
+                          style=wx.DEFAULT_DIALOG_STYLE)
+        self.username = username
+        self.audio = audio_manager
+        self.extra_info = extra_info or {}
+        self.created_ticket = None
+        self._sending = False
+
+        self._build_ui()
+        self._bind_events()
+        self.CenterOnParent()
+
+    def _build_ui(self):
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label="YENİ BİLET")
+        title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        sizer.Add(title, 0, wx.ALL | wx.CENTER, 10)
+
+        sizer.Add(wx.StaticText(panel, label="Konu:"), 0, wx.LEFT | wx.TOP, 10)
+        self.subject_ctrl = wx.TextCtrl(panel)
+        bind_typing_sound(self.subject_ctrl, self.audio)
+        sizer.Add(self.subject_ctrl, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
+
+        sizer.Add(wx.StaticText(panel, label="Mesajınız:"), 0, wx.LEFT | wx.TOP, 10)
+        self.message_ctrl = wx.TextCtrl(panel, style=wx.TE_MULTILINE)
+        self.message_ctrl.SetMinSize((440, 200))
+        bind_typing_sound(self.message_ctrl, self.audio)
+        sizer.Add(self.message_ctrl, 1, wx.EXPAND | wx.ALL, 10)
+
+        self.status_label = wx.StaticText(panel, label="")
+        sizer.Add(self.status_label, 0, wx.LEFT | wx.BOTTOM, 10)
+
+        btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.send_btn = wx.Button(panel, label="Gönder")
+        self.cancel_btn = wx.Button(panel, label="İptal (Esc)")
+        btn_sizer.Add(self.send_btn, 0, wx.ALL, 5)
+        btn_sizer.Add(self.cancel_btn, 0, wx.ALL, 5)
+        sizer.Add(btn_sizer, 0, wx.ALIGN_CENTER, 10)
+
+        panel.SetSizer(sizer)
+        wx.CallAfter(self.subject_ctrl.SetFocus)
+
+    def _bind_events(self):
+        self.send_btn.Bind(wx.EVT_BUTTON, self.on_send)
+        self.cancel_btn.Bind(wx.EVT_BUTTON, self.on_cancel)
+        self.Bind(wx.EVT_CLOSE, self.on_cancel)
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
+
+    def on_key_down(self, event):
+        if event.GetKeyCode() == wx.WXK_ESCAPE and not self._sending:
+            self.on_cancel(event)
+            return
+        event.Skip()
+
+    def on_send(self, event):
+        if self._sending:
+            return
+
+        subject = self.subject_ctrl.GetValue().strip()
+        message = self.message_ctrl.GetValue().strip()
+
+        if not subject or not message:
+            wx.MessageBox("Konu ve mesaj alanları boş olamaz.",
+                           "Eksik Bilgi", wx.OK | wx.ICON_WARNING)
+            speak("Konu ve mesaj alanları boş olamaz")
+            return
+
+        self._sending = True
+        self.send_btn.Disable()
+        self.cancel_btn.Disable()
+        self.status_label.SetLabel("Gönderiliyor, lütfen bekleyin...")
+        speak("Bilet gönderiliyor, lütfen bekleyin")
+
+        def worker():
+            try:
+                ticket = ticket_manager.create_ticket(
+                    self.username, subject, message, extra_info=self.extra_info
+                )
+                wx.CallAfter(self._on_success, ticket)
+            except Exception as e:
+                wx.CallAfter(self._on_error, str(e))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_success(self, ticket):
+        self._sending = False
+        self.created_ticket = ticket
+        self.audio.play_sound(SOUND_TICKET_SENT)
+        speak(f"Biletiniz oluşturuldu, numara {ticket['number']}")
+        wx.MessageBox(
+            f"Biletiniz oluşturuldu (#{ticket['number']}).\n\n"
+            f"Yanıtları 'Biletlerim' ekranından takip edebilir, bilet "
+            f"kapatılmadığı sürece tekrar yazabilirsiniz.",
+            "Bilet Oluşturuldu", wx.OK | wx.ICON_INFORMATION
+        )
+        self.EndModal(wx.ID_OK)
+
+    def _on_error(self, error_message):
+        self._sending = False
+        self.send_btn.Enable()
+        self.cancel_btn.Enable()
+        self.status_label.SetLabel("")
+        wx.MessageBox(f"Bilet gönderilemedi:\n{error_message}",
+                       "Hata", wx.OK | wx.ICON_ERROR)
+        speak("Bilet gönderilemedi")
+
+    def on_cancel(self, event):
+        if self._sending:
+            speak("Bilet gönderilirken pencereyi kapatamazsınız")
+            if hasattr(event, "Veto"):
+                event.Veto()
+            return
+        self.EndModal(wx.ID_CANCEL)
+
+
+class TicketsDialog(wx.Dialog):
+    """'Biletlerim' ekranı: oyuncunun açtığı biletlerin listesi, seçili
+    biletin tüm yanıt geçmişi ve (bilet kapanmadığı sürece) tekrar
+    yanıt yazabilme. Açıldığında ve her 'Yenile'de GitHub'dan güncel
+    durum çekilir."""
+
+    def __init__(self, parent, username, audio_manager, extra_info=None):
+        super().__init__(parent, title="Biletlerim", size=(650, 560),
+                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.username = username
+        self.audio = audio_manager
+        self.extra_info = extra_info or {}
+        self.tickets = []
+        self.selected_ticket = None
+        self._busy = False
+
+        self._build_ui()
+        self._bind_events()
+        self.CenterOnParent()
+        self._reload_ticket_list()
+
+    def _build_ui(self):
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label="BİLETLERİM")
+        title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        sizer.Add(title, 0, wx.ALL | wx.CENTER, 10)
+
+        top_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.new_ticket_btn = wx.Button(panel, label="Yeni Bilet Aç")
+        self.refresh_btn = wx.Button(panel, label="Yenile")
+        top_btn_sizer.Add(self.new_ticket_btn, 0, wx.ALL, 5)
+        top_btn_sizer.Add(self.refresh_btn, 0, wx.ALL, 5)
+        sizer.Add(top_btn_sizer, 0, wx.ALIGN_CENTER, 5)
+
+        sizer.Add(wx.StaticText(panel, label="Biletleriniz:"), 0, wx.LEFT | wx.TOP, 10)
+        self.ticket_list = wx.ListBox(panel, style=wx.LB_SINGLE)
+        self.ticket_list.SetMinSize((600, 110))
+        sizer.Add(self.ticket_list, 0, wx.EXPAND | wx.ALL, 10)
+
+        sizer.Add(wx.StaticText(panel, label="Yanıt Geçmişi:"), 0, wx.LEFT | wx.TOP, 5)
+        self.thread_text = wx.TextCtrl(
+            panel, style=wx.TE_READONLY | wx.TE_MULTILINE | wx.TE_WORDWRAP
+        )
+        self.thread_text.SetMinSize((600, 170))
+        sizer.Add(self.thread_text, 1, wx.EXPAND | wx.ALL, 10)
+
+        sizer.Add(wx.StaticText(panel, label="Yanıtınız:"), 0, wx.LEFT | wx.TOP, 5)
+        self.reply_ctrl = wx.TextCtrl(panel, style=wx.TE_MULTILINE)
+        self.reply_ctrl.SetMinSize((600, 70))
+        bind_typing_sound(self.reply_ctrl, self.audio)
+        sizer.Add(self.reply_ctrl, 0, wx.EXPAND | wx.ALL, 10)
+
+        bottom_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.reply_btn = wx.Button(panel, label="Yanıtla")
+        self.close_btn = wx.Button(panel, label="Kapat")
+        bottom_btn_sizer.Add(self.reply_btn, 0, wx.ALL, 5)
+        bottom_btn_sizer.Add(self.close_btn, 0, wx.ALL, 5)
+        sizer.Add(bottom_btn_sizer, 0, wx.ALIGN_CENTER, 10)
+
+        panel.SetSizer(sizer)
+        self._set_detail_controls_enabled(False)
+
+    def _bind_events(self):
+        self.new_ticket_btn.Bind(wx.EVT_BUTTON, self.on_new_ticket)
+        self.refresh_btn.Bind(wx.EVT_BUTTON, self.on_refresh)
+        self.ticket_list.Bind(wx.EVT_LISTBOX, self.on_select_ticket)
+        self.reply_btn.Bind(wx.EVT_BUTTON, self.on_reply)
+        self.close_btn.Bind(wx.EVT_BUTTON, self.on_close_dialog)
+        self.Bind(wx.EVT_CLOSE, self.on_close_dialog)
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
+
+    def on_key_down(self, event):
+        if event.GetKeyCode() == wx.WXK_ESCAPE and not self.reply_ctrl.HasFocus():
+            self.on_close_dialog(event)
+            return
+        event.Skip()
+
+    def _set_detail_controls_enabled(self, enabled: bool):
+        self.reply_ctrl.Enable(enabled)
+        self.reply_btn.Enable(enabled)
+
+    # -- Bilet listesi -----------------------------------------------
+
+    def _reload_ticket_list(self):
+        self.tickets = ticket_manager.list_local_tickets(self.username)
+        self.ticket_list.Clear()
+
+        if not self.tickets:
+            self.ticket_list.Append("Henüz bilet açmadınız.")
+            self.thread_text.SetValue("")
+            self._set_detail_controls_enabled(False)
+            return
+
+        for t in self.tickets:
+            state_label = "Kapalı" if t.get("state") == "closed" else "Açık"
+            self.ticket_list.Append(f"#{t['number']} - {t.get('title', '')} [{state_label}]")
+
+        wx.CallAfter(self.ticket_list.SetSelection, 0)
+        wx.CallAfter(self.on_select_ticket, None)
+
+    def on_new_ticket(self, event):
+        dlg = NewTicketDialog(self, self.username, self.audio, self.extra_info)
+        result = dlg.ShowModal()
+        dlg.Destroy()
+        if result == wx.ID_OK:
+            self._reload_ticket_list()
+
+    def on_refresh(self, event):
+        self._reload_ticket_list()
+
+    # -- Seçili biletin detayı ----------------------------------------
+
+    def on_select_ticket(self, event):
+        idx = self.ticket_list.GetSelection()
+        if idx == wx.NOT_FOUND or idx >= len(self.tickets):
+            self.selected_ticket = None
+            self._set_detail_controls_enabled(False)
+            return
+
+        self.selected_ticket = self.tickets[idx]
+        self.thread_text.SetValue("Yükleniyor...")
+        self._set_detail_controls_enabled(False)
+
+        ticket_number = self.selected_ticket["number"]
+
+        def worker():
+            try:
+                thread = ticket_manager.fetch_ticket_thread(ticket_number)
+                wx.CallAfter(self._show_thread, ticket_number, thread)
+            except Exception as e:
+                wx.CallAfter(self._show_thread_error, str(e))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _show_thread(self, ticket_number, thread):
+        # GitHub tarafında tüm mesajlar AYNI hesaptan (token sahibi)
+        # gönderildiği için "author" alanı oyuncu ile yönetimi ayırt
+        # etmez. Onun yerine, oyuncunun kendi gönderdiği yorumların
+        # id'lerini yerel kayıttan (own_comment_ids) okuyup GitHub
+        # kullanıcı adı yerine "SİZ" / "YÖNETİM CEVABI" başlıkları
+        # gösteriyoruz; kullanıcı kimin ne yazdığını unutmasın diye.
+        local_ticket = ticket_manager.get_local_ticket(self.username, ticket_number)
+        own_ids = set((local_ticket or {}).get("own_comment_ids") or [])
+
+        lines = ["--- SİZ ---", thread.get("body", "").strip(), ""]
+        for c in thread.get("comments", []):
+            when = (c.get("created_at") or "")[:16].replace("T", " ")
+            header = "SİZ" if c.get("id") in own_ids else "YÖNETİM CEVABI"
+            lines.append(f"--- {header} [{when}] ---")
+            lines.append(c.get("body", "").strip())
+            lines.append("")
+
+        self.thread_text.SetValue("\n".join(lines).strip())
+
+        is_closed = thread.get("state") == "closed"
+        self._set_detail_controls_enabled(not is_closed)
+        if is_closed:
+            self.thread_text.AppendText(
+                "\n\n--- Bu bilet kapatılmıştır, yeni yanıt eklenemez. "
+                "Yeni bir konu için 'Yeni Bilet Aç' butonunu kullanın. ---"
+            )
+
+        comment_count = len(thread.get("comments", []))
+        ticket_manager.mark_ticket_seen(self.username, ticket_number, comment_count)
+
+    def _show_thread_error(self, error_message):
+        self.thread_text.SetValue(f"Yanıtlar yüklenemedi:\n{error_message}")
+        self._set_detail_controls_enabled(False)
+
+    def on_reply(self, event):
+        if self._busy or not self.selected_ticket:
+            return
+
+        message = self.reply_ctrl.GetValue().strip()
+        if not message:
+            speak("Yanıt boş olamaz")
+            return
+
+        self._busy = True
+        self.reply_btn.Disable()
+        ticket_number = self.selected_ticket["number"]
+
+        def worker():
+            try:
+                ticket_manager.add_reply(self.username, ticket_number, message)
+                thread = ticket_manager.fetch_ticket_thread(ticket_number)
+                wx.CallAfter(self._on_reply_success, ticket_number, thread)
+            except Exception as e:
+                wx.CallAfter(self._on_reply_error, str(e))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_reply_success(self, ticket_number, thread):
+        self._busy = False
+        self.reply_btn.Enable()
+        self.reply_ctrl.SetValue("")
+        self._show_thread(ticket_number, thread)
+        self.audio.play_sound(SOUND_TICKET_SENT)
+        speak("Yanıtınız gönderildi")
+
+    def _on_reply_error(self, error_message):
+        self._busy = False
+        self.reply_btn.Enable()
+        wx.MessageBox(f"Yanıt gönderilemedi:\n{error_message}",
+                       "Hata", wx.OK | wx.ICON_ERROR)
+        speak("Yanıt gönderilemedi")
+
+    def on_close_dialog(self, event):
         self.EndModal(wx.ID_OK)
 
 

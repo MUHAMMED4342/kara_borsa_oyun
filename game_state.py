@@ -1047,17 +1047,34 @@ class GameState:
         """Her şirket için aktif gün sayısını artırır ve 30 günde bir
         (adamlardaki maaş duyurusuyla aynı mantıkla) o ayki toplam kârı
         seslendirilmek üzere bildirip aylık ciroyu sıfırlar. Her şirket
-        kendi takvimine göre ilerler."""
-        messages = []
+        kendi takvimine göre ilerler.
+
+        Çok şirketi olan oyuncularda eskiden her şirket için ayrı bir
+        cümle okunuyordu (onlarca şirketle bu, tek bir gün geçişinde
+        dakikalarca sürebiliyordu). Artık bu ay dönümüne denk gelen
+        TÜM şirketlerin kârı tek bir cümlede toplanıp okunuyor; tek
+        şirket varsa ismiyle, birden fazlaysa "şirketleriniz" diyerek
+        toplam üzerinden bildiriliyor."""
+        due_companies = []
         for c in self.companies:
             c["days_active"] = c.get("days_active", 0) + 1
             if c["days_active"] % 30 == 0:
-                monthly_revenue = c.get("monthly_revenue", 0.0)
-                messages.append(
-                    f"{c['name']} ({c['city']}): bu ay {format_tl(monthly_revenue)} TL kâr elde ettiniz"
-                )
-                c["monthly_revenue"] = 0.0
-        return messages
+                due_companies.append(c)
+
+        if not due_companies:
+            return []
+
+        total_profit = sum(c.get("monthly_revenue", 0.0) for c in due_companies)
+        for c in due_companies:
+            c["monthly_revenue"] = 0.0
+
+        if len(due_companies) == 1:
+            c = due_companies[0]
+            message = f"{c['name']} ({c['city']}) bu ay {format_tl(total_profit)} TL kâr üretti"
+        else:
+            message = f"Şirketleriniz bu ay toplam {format_tl(total_profit)} TL kâr üretti"
+
+        return [message]
 
     def process_company_daily(self) -> str:
         """Her gün: sahip olduğunuz HER şirket ayrı ayrı rastgele bir

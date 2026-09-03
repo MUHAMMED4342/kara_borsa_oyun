@@ -1,0 +1,62 @@
+# Kullanım Şartları — Karaborsa Simülasyonu
+
+*Son güncelleme: 2 Eylül 2026 Çarşamba*
+
+## 1. Kabul
+
+**Karaborsa Simülasyonu**'nu ("Oyun") indirip oynayarak bu Kullanım Şartları'nı kabul etmiş sayılırsınız. Bu şartları kabul etmiyorsanız Oyunu kullanmamalısınız.
+
+Geliştirici: **muhammed.ali ve emir.yakup**  
+İletişim: **https://bilgisayar-xi.vercel.app/iletisim.html**
+
+## 2. İçerik Uyarısı
+
+Oyun; kara borsa ticareti, silah, uyuşturucu benzeri kurgusal ürünler, kara para aklama, hapis ve suç temalarını **tamamen kurgusal ve simülasyon amaçlı** olarak içerir. Oyun içindeki hiçbir öğe, gerçek hayatta yasa dışı faaliyetleri teşvik etmez veya onaylamaz. 
+
+## 3. Hesap Kuralları
+
+- Oyunu oynamak için bir hesap oluşturmanız zorunludur.
+- Her oyuncunun **tek bir hesabı** olması esastır; ilerlemeniz bu hesaba bağlı olarak saklanır.
+- Hesap bilgilerinizin (özellikle şifrenizin) gizliliğinden siz sorumlusunuz. Hesabınız üzerinden gerçekleşen tüm etkinliklerden siz sorumlu tutulursunuz.
+- Kayıt sırasında verdiğiniz bilgilerin (kullanıcı adı, e-posta) doğru olması beklenir.
+- Kullanıcı adınızı yanlış girdiyseniz, Oyun içindeki **Kayıtlı Oyunlar** ekranından ilerlemenizi kaydetmeden yeniden adlandırabilirsiniz.
+
+## 4. Kabul Edilebilir Kullanım
+
+Aşağıdaki davranışlar yasaktır ve tespit edilmesi halinde hesabınızın askıya alınmasına veya kalıcı olarak kapatılmasına yol açabilir:
+
+- Hile, exploit, oyunun normal akışını bozan üçüncü taraf araçlar veya otomasyon (bot) kullanmak
+- Başka bir oyuncunun hesabına izinsiz erişmeye çalışmak
+- **Skor tablosunu** manipüle etmeye yönelik girişimlerde bulunmak
+- **Destek / Bilet** sistemini kötüye kullanmak (spam, taciz, uygunsuz veya yasa dışı içerik göndermek)
+- Oyunun sunucularına (bulut senkronu, destek, skor tablosu) zarar verecek veya aşırı yük bindirecek şekilde kullanmak
+
+## 5. Skor Tablosu ve Kullanıcı İçeriği
+
+"En İyi Skorlar" ekranına katılmayı seçtiğinizde kullanıcı adınız ve skorunuz herkese açık olarak görünür hale gelir. Destek biletlerinde paylaştığınız içerikten de siz sorumlusunuz; uygunsuz, hakaret içeren veya yasa dışı içerik paylaşılması durumunda ilgili bilet kapatılabilir ve hesabınız hakkında işlem yapılabilir.
+
+## 6. Fikri Mülkiyet ve Açık Kaynak
+
+Oyun açık kaynaklıdır; kodunu ve içeriğini özgürce inceleyebilir, kopyalayabilir, değiştirebilir ve dağıtabilirsiniz. Ancak topluluk sağlığı ve adil oyun ortamı için resmi **Skor Tablosu**, **Destek Sistemi** ve resmi bulut altyapısı üzerinde manipülasyon yapmak veya bu resmi servisleri izinsiz kendi dış projeleriniz için kötüye kullanmak yasaktır.
+
+## 7. Hizmetin Sağlanması
+
+- Hesap doğrulama, bulut senkronu, destek sistemi ve skor tablosu gibi özellikler **internet bağlantısı gerektirir** ve üçüncü taraf altyapılara (bulut veritabanı barındırma hizmeti, GitHub) bağlıdır.
+- Bu hizmetlerin kesintisiz veya hatasız çalışacağını garanti etmiyoruz; bakım, altyapı sorunları veya üçüncü taraf kesintileri nedeniyle geçici erişim sorunları yaşanabilir.
+- Oyun "olduğu gibi" sunulur; belirli bir amaca uygunluk dahil, açık ya da zımni hiçbir garanti verilmez.
+
+## 8. Sorumluluğun Sınırlandırılması
+
+Yürürlükteki mevzuatın izin verdiği azami ölçüde, geliştiriciler; Oyunun kullanımından veya kullanılamamasından, veri kaybından ya da üçüncü taraf hizmetlerindeki (bulut barındırma, GitHub vb.) aksaklıklardan kaynaklanan dolaylı, arızi veya sonuç niteliğindeki zararlardan sorumlu tutulamaz.
+
+## 9. Fesih
+
+Bu Kullanım Şartları'nı ihlal ettiğinizi tespit etmemiz halinde hesabınızı önceden bildirimde bulunmaksızın askıya alma veya kapatma hakkımız saklıdır. Hesabınızı kapatmak isterseniz **Destek / Bilet** ekranından veya iletişim adresimiz üzerinden bize ulaşabilirsiniz.
+
+## 10. Değişiklikler
+
+Bu şartları zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğunda oyun içi bir duyuru ile bilgilendirilirsiniz; Oyunu kullanmaya devam etmeniz güncellenmiş şartları kabul ettiğiniz anlamına gelir.
+
+## 11. Uygulanacak Hukuk
+
+Bu şartlar **Türkiye kanunlarına** tabidir ve buna göre yorumlanır.

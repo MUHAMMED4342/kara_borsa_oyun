@@ -20,6 +20,13 @@ if not os.path.exists(_token_file):
         "HATA: token.txt bulunamadi."
     )
 
+_github_token_file = 'github.txt'
+if not os.path.exists(_github_token_file):
+    raise SystemExit(
+        "HATA: github.txt bulunamadi. Bilet (destek) sistemi icin gereken "
+        "GitHub token dosyasi bu klasorde olmali."
+    )
+
 # release_notes.html kontrolü (Opsiyonel ama hata almamak için önerilir)
 if not os.path.exists('release_notes.html'):
     print("UYARI: release_notes.html bulunamadi, paketlenmeyecek.")
@@ -47,6 +54,7 @@ a = Analysis(
         ('ilceler.txt', '.'),  # Buraya eklendi
         (_updater_exe, '.'),
         (_token_file, '.'),
+        (_github_token_file, '.'),
     ],
     hiddenimports=[],
     hookspath=[],

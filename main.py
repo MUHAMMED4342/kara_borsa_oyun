@@ -14,14 +14,17 @@ from accessibility_helper import speak as _tts_speak
 from history_log import log_history
 from formatting import format_tl
 from audio_manager import AudioManager
-from save_manager import save_game, load_game, apply_one_time_heat_reset
+from save_manager import save_game, load_game, apply_one_time_heat_reset, import_cloud_save, build_save_data
 
+import auth_manager
+import ticket_manager
+import settings_manager
 from game_state import GameState, resource_path, get_music_tracks, open_help, ID_LOAD, ID_NEW
 from dialogs import (
     LandManagementDialog, MainMenu, LoadGameDialog, CompanyDialog,
     InformantDialog, BankLoanDialog, LandLoanDialog, BankingDialog, JailDialog,
     HistoryDialog, EmployeeManagementDialog, GamblingDialog, DailyMessageDialog,
-    ProductActionDialog
+    ProductActionDialog, AuthDialog, TicketsDialog
 )
 
 import leaderboard
@@ -64,6 +67,7 @@ class MainFrame(wx.Frame):
     SOUND_CARK = resource_path("sounds/cark.mp3")
     SOUND_MANI = resource_path("sounds/mani.mp3")
     SOUND_TYPING = resource_path("sounds/typing.wav")
+    SOUND_TICKET_REPLY = resource_path("sounds/yanit.mp3")
 
     def __init__(self, username=None, load_data=None):
         super().__init__(None, title=f"Karaborsa - {username}", size=(800, 650))
@@ -104,7 +108,13 @@ class MainFrame(wx.Frame):
         else:
             speak(f"Hoş geldiniz {username}")
 
-        daily_message.check_for_new_message(self._on_daily_message_ready)
+        if settings_manager.is_daily_message_enabled():
+            daily_message.check_for_new_message(self._on_daily_message_ready)
+
+        if self.username:
+            ticket_manager.check_for_new_replies_async(
+                self.username, self._on_ticket_replies_ready
+            )
 
     def _on_daily_message_ready(self, date_str: str, message_text: str):
         """daily_message arka plan thread'inden çağrılır; UI güncellemesi
@@ -173,7 +183,12 @@ class MainFrame(wx.Frame):
         btn_sizer3.Add(self.land_btn, 0, wx.ALL, 3)
         btn_sizer3.Add(self.status_btn, 0, wx.ALL, 3)
         btn_sizer3.Add(self.gamble_btn, 0, wx.ALL, 3)
-        sizer.Add(btn_sizer3, 0, wx.ALIGN_CENTER | wx.BOTTOM, 10)
+        sizer.Add(btn_sizer3, 0, wx.ALIGN_CENTER | wx.TOP, 5)
+
+        btn_sizer4 = wx.BoxSizer(wx.HORIZONTAL)
+        self.support_btn = wx.Button(panel, label="Destek / Bilet")
+        btn_sizer4.Add(self.support_btn, 0, wx.ALL, 3)
+        sizer.Add(btn_sizer4, 0, wx.ALIGN_CENTER | wx.BOTTOM, 10)
 
         self.CreateStatusBar()
         self.SetStatusText("F1: Yardım | F3: Geçmiş | F6: Arsa | F7: Adamlar | C: Nakit | D: Kategori | E: Envanter | PgUp/PgDn: Ses | Otomatik kayıt aktif")
@@ -193,6 +208,7 @@ class MainFrame(wx.Frame):
         self.status_btn.Bind(wx.EVT_BUTTON, self.on_status)
         self.employees_btn.Bind(wx.EVT_BUTTON, self.on_employees)
         self.gamble_btn.Bind(wx.EVT_BUTTON, self.on_gamble)
+        self.support_btn.Bind(wx.EVT_BUTTON, self.on_support)
         
         self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
         self.Bind(wx.EVT_CLOSE, self.on_close)
@@ -325,7 +341,8 @@ class MainFrame(wx.Frame):
         ctrl.Bind(wx.EVT_TEXT, self._on_typing_sound)
 
     def _on_typing_sound(self, event):
-        self.play_sound(self.SOUND_TYPING)
+        if settings_manager.is_typing_sound_enabled():
+            self.play_sound(self.SOUND_TYPING)
         event.Skip()
 
     def auto_save(self):
@@ -528,6 +545,40 @@ class MainFrame(wx.Frame):
         self.update_wallet_display()
         self.auto_save()
         dlg.Destroy()
+
+    def on_support(self, event):
+        """Destek/Bilet ekranını açar. Hapisteyken de kullanılabilir
+        tutuluyor (set_jail_mode kilit listesine dahil edilmedi) -
+        oyuncu hapisteyken de bir sorun bildirebilmeli."""
+        self.play_sound(self.SOUND_BUTTON)
+        dlg = TicketsDialog(self, self.username, self.audio, self._ticket_extra_info())
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def _ticket_extra_info(self) -> dict:
+        """Yeni bilet açarken (ve destek ekibinin ilk bakışta göreceği
+        gövdede) otomatik eklenecek oyun bilgileri."""
+        return {
+            "Oyun günü": self.state.day,
+            "Nakit": f"{format_tl(self.state.cash)} TL",
+            "Hapiste mi": "Evet" if self.state.in_jail else "Hayır",
+        }
+
+    def _on_ticket_replies_ready(self, results: list):
+        """ticket_manager arka plan thread'inden çağrılır; UI
+        güncellemesi ana thread'de yapılmalı."""
+        wx.CallAfter(self._notify_ticket_replies, results)
+
+    def _notify_ticket_replies(self, results: list):
+        if not results:
+            return
+        if len(results) == 1:
+            r = results[0]
+            msg = f"Bilet #{r['number']} ({r['title']}) için yeni yanıt var."
+        else:
+            msg = f"{len(results)} biletinize yeni yanıt geldi."
+        self.play_sound(self.SOUND_TICKET_REPLY)
+        speak(msg + " Görmek için 'Destek / Bilet' butonunu kullanın.")
 
     def get_current_music_track(self) -> str:
         if self.music_tracks:
@@ -812,7 +863,10 @@ class MainFrame(wx.Frame):
                 _speak_narration(narration)
                 self.refresh_product_list()
                 self.update_wallet_display()
-                self.auto_save()
+                # auto_save() burada ÇAĞRILMIYOR: bu fonksiyonu çağıran
+                # on_next_day()'in finally bloğu, buradan dönüldükten hemen
+                # sonra zaten kaydı yapıyor. Burada da çağrılırsa her gün
+                # ilerlemesinde kayıt iki kez (ve buluta iki kez) gönderilir.
                 return
             elif msg:
                 narration.append(msg)
@@ -878,7 +932,8 @@ class MainFrame(wx.Frame):
             _speak_narration(narration)
             self.update_wallet_display()
             self.refresh_product_list()
-            self.auto_save()
+            # auto_save() burada ÇAĞRILMIYOR (bkz. yukarıdaki not) - on_next_day()
+            # finally bloğu kaydı zaten yapacak.
             self.audio.play_sound(self.SOUND_JAIL_DOOR)
             wx.CallAfter(self.start_jail_dialog)
             return
@@ -909,7 +964,8 @@ class MainFrame(wx.Frame):
             self.days_since_last_score_update = 0
             self.update_score()
 
-        self.auto_save()
+        # auto_save() burada ÇAĞRILMIYOR (bkz. yukarıdaki not) - on_next_day()
+        # finally bloğu kaydı zaten yapacak.
 
     def check_game_over(self):
         """
@@ -1017,16 +1073,110 @@ class MainFrame(wx.Frame):
             self.jail_dialog = None
         if self.autosave_timer:
             self.autosave_timer.Stop()
-        
+
         if self.username and not self.state.in_jail:
             self.update_score()
-            self.auto_save()
-        
+            # Yerel kayıt her zaman anında yapılır (ağ gerekmez, veri
+            # kaybı riski yok, ayarlardan kapatılamaz).
+            save_game(self.username, self.state)
+
+            if not settings_manager.is_cloud_backup_enabled():
+                # Ayarlardan buluta yedekleme kapatılmışsa, kapanışta
+                # ağ isteği hiç atılmaz - "lütfen bekleyin" penceresi
+                # de gösterilmez, oyun anında kapanır.
+                event.Skip()
+                return
+
+            if event.CanVeto():
+                # Kapanmayı bir an için engelleyip buluta SON HALİ tek
+                # seferlik göndermeyi deniyoruz; kullanıcı beklerken
+                # bunu görsün diye küçük bir bilgi penceresi gösteriyoruz.
+                event.Veto()
+                self._exit_with_final_cloud_push()
+                return
+            else:
+                # Sistem tarafında kapanma engellenemiyorsa (ör. Windows
+                # kapanıyor), en azından arka planda göndermeyi dene ama
+                # kapanmayı bekletme.
+                try:
+                    save_data = build_save_data(self.username, self.state)
+                    auth_manager.push_active_save_async(save_data, force=True)
+                except Exception as e:
+                    print(f"[Bulut Kayıt] Kapanışta (zorunlu) gönderim denemesi hata verdi: {e}")
+
         event.Skip()
+
+    def _exit_with_final_cloud_push(self):
+        """Pencere kapatılırken buluta SON kez ve TEK SEFERLİK gönderim
+        yapar. 'Lütfen bekleyin' yazan küçük bir pencere gösterir; bu
+        gönderim 10 saniyeden uzun sürerse ya da hiç bitmezse (internet
+        yok, sunucu yanıt vermiyor vb.) süre dolduğunda oyunu yine de
+        kapatır - kullanıcı asla ekranda takılı kalmaz."""
+        try:
+            save_data = build_save_data(self.username, self.state)
+        except Exception as e:
+            print(f"[Bulut Kayıt] Kapanışta save_data oluşturulamadı: {e}")
+            self.Destroy()
+            return
+
+        wait_dlg = wx.Dialog(
+            self, title="Karaborsa",
+            style=wx.CAPTION | wx.STAY_ON_TOP,
+        )
+        panel = wx.Panel(wait_dlg)
+        msg = wx.StaticText(panel, label="Lütfen bekleyin, skorunuz gönderiliyor...")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(msg, 0, wx.ALL, 20)
+        panel.SetSizer(sizer)
+        wait_dlg.Fit()
+        wait_dlg.CenterOnScreen()
+        wait_dlg.Show()
+        speak("Lütfen bekleyin, skorunuz gönderiliyor")
+
+        finished = threading.Event()
+
+        def worker():
+            try:
+                sess = auth_manager.get_current_session()
+                if sess.get("access_token") and sess.get("user_id"):
+                    auth_manager.push_cloud_save(sess["access_token"], sess["user_id"], save_data)
+            except Exception as e:
+                print(f"[Bulut Kayıt] Kapanışta gönderim hatası: {e}")
+            finally:
+                finished.set()
+
+        threading.Thread(target=worker, daemon=True).start()
+
+        state = {"done": False}
+
+        def finalize():
+            if state["done"]:
+                return
+            state["done"] = True
+            try:
+                wait_dlg.Destroy()
+            except Exception:
+                pass
+            self.Destroy()
+
+        def poll():
+            if state["done"]:
+                return
+            if finished.is_set():
+                finalize()
+            else:
+                wx.CallLater(200, poll)
+
+        # 10 saniyelik SERT sınır: gönderim bitmese bile burada kapanır.
+        wx.CallLater(10000, finalize)
+        wx.CallLater(200, poll)
 
 
 class App(wx.App):
     def OnInit(self):
+        if not self._ensure_authenticated():
+            return False
+
         dlg = MainMenu()
         result = dlg.ShowModal()
         username = dlg.username
@@ -1052,6 +1202,50 @@ class App(wx.App):
                 speak("Kayıt yüklenemedi")
                 return False
         return False
+
+    def _ensure_authenticated(self) -> bool:
+        """PocketBase üzerinden ZORUNLU giriş akışı. Kullanıcı geçerli bir
+        kullanıcı adı/şifre hesabıyla giriş yapmadan/hesap oluşturmadan
+        bu fonksiyon False döner ve uygulama hiçbir içeriğe (ana menü,
+        oyun ekranı) geçmeden kapanır.
+
+        Önceden kaydedilmiş bir oturum varsa (aynı hesapla daha önce
+        giriş yapılmışsa) sessizce yenilenir; bu SADECE oturum hâlâ
+        PocketBase tarafında geçerliyse çalışır - geçersizse (örn.
+        token süresi dolmuşsa) giriş ekranı yine de zorunlu olarak
+        gösterilir.
+
+        Giriş başarılı olduktan sonra, bu hesaba ait PocketBase'deki
+        bulut kaydı varsa bu cihaza indirilir; böylece oyuncunun
+        ilerlemesi hiçbir zaman kaybolmaz."""
+        session = auth_manager.try_restore_session()
+
+        if not session:
+            auth_dlg = AuthDialog()
+            result = auth_dlg.ShowModal()
+            session = auth_dlg.session
+            auth_dlg.Destroy()
+
+            if result != wx.ID_OK or not session:
+                return False
+
+            auth_manager.save_session(session)
+        elif session.get("_offline"):
+            speak("İnternete ulaşılamadı, çevrimdışı devam ediliyor. "
+                  "İlerlemeniz bu bilgisayara kaydedilecek, internete "
+                  "bağlanınca buluta senkronize edilecek.")
+
+        auth_manager.set_current_session(session)
+
+        sess = auth_manager.get_current_session()
+        try:
+            cloud_save = auth_manager.fetch_cloud_save(sess["access_token"], sess["user_id"])
+            if cloud_save:
+                import_cloud_save(cloud_save)
+        except Exception as e:
+            print(f"[Bilgi] Bulut kaydı kontrol edilemedi (internet yok olabilir): {e}")
+
+        return True
 
 
 if __name__ == "__main__":
