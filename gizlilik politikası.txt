@@ -1,0 +1,64 @@
+Gizlilik Politikası — Karaborsa Simülasyonu
+Son güncelleme: 4 Eylül 2026 Cuma
+
+1. Kapsam
+Bu politika, Karaborsa Simülasyonu masaüstü oyununu ("Oyun") ve oyunla ilgili web sayfalarını (ör. iletişim ve şifremi unuttum sayfaları) kullanırken hangi verilerin toplandığını, nasıl kullanıldığını ve kimlerle paylaşıldığını açıklar. Oyunu kullanarak bu politikayı kabul etmiş olursunuz.
+Geliştirici: muhammed.ali ve emir.yakup
+İletişim: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. Hangi Verileri Topluyoruz
+
+2.1 Hesap Bilgileri
+Oyunu oynayabilmek için bir hesap oluşturmanız zorunludur. Hesap oluştururken şu bilgileri alırız:
+- Kullanıcı adı (3-20 karakter)
+- Şifre (en az 8 karakter; sunucu tarafında güvenli şekilde saklanır, düz metin olarak tutulmaz)
+- E-posta adresi (yalnızca hesap oluştururken istenir; kayıt altına alınır ve yönetim panelinden görülebilir, ancak günlük girişte kullanılmaz)
+
+2.2 Oyun İlerleme Verisi
+Nakit bakiyeniz, envanteriniz, şirketleriniz, arsalarınız, çalışanlarınız, kredi durumunuz ve oyun günü gibi ilerleme verileriniz hesabınıza bağlı olarak bulutta saklanır. Bu sayede farklı bir cihazda giriş yaptığınızda kaldığınız yerden devam edebilirsiniz. Ayarlar ekranından buluta yedeklemeyi kapatabilirsiniz; bu durumda ilerlemeniz yalnızca kendi cihazınızda saklanır.
+
+2.3 Skor Tablosu
+"En İyi Skorlar" ekranına katılmayı seçtiğinizde kullanıcı adınız, nakit bakiyeniz ve oyun gününüz, diğer tüm oyuncuların görebileceği herkese açık bir sıralamaya gönderilir. Bu bilgiler gönderildikten sonra başka oyuncular tarafından görülebilir hale gelir. Bu katılımı Ayarlar ekranından istediğiniz zaman kapatabilirsiniz.
+Gerçek adınızı ya da başka yerlerde kullandığınız kimliğinizi ifşa etmek istemiyorsanız, kullanıcı adınızı buna göre seçmenizi öneririz.
+
+2.4 Destek Talepleri (Biletler)
+"Destek / Bilet" ekranından bir talep açtığınızda, kullanıcı adınız ve yazdığınız mesaj, geliştiricinin destek sisteminde kayıt altına alınır ve talebiniz yanıtlanana kadar saklanır. Bilet ekranındaki "Log Yükle" butonunu kullanırsanız, oyun içi geçmişiniz ve cihazınızdaki teknik hata kayıtları (uygulama günlüğü) da mesajınıza eklenir; bu tamamen isteğe bağlıdır, buton kullanılmadıkça bu bilgiler bilete eklenmez. Bilet içeriğine paylaştığınız her bilgiden siz sorumlusunuz; şifre, kimlik numarası gibi hassas bilgileri bilet mesajlarına yazmamanızı öneririz.
+
+2.5 Şifre Sıfırlama Talepleri
+Şifrenizi unutursanız, oyunun giriş ekranındaki "Şifremi Unuttum" bağlantısı sizi web sitemizdeki bir forma yönlendirir. Bu formda istediğimiz kullanıcı adı ve e-posta adresi, talebinizi değerlendirip size yeni bir şifre bildirebilmemiz için üçüncü taraf bir form hizmeti (web3forms) üzerinden tarafımıza iletilir ve talebiniz sonuçlanana kadar saklanır.
+
+2.6 Yerel Cihaz Verileri
+Aşağıdaki veriler yalnızca kendi bilgisayarınızda saklanır ve bize gönderilmez (2.4'te açıklanan "Log Yükle" butonuyla kendi isteğinizle bir bilete eklemediğiniz sürece):
+- Oturum bilgisi (tekrar giriş yapmadan devam edebilmeniz için)
+- Yerel kayıt yedeği ve bilet geçmişiniz
+- Ses/müzik seviyesi, buluta yedekleme, skor gönderimi gibi tercihleriniz
+- Ekran okuyucu için tutulan "söylenen mesajlar" geçmişi
+- Uygulamanın teknik hata/olay kayıtlarının tutulduğu yerel günlük dosyası
+
+3. Verilerinizi Ne İçin Kullanıyoruz
+- Hesabınızı oluşturmak, doğrulamak ve korumak
+- İlerlemenizi cihazlar arasında senkronize etmek
+- Destek taleplerinizi ve şifre sıfırlama taleplerinizi yanıtlamak
+- Skor tablosunu (yalnızca gönüllü katılımla) yürütmek
+- Oyunun teknik olarak çalışmasını sağlamak
+Verilerinizi reklam amacıyla kullanmıyor, üçüncü taraflara satmıyoruz.
+
+4. Verileriniz Nerede Saklanıyor
+Hesap ve ilerleme verileriniz, geliştiricinin işlettiği bir bulut veritabanı altyapısında (PocketBase tabanlı bir sunucu) saklanır.
+Destek talepleriniz ve skor tablosu, GitHub'ın altyapısı üzerinde barındırılır; şifre sıfırlama talepleriniz web3forms üzerinden iletilir. Bu nedenle bu hizmetlerin kendi gizlilik politikaları da ilgili veriler için geçerlidir.
+Bu hizmetler oyunun çalışması için gereklidir; oyun internet bağlantısı olmadan hesap doğrulaması, bulut senkronu, destek veya skor tablosu özelliklerini kullanamaz.
+
+5. Veri Güvenliği
+Şifreniz sunucu tarafında güvenli biçimde saklanır ve tarafımızca düz metin olarak görülemez. Yine de hiçbir internet hizmeti %100 güvenli değildir; şifrenizi başka hizmetlerle paylaşmamanızı ve tahmin edilmesi zor bir şifre seçmenizi öneririz.
+
+6. Verilerinizin Saklanma Süresi ve Hesap Silme
+İlerleme verileriniz, hesabınız aktif olduğu sürece saklanır. Hesabınızın veya verilerinizin silinmesini talep etmek için iletişim sayfamız üzerinden bize ulaşabilirsiniz. Skor tablosuna gönderilmiş kayıtlar herkese açık olduğu için silme talepleri makul süre içinde işleme alınır ancak önceden görülmüş/kopyalanmış kayıtlar üzerinde kontrolümüz olmayabilir.
+
+7. Haklarınız
+Bulunduğunuz ülkenin mevzuatına (örn. KVKK, GDPR) bağlı olarak verilerinize erişme, düzeltme, taşınmasını isteme ve silinmesini talep etme hakkına sahip olabilirsiniz. Bu taleplerinizi iletişim sayfamız (https://bilgisayar-xi.vercel.app/iletisim.html) üzerinden iletebilirsiniz.
+
+8. Politikada Değişiklik
+Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğunda oyun içi bir onay ekranı ile yeniden bilgilendirilir ve onayınız istenir.
+
+9. İletişim
+Sorularınız için: https://bilgisayar-xi.vercel.app/iletisim.html veya oyun içindeki Destek / Bilet ekranı.

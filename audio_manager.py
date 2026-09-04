@@ -182,6 +182,18 @@ class AudioManager:
         settings_manager.set_sfx_volume(self.sfx_volume)
         return self.sfx_volume
 
+    def set_music_volume(self, volume: float) -> None:
+        """Müzik ses seviyesini doğrudan ayarlar (sürgü/slider için -
+        volume_up/volume_down'ın aksine göreli değil, mutlak değer
+        alır) ve kalıcı olması için diske de yazar."""
+        self.music_volume = max(0.0, min(1.0, volume))
+        if self.available:
+            try:
+                pygame.mixer.music.set_volume(self.music_volume)
+            except Exception:
+                pass
+        settings_manager.set_music_volume(self.music_volume)
+
     def set_sfx_volume(self, volume: float) -> None:
         """Efekt ses seviyesini doğrudan ayarlar (ve diske yazar)."""
         self.sfx_volume = max(0.0, min(1.0, volume))

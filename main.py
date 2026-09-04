@@ -9,6 +9,7 @@ import webbrowser
 
 import updater
 import daily_message
+import app_log
 from game_data import PRODUCT_CATEGORIES, get_flat_product_order
 from accessibility_helper import speak as _tts_speak
 from history_log import log_history
@@ -24,6 +25,7 @@ from dialogs import (
     LandManagementDialog, MainMenu, LoadGameDialog, CompanyDialog,
     InformantDialog, BankLoanDialog, LandLoanDialog, BankingDialog, JailDialog,
     HistoryDialog, EmployeeManagementDialog, GamblingDialog, DailyMessageDialog,
+    TermsDialog, TERMS_VERSION,
     ProductActionDialog, AuthDialog, TicketsDialog
 )
 
@@ -1174,6 +1176,9 @@ class MainFrame(wx.Frame):
 
 class App(wx.App):
     def OnInit(self):
+        if not self._ensure_terms_accepted():
+            return False
+
         if not self._ensure_authenticated():
             return False
 
@@ -1203,7 +1208,28 @@ class App(wx.App):
                 return False
         return False
 
-    def _ensure_authenticated(self) -> bool:
+    def _ensure_terms_accepted(self) -> bool:
+        """Gizlilik politikası ve kullanım şartlarının bu CİHAZDA en az
+        bir kez kabul edilmesini zorunlu kılar. Hesaptan tamamen
+        bağımsızdır - giriş ekranından (_ensure_authenticated) bile
+        ÖNCE çağrılır, böylece hangi hesapla oynanacağından bağımsız
+        olarak sadece cihaz başına bir kez gösterilir. Daha önce
+        (aynı TERMS_VERSION ile) kabul edilmişse hiçbir şey
+        göstermeden True döner."""
+        if settings_manager.is_terms_accepted(TERMS_VERSION):
+            return True
+
+        dlg = TermsDialog()
+        result = dlg.ShowModal()
+        dlg.Destroy()
+
+        if result != wx.ID_OK:
+            return False
+
+        settings_manager.set_terms_accepted(TERMS_VERSION)
+        return True
+
+    def _ensure_authenticated(self) -> bool:
         """PocketBase üzerinden ZORUNLU giriş akışı. Kullanıcı geçerli bir
         kullanıcı adı/şifre hesabıyla giriş yapmadan/hesap oluşturmadan
         bu fonksiyon False döner ve uygulama hiçbir içeriğe (ana menü,
@@ -1249,7 +1275,10 @@ class App(wx.App):
 
 
 if __name__ == "__main__":
-    updater.check_for_update_async(ask_user_callback=_ask_update_confirmation)
+    app_log.init_logging()
+
+    if settings_manager.is_auto_update_check_enabled():
+        updater.check_for_update_async(ask_user_callback=_ask_update_confirmation)
 
     apply_one_time_heat_reset()
 

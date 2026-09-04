@@ -250,7 +250,7 @@ def _ask_on_gui_thread_sync(question_fn, *args, timeout: float = 120.0):
     return result_holder["answer"]
 
 
-def check_for_update_async(ask_user_callback=None) -> None:
+def check_for_update_async(ask_user_callback=None, on_no_update_callback=None) -> None:
     """
     Sürüm kontrolünü arka planda (ayrı thread) yapar; çağıran kodu ASLA
     bloklamaz. Script olarak (frozen değilken) çalışıyorsa hiçbir şey
@@ -263,25 +263,45 @@ def check_for_update_async(ask_user_callback=None) -> None:
     diyalogları güvenle açılabilir); çağıranın ayrıca wx.CallAfter
     kullanmasına gerek yoktur. None verilirse hiçbir onay istenmeden
     otomatik indirilir.
+
+    on_no_update_callback: kontrol TAMAMLANDIĞI ve indirilecek bir
+    güncelleme OLMADIĞI durumlarda (zaten en güncel sürüm, sunucuya
+    ulaşılamadı vb.) çağrılır - tek bir str parametre (kullanıcıya
+    gösterilebilecek bir mesaj) alır. Bu da ask_user_callback gibi ANA
+    GUI THREAD'İNDE çalıştırılır. Sessiz otomatik açılış kontrolünde
+    (main.py) bu None bırakılabilir; Ayarlar ekranındaki elle
+    tetiklenen kontrolde kullanıcıya "güncelsiniz" gibi bir geri
+    bildirim vermek için doldurulur.
     """
     if not _is_frozen():
+        _notify_no_update(on_no_update_callback, "Güncelleme kontrolü yalnızca kurulu uygulamada çalışır.")
         return
 
     _log("check_for_update_async baslatildi")
 
     def _worker():
         try:
-            _check_and_download(ask_user_callback)
+            _check_and_download(ask_user_callback, on_no_update_callback)
         except Exception as e:
             _log(f"beklenmeyen hata: {e}")
 
     threading.Thread(target=_worker, daemon=True).start()
 
 
-def _check_and_download(ask_user_callback=None) -> None:
+def _notify_no_update(callback, message: str) -> None:
+    if not callback:
+        return
+    try:
+        wx.CallAfter(callback, message)
+    except Exception:
+        pass
+
+
+def _check_and_download(ask_user_callback=None, on_no_update_callback=None) -> None:
     try:
         import requests
     except Exception:
+        _notify_no_update(on_no_update_callback, "Güncelleme kontrolü yapılamadı (ağ modülü eksik).")
         return
 
     try:
@@ -290,6 +310,7 @@ def _check_and_download(ask_user_callback=None) -> None:
         remote_version = resp.text.strip()
     except Exception as e:
         _log(f"versiyon.txt okunamadi: {e}")
+        _notify_no_update(on_no_update_callback, "Güncelleme sunucusuna ulaşılamadı. İnternet bağlantınızı kontrol edin.")
         return
 
     installed = get_installed_version()
@@ -297,6 +318,7 @@ def _check_and_download(ask_user_callback=None) -> None:
 
     if not remote_version or not _is_newer(remote_version, installed):
         _log("yeni surum yok, cikiliyor")
+        _notify_no_update(on_no_update_callback, f"Zaten en güncel sürümü kullanıyorsunuz ({installed}).")
         return
 
     if ask_user_callback:

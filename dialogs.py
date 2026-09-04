@@ -20,6 +20,8 @@ from leaderboard import get_leaderboard, get_gist_content
 import auth_manager
 import ticket_manager
 import settings_manager
+import app_log
+import updater
 
 
 def speak(text: str):
@@ -53,6 +55,25 @@ def bind_typing_sound_to_dialog(dialog, audio_manager):
         if isinstance(child, wx.TextCtrl):
             bind_typing_sound(child, audio_manager)
             break
+
+
+def _ask_update_confirmation(remote_version: str) -> bool:
+    """main.py'deki aynı isimli fonksiyonun birebir eşi. dialogs.py,
+    main.py'yi import EDEMEZ (main.py zaten dialogs.py'yi import
+    ediyor - döngüsel import olurdu), bu yüzden Ayarlar ekranındaki
+    'Güncellemeleri Kontrol Et' butonu için burada ayrıca tutuluyor."""
+    try:
+        dlg = wx.MessageDialog(
+            None,
+            f"Yeni sürüm bulundu ({remote_version}). İndirilsin mi?",
+            "Güncelleme",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        result = dlg.ShowModal()
+        dlg.Destroy()
+        return result == wx.ID_YES
+    except Exception:
+        return False
 
 
 SPIN_SOUND_FALLBACK_SECONDS = 4.0
@@ -273,6 +294,89 @@ class LandManagementDialog(wx.Dialog):
             if success:
                 self._update_ui()
                 self.parent.auto_save()
+
+
+TERMS_VERSION = "1.0"
+TERMS_FILES = [
+    ("Gizlilik Politikası", "gizlilik politikası.txt"),
+    ("Kullanım Şartları", "kullanimsartlari.txt"),
+]
+
+
+class TermsDialog(wx.Dialog):
+    """Oyunun İLK açılışında, hesaptan tamamen bağımsız olarak (giriş
+    ekranından bile ÖNCE, bkz. main.py App._ensure_terms_accepted),
+    gizlilik politikası ve kullanım şartlarının gösterilip kabul
+    edilmesini sağlar. X ile kapatmak da 'reddet' sayılır - kabul
+    edilmeden uygulama hiçbir ekrana geçmez, sadece kapanır.
+
+    Kabul edildiğinde settings_manager'a TERMS_VERSION yazılır; bu
+    sayede sadece BİR KEZ (cihaz başına) gösterilir. Metinler ileride
+    değişirse TERMS_VERSION artırılır, kullanıcı otomatik olarak
+    yeniden onay ekranını görür."""
+
+    def __init__(self, parent=None):
+        super().__init__(
+            parent, title="Gizlilik Politikası ve Kullanım Şartları",
+            size=(600, 560),
+        )
+        self._build_ui()
+        self._bind_events()
+        self.CenterOnScreen()
+        speak(
+            "Devam etmeden önce gizlilik politikasını ve kullanım "
+            "şartlarını okuyup kabul etmeniz gerekiyor."
+        )
+
+    def _load_text(self, filename: str) -> str:
+        path = resource_path(filename)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception:
+            return f"({filename} bulunamadı. Lütfen bu dosyayı uygulama klasörüne ekleyin.)"
+
+    def _build_ui(self):
+        panel = wx.Panel(self)
+        outer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label="GİZLİLİK POLİTİKASI VE KULLANIM ŞARTLARI")
+        title.SetFont(wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        outer.Add(title, 0, wx.ALL | wx.CENTER, 12)
+
+        self.notebook = wx.Notebook(panel)
+        for label, filename in TERMS_FILES:
+            page = wx.Panel(self.notebook)
+            page_sizer = wx.BoxSizer(wx.VERTICAL)
+            text_ctrl = wx.TextCtrl(
+                page, value=self._load_text(filename),
+                style=wx.TE_MULTILINE | wx.TE_READONLY
+            )
+            page_sizer.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 8)
+            page.SetSizer(page_sizer)
+            self.notebook.AddPage(page, label)
+        outer.Add(self.notebook, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 15)
+
+        btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.btn_accept = wx.Button(panel, label="Okudum, Anlıyorum ve Kabul Ediyorum")
+        self.btn_decline = wx.Button(panel, label="Reddet ve Çık")
+        btn_sizer.Add(self.btn_accept, 1, wx.EXPAND | wx.RIGHT, 6)
+        btn_sizer.Add(self.btn_decline, 1, wx.EXPAND)
+        outer.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 15)
+
+        panel.SetSizer(outer)
+        self.btn_accept.SetFocus()
+
+    def _bind_events(self):
+        self.btn_accept.Bind(wx.EVT_BUTTON, self.on_accept)
+        self.btn_decline.Bind(wx.EVT_BUTTON, self.on_decline)
+        self.Bind(wx.EVT_CLOSE, self.on_decline)
+
+    def on_accept(self, event):
+        self.EndModal(wx.ID_OK)
+
+    def on_decline(self, event):
+        self.EndModal(wx.ID_CANCEL)
 
 
 class AuthDialog(wx.Dialog):
@@ -612,12 +716,13 @@ class SettingsDialog(wx.Dialog):
     riskinden) tamamen kaçınıyor."""
 
     def __init__(self, parent=None):
-        super().__init__(parent, title="Ayarlar", size=(420, 620))
+        super().__init__(parent, title="Ayarlar", size=(420, 640))
         self.audio = AudioManager()
+        self._last_vol_speak_time = 0.0
         self._build_ui()
         self._bind_events()
         self.CenterOnScreen()
-        speak("Ayarlar ekranı.")
+        speak("Ayarlar.")
 
     def _build_ui(self):
         panel = wx.Panel(self)
@@ -645,15 +750,7 @@ class SettingsDialog(wx.Dialog):
 
         self.cb_cloud_backup = wx.CheckBox(panel, label="Buluta yedeklemeyi etkinleştir")
         self.cb_cloud_backup.SetValue(settings_manager.is_cloud_backup_enabled())
-        outer.Add(self.cb_cloud_backup, 0, wx.LEFT | wx.RIGHT | wx.TOP, 15)
-
-        backup_hint = wx.StaticText(
-            panel,
-            label="Kapatılırsa oyun kapanırken/otomatik kayıtta kaydınız "
-                  "sunucuya gönderilmez; yerel kayıt bundan etkilenmez."
-        )
-        backup_hint.Wrap(360)
-        outer.Add(backup_hint, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+        outer.Add(self.cb_cloud_backup, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, 15)
 
         self.cb_score_submission = wx.CheckBox(panel, label="Skor gönderimini etkinleştir")
         self.cb_score_submission.SetValue(leaderboard.is_score_submission_enabled())
@@ -667,33 +764,39 @@ class SettingsDialog(wx.Dialog):
         self.cb_typing_sound.SetValue(settings_manager.is_typing_sound_enabled())
         outer.Add(self.cb_typing_sound, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
 
+        self.cb_auto_update = wx.CheckBox(panel, label="Açılışta otomatik güncelleme kontrolünü etkinleştir")
+        self.cb_auto_update.SetValue(settings_manager.is_auto_update_check_enabled())
+        outer.Add(self.cb_auto_update, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
+        self.btn_check_update = wx.Button(panel, label="Güncellemeleri Kontrol Et")
+        outer.Add(self.btn_check_update, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
         outer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 15)
 
-        # Müzik sesi
+        # Müzik sesi - sürgü, odaktayken sol/sağ ok tuşlarıyla
+        # (wx.Slider'ın kendi doğal davranışı) değiştirilebilir.
         self.music_volume_label = wx.StaticText(
             panel, label=f"Müzik sesi: %{int(self.audio.music_volume * 100)}"
         )
         outer.Add(self.music_volume_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 15)
-
-        music_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.btn_music_down = wx.Button(panel, label="Müziği Azalt")
-        self.btn_music_up = wx.Button(panel, label="Müziği Artır")
-        music_btn_sizer.Add(self.btn_music_down, 1, wx.EXPAND | wx.RIGHT, 6)
-        music_btn_sizer.Add(self.btn_music_up, 1, wx.EXPAND)
-        outer.Add(music_btn_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+        self.music_slider = wx.Slider(
+            panel, value=int(self.audio.music_volume * 100),
+            minValue=0, maxValue=100, style=wx.SL_HORIZONTAL
+        )
+        self.music_slider.SetLineSize(10)
+        outer.Add(self.music_slider, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
 
         # Efekt sesi
         self.sfx_volume_label = wx.StaticText(
             panel, label=f"Efekt sesi: %{int(self.audio.sfx_volume * 100)}"
         )
         outer.Add(self.sfx_volume_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 15)
-
-        sfx_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.btn_sfx_down = wx.Button(panel, label="Efekti Azalt")
-        self.btn_sfx_up = wx.Button(panel, label="Efekti Artır")
-        sfx_btn_sizer.Add(self.btn_sfx_down, 1, wx.EXPAND | wx.RIGHT, 6)
-        sfx_btn_sizer.Add(self.btn_sfx_up, 1, wx.EXPAND)
-        outer.Add(sfx_btn_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+        self.sfx_slider = wx.Slider(
+            panel, value=int(self.audio.sfx_volume * 100),
+            minValue=0, maxValue=100, style=wx.SL_HORIZONTAL
+        )
+        self.sfx_slider.SetLineSize(10)
+        outer.Add(self.sfx_slider, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
 
         self.btn_close = wx.Button(panel, label="Kapat")
         outer.Add(self.btn_close, 0, wx.EXPAND | wx.ALL, 15)
@@ -708,10 +811,10 @@ class SettingsDialog(wx.Dialog):
         self.cb_score_submission.Bind(wx.EVT_CHECKBOX, self.on_toggle_score_submission)
         self.cb_daily_message.Bind(wx.EVT_CHECKBOX, self.on_toggle_daily_message)
         self.cb_typing_sound.Bind(wx.EVT_CHECKBOX, self.on_toggle_typing_sound)
-        self.btn_music_up.Bind(wx.EVT_BUTTON, self.on_music_volume_up)
-        self.btn_music_down.Bind(wx.EVT_BUTTON, self.on_music_volume_down)
-        self.btn_sfx_up.Bind(wx.EVT_BUTTON, self.on_sfx_volume_up)
-        self.btn_sfx_down.Bind(wx.EVT_BUTTON, self.on_sfx_volume_down)
+        self.cb_auto_update.Bind(wx.EVT_CHECKBOX, self.on_toggle_auto_update)
+        self.btn_check_update.Bind(wx.EVT_BUTTON, self.on_check_update_now)
+        self.music_slider.Bind(wx.EVT_SLIDER, self.on_music_slider)
+        self.sfx_slider.Bind(wx.EVT_SLIDER, self.on_sfx_slider)
         self.btn_close.Bind(wx.EVT_BUTTON, self.on_close_dialog)
         self.Bind(wx.EVT_CLOSE, self.on_close_dialog)
 
@@ -748,25 +851,48 @@ class SettingsDialog(wx.Dialog):
         settings_manager.set_typing_sound_enabled(enabled)
         speak(f"Yazım sesi {'etkin' if enabled else 'devre dışı'}")
 
-    def on_music_volume_up(self, event):
-        vol = self.audio.volume_up()
-        self.music_volume_label.SetLabel(f"Müzik sesi: %{int(vol * 100)}")
-        speak(f"Müzik sesi %{int(vol * 100)}")
+    def on_toggle_auto_update(self, event):
+        enabled = self.cb_auto_update.GetValue()
+        settings_manager.set_auto_update_check_enabled(enabled)
+        speak(f"Otomatik güncelleme kontrolü {'etkin' if enabled else 'devre dışı'}")
 
-    def on_music_volume_down(self, event):
-        vol = self.audio.volume_down()
-        self.music_volume_label.SetLabel(f"Müzik sesi: %{int(vol * 100)}")
-        speak(f"Müzik sesi %{int(vol * 100)}")
+    def on_check_update_now(self, event):
+        # Bu buton, ayardan BAĞIMSIZ - kapalı olsa bile elle kontrol
+        # edilebilir. Kontrol arka planda yapılıyor; yeni bir sürüm
+        # bulunursa _ask_update_confirmation penceresi açılır, yoksa
+        # (zaten güncel / bağlantı hatası vb.) _on_no_update ile
+        # kullanıcıya bir mesaj gösterilir.
+        speak("Güncellemeler kontrol ediliyor")
 
-    def on_sfx_volume_up(self, event):
-        vol = self.audio.sfx_volume_up()
-        self.sfx_volume_label.SetLabel(f"Efekt sesi: %{int(vol * 100)}")
-        speak(f"Efekt sesi %{int(vol * 100)}")
+        def _on_no_update(message):
+            wx.MessageBox(message, "Güncelleme", wx.OK | wx.ICON_INFORMATION)
+            speak(message)
 
-    def on_sfx_volume_down(self, event):
-        vol = self.audio.sfx_volume_down()
-        self.sfx_volume_label.SetLabel(f"Efekt sesi: %{int(vol * 100)}")
-        speak(f"Efekt sesi %{int(vol * 100)}")
+        updater.check_for_update_async(
+            ask_user_callback=_ask_update_confirmation,
+            on_no_update_callback=_on_no_update,
+        )
+
+    def _throttled_speak(self, text):
+        # Fare ile sürüklerken EVT_SLIDER art arda çok sayıda tetiklenir;
+        # her seferinde konuşursa sesli anons üst üste biner. Ok
+        # tuşlarıyla tek tek değiştirmede bu limite takılmaz.
+        now = time.time()
+        if now - self._last_vol_speak_time >= 0.15:
+            speak(text)
+            self._last_vol_speak_time = now
+
+    def on_music_slider(self, event):
+        vol = self.music_slider.GetValue() / 100.0
+        self.audio.set_music_volume(vol)
+        self.music_volume_label.SetLabel(f"Müzik sesi: %{self.music_slider.GetValue()}")
+        self._throttled_speak(f"Müzik sesi %{self.music_slider.GetValue()}")
+
+    def on_sfx_slider(self, event):
+        vol = self.sfx_slider.GetValue() / 100.0
+        self.audio.set_sfx_volume(vol)
+        self.sfx_volume_label.SetLabel(f"Efekt sesi: %{self.sfx_slider.GetValue()}")
+        self._throttled_speak(f"Efekt sesi %{self.sfx_slider.GetValue()}")
 
     def on_close_dialog(self, event):
         self.EndModal(wx.ID_CLOSE)
@@ -2456,7 +2582,7 @@ class NewTicketDialog(wx.Dialog):
     sırada kilitlenir ki oyuncu aynı bileti iki kez göndermesin."""
 
     def __init__(self, parent, username, audio_manager, extra_info=None):
-        super().__init__(parent, title="Yeni Bilet Aç", size=(480, 420),
+        super().__init__(parent, title="Yeni Bilet Aç", size=(520, 420),
                           style=wx.DEFAULT_DIALOG_STYLE)
         self.username = username
         self.audio = audio_manager
@@ -2492,8 +2618,10 @@ class NewTicketDialog(wx.Dialog):
 
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.send_btn = wx.Button(panel, label="Gönder")
+        self.load_log_btn = wx.Button(panel, label="Log Yükle")
         self.cancel_btn = wx.Button(panel, label="İptal (Esc)")
         btn_sizer.Add(self.send_btn, 0, wx.ALL, 5)
+        btn_sizer.Add(self.load_log_btn, 0, wx.ALL, 5)
         btn_sizer.Add(self.cancel_btn, 0, wx.ALL, 5)
         sizer.Add(btn_sizer, 0, wx.ALIGN_CENTER, 10)
 
@@ -2502,6 +2630,7 @@ class NewTicketDialog(wx.Dialog):
 
     def _bind_events(self):
         self.send_btn.Bind(wx.EVT_BUTTON, self.on_send)
+        self.load_log_btn.Bind(wx.EVT_BUTTON, self.on_load_log)
         self.cancel_btn.Bind(wx.EVT_BUTTON, self.on_cancel)
         self.Bind(wx.EVT_CLOSE, self.on_cancel)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
@@ -2511,6 +2640,44 @@ class NewTicketDialog(wx.Dialog):
             self.on_cancel(event)
             return
         event.Skip()
+
+    def on_load_log(self, event):
+        """Oyun geçmişini (history_log) ve konsol çıktılarının
+        toplandığı dosyayı (app_log) mesaj kutusuna ekler - destek
+        ekibinin sorunu teşhis etmesine yardımcı olur."""
+        if self._sending:
+            return
+
+        parts = []
+        try:
+            from history_log import get_history
+            entries = get_history()
+            if entries:
+                lines = []
+                for entry in entries:
+                    day = entry.get("day")
+                    gun_str = f"[Gün {day}] " if day is not None else ""
+                    lines.append(f"{entry['time']}  {gun_str}{entry['text']}")
+                parts.append("--- Oyun Geçmişi ---\n" + "\n".join(lines))
+        except Exception as e:
+            print(f"[Bilet] Oyun geçmişi okunamadı: {e}")
+
+        debug_tail = app_log.get_log_tail(max_chars=6000)
+        if debug_tail:
+            parts.append("--- Uygulama Günlüğü (son kayıtlar) ---\n" + debug_tail)
+
+        if not parts:
+            wx.MessageBox("Eklenecek bir log kaydı bulunamadı.",
+                           "Bilgi", wx.OK | wx.ICON_INFORMATION)
+            speak("Eklenecek log bulunamadı")
+            return
+
+        log_text = "\n\n".join(parts)
+        current = self.message_ctrl.GetValue()
+        separator = "\n\n" if current.strip() else ""
+        self.message_ctrl.SetValue(current + separator + "[LOG KAYDI]\n" + log_text)
+        self.message_ctrl.SetInsertionPointEnd()
+        speak("Log mesaja eklendi")
 
     def on_send(self, event):
         if self._sending:

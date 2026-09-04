@@ -29,6 +29,8 @@ _DEFAULTS = {
     "music_volume": 0.5,
     "sfx_volume": 0.8,
     "typing_sound_enabled": True,
+    "auto_update_check_enabled": True,
+    "terms_accepted_version": "",
 }
 
 _cache = None
@@ -123,4 +125,34 @@ def is_typing_sound_enabled() -> bool:
 def set_typing_sound_enabled(enabled: bool) -> None:
     data = _load()
     data["typing_sound_enabled"] = bool(enabled)
+    _save()
+
+
+def is_auto_update_check_enabled() -> bool:
+    """False ise, oyun açılışında updater.check_for_update_async hiç
+    çağrılmaz - internet bağlantısı olsa bile açılışta güncelleme
+    kontrolü için istek atılmaz. Ayarlar ekranındaki 'Güncellemeleri
+    Kontrol Et' butonu bundan ETKİLENMEZ - o her zaman elle
+    tetiklenebilir."""
+    return bool(_load().get("auto_update_check_enabled", True))
+
+
+def set_auto_update_check_enabled(enabled: bool) -> None:
+    data = _load()
+    data["auto_update_check_enabled"] = bool(enabled)
+    _save()
+
+
+def is_terms_accepted(current_version: str) -> bool:
+    """Gizlilik politikası/kullanım şartları bu CİHAZDA daha önce
+    kabul edilmiş mi (hesaptan bağımsız). current_version, main.py
+    içindeki TERMS_VERSION sabitidir - metinler ileride değişirse bu
+    sabiti artırmak yeterlidir, kullanıcı bir dahaki açılışta yeniden
+    onay ekranını görür (eski kabulü otomatik geçersiz sayılır)."""
+    return _load().get("terms_accepted_version", "") == current_version
+
+
+def set_terms_accepted(version: str) -> None:
+    data = _load()
+    data["terms_accepted_version"] = version
     _save()

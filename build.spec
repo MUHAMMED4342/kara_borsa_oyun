@@ -31,6 +31,16 @@ if not os.path.exists(_github_token_file):
 if not os.path.exists('release_notes.html'):
     print("UYARI: release_notes.html bulunamadi, paketlenmeyecek.")
 
+# Gizlilik politikasi / kullanim sartlari kontrolu (ilk acilista zorunlu
+# onay ekrani icin). Bu dosyalar yoksa build'i DURDURMUYORUZ (TermsDialog
+# kendi icinde "dosya bulunamadi" yedek metniyle yine de calisiyor) ama
+# gercek metin olmadan pakete girilmis bir exe'yi dagitmamak icin uyari
+# veriyoruz.
+for _terms_file in ('gizlilik politikası.txt', 'kullanimsartlari.txt'):
+    if not os.path.exists(_terms_file):
+        print(f"UYARI: {_terms_file} bulunamadi, paketlenmeyecek. "
+              f"Ilk acilis onay ekrani 'dosya bulunamadi' yedek metniyle gorunecek.")
+
 # insanlar.txt / iller.txt / ilceler.txt kontrolü (Adam Yönetimi özelliği için gerekli)
 for _pool_file in ('insanlar.txt', 'iller.txt', 'ilceler.txt'):
     if not os.path.exists(_pool_file):
@@ -48,6 +58,8 @@ a = Analysis(
     datas=[
         ('help.html', '.'),
         ('release_notes.html', '.'),  # Buraya eklendi
+        ('gizlilik politikası.txt', '.'),
+        ('kullanimsartlari.txt', '.'),
         ('sounds', 'sounds'),
         ('insanlar.txt', '.'),
         ('iller.txt', '.'),
