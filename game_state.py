@@ -15,11 +15,14 @@ from game_data import (
     LAND_TYPES, EMPLOYEE_HIRE_FEE,
     EMPLOYEE_BASE_SALARY, EMPLOYEE_DAILY_MIN, EMPLOYEE_DAILY_MAX,
     load_names_from_file, load_cities_from_file, load_districts_from_file,
-    tr_casefold,
+    tr_casefold, EVENT_TEXT_KEYS, category_display_name, product_display_name,
+    land_type_display_name,
+    AUCTION_ITEMS, AUCTION_NPC_DESCRIPTOR_KEYS, auction_item_display_name,
 )
 from accessibility_helper import speak as _tts_speak
 from history_log import log_history
 from formatting import format_tl
+from i18n import t, get_language
 
 
 def speak(text: str):
@@ -29,6 +32,18 @@ def speak(text: str):
 
 
 def resource_path(relative_path: str) -> str:
+    """--include-data-files/--include-data-dir (Nuitka) ya da datas=
+    (PyInstaller) ile pakete gömülen dosyaların çalışma anındaki
+    gerçek yolunu döndürür.
+
+    PyInstaller, gömülü dosyaları sys._MEIPASS adlı geçici bir
+    klasöre açar. Nuitka bu özniteliği HİÇ ayarlamaz - onun yerine
+    (hem standalone hem onefile modunda) gömülü dosyalar, çalışma
+    anında __file__'in bulunduğu klasörün altında bulunur (Nuitka'nın
+    kendi belgelerindeki "Onefile: Finding files" bölümü). Bu yüzden
+    sys._MEIPASS yoksa (Nuitka'da veya normal script olarak
+    çalışırken) os.path.dirname(__file__)'a düşüyoruz - bu, Nuitka
+    ile paketlenmiş exe'de de doğru sonucu verir."""
     base_path = getattr(sys, "_MEIPASS", os.path.abspath(os.path.dirname(__file__)))
     return os.path.join(base_path, relative_path)
 
@@ -42,27 +57,89 @@ def resource_path(relative_path: str) -> str:
 
 
 def _load_people_pool() -> list:
+    # İsim havuzu ÜLKEDEN BAĞIMSIZDIR: insanlar.txt artık Türkçe isimlerin
+    # yanı sıra İngiliz/Amerikan/Avustralya isimlerini de içerir, hangi
+    # ülke seçilirse seçilsin aynı (karışık) havuzdan rastgele isim çekilir.
     return load_names_from_file(resource_path("insanlar.txt"))
 
 
-def _load_city_list() -> list:
+# Desteklenen ülkeler: kod -> (görünen ad çeviri anahtarı, il dosyası,
+# ilçe dosyası). Yeni bir ülke eklemek için buraya bir satır ve
+# iller_<kod>.txt / ilceler_<kod>.txt dosyalarını (ilceler.txt ile AYNI
+# "(il) İlçe1, İlçe2, ..." biçiminde) eklemek yeterlidir.
+COUNTRIES = {
+    "tr": {"name_key": "country.tr", "cities_file": "iller.txt", "districts_file": "ilceler.txt"},
+    "us": {"name_key": "country.us", "cities_file": "iller_us.txt", "districts_file": "ilceler_us.txt"},
+    "uk": {"name_key": "country.uk", "cities_file": "iller_uk.txt", "districts_file": "ilceler_uk.txt"},
+    "au": {"name_key": "country.au", "cities_file": "iller_au.txt", "districts_file": "ilceler_au.txt"},
+}
+DEFAULT_COUNTRY = "tr"
+
+
+def _load_city_list(country: str = DEFAULT_COUNTRY) -> list:
     """Düz şehir (il) listesini döner (bölge kavramı YOK)."""
-    return load_cities_from_file(resource_path("iller.txt"))
+    info = COUNTRIES.get(country, COUNTRIES[DEFAULT_COUNTRY])
+    return load_cities_from_file(resource_path(info["cities_file"]))
 
 
-def _load_district_pool() -> dict:
-    """ilceler.txt TEK KAYNAKTIR: il -> ilçe listesi sözlüğünü döner.
+def _load_district_pool(country: str = DEFAULT_COUNTRY) -> dict:
+    """ilceler*.txt TEK KAYNAKTIR: il -> ilçe listesi sözlüğünü döner.
     ŞİRKET SİSTEMİ bu havuzu kullanarak, bir ilde zaten şirketiniz varsa
     o ilin ilçelerinde de ayrıca şirket açabilmenizi sağlar. Dosya
     yoksa/bozuksa/boşsa boş sözlük döner; bu durumda ilçe bazlı şirket
     açma imkanı sunulmaz ama oyun çökmez, sadece il bazlı eski davranış
     devam eder."""
-    return load_districts_from_file(resource_path("ilceler.txt"))
+    info = COUNTRIES.get(country, COUNTRIES[DEFAULT_COUNTRY])
+    return load_districts_from_file(resource_path(info["districts_file"]))
+
+
+def _load_country_data(country: str) -> tuple:
+    """Bir ülkenin şehir listesini ve ilçe sözlüğünü yükler. Ülkeye ait
+    dosyalar bulunamazsa/boşsa (ör. iller_us.txt paket derlemesine
+    EKLENMEMİŞSE - bkz. resource_path ve Nuitka/PyInstaller "datas"
+    listesi) SESSİZCE boş kalmak yerine Türkiye verisine geri döner;
+    böylece oyun hiçbir zaman boş şehir/ilçe listesiyle kalmaz. Bu bir
+    geliştirici uyarısı ile birlikte olur (konsola/log'a yazılır) ki
+    paketleme dosyaları eksikse fark edilsin."""
+    cities = _load_city_list(country)
+    districts = _load_district_pool(country)
+
+    if country != DEFAULT_COUNTRY and (not cities or not districts):
+        info = COUNTRIES.get(country, {})
+        print(
+            f"[Uyarı] '{country}' ülkesi için şehir/ilçe verisi bulunamadı "
+            f"(dosyalar: {info.get('cities_file')}, {info.get('districts_file')}). "
+            f"Bu dosyaların derleme (Nuitka/PyInstaller) veri dosyaları listesine "
+            f"eklendiğinden emin olun. Şimdilik Türkiye verisiyle devam ediliyor."
+        )
+        cities = _load_city_list(DEFAULT_COUNTRY)
+        districts = _load_district_pool(DEFAULT_COUNTRY)
+
+    return cities, districts
 
 
 ACTIVE_PEOPLE_POOL = _load_people_pool()
-ACTIVE_CITIES = _load_city_list()
-ACTIVE_DISTRICTS_BY_CITY = _load_district_pool()
+ACTIVE_COUNTRY = DEFAULT_COUNTRY
+ACTIVE_CITIES, ACTIVE_DISTRICTS_BY_CITY = _load_country_data(ACTIVE_COUNTRY)
+
+
+def set_active_country(country: str) -> None:
+    """Aktif şehir/ilçe havuzunu verilen ülkeye göre değiştirir. Bilinmeyen
+    bir kod verilirse sessizce Türkiye'ye (DEFAULT_COUNTRY) döner. Bu,
+    GameState oluşturulurken (yeni oyun ya da kayıt yükleme) çağrılır;
+    ACTIVE_CITIES / ACTIVE_DISTRICTS_BY_CITY modül seviyesinde birer
+    global olduğundan ve bu dosyadaki tüm fonksiyonlar onları çağrı
+    anında (import anında değil) okuduğundan, bu atama HER YERDE anında
+    etkili olur."""
+    global ACTIVE_COUNTRY, ACTIVE_CITIES, ACTIVE_DISTRICTS_BY_CITY
+    if country not in COUNTRIES:
+        country = DEFAULT_COUNTRY
+    ACTIVE_COUNTRY = country
+    ACTIVE_CITIES, ACTIVE_DISTRICTS_BY_CITY = _load_country_data(country)
+
+
+def get_active_country() -> str:
+    return ACTIVE_COUNTRY
 
 
 def resolve_company_location(city: str):
@@ -126,26 +203,106 @@ ROULETTE_RED_NUMBERS = {
     19, 21, 23, 25, 27, 30, 32, 34, 36,
 }
 
-ROULETTE_BET_LABELS = {
-    "kirmizi": "Kırmızı",
-    "siyah": "Siyah",
-    "cift": "Çift",
-    "tek": "Tek",
-    "1-18": "1-18",
-    "19-36": "19-36",
-    "1.duzine": "1. Düzine (1-12)",
-    "2.duzine": "2. Düzine (13-24)",
-    "3.duzine": "3. Düzine (25-36)",
-    "sayi": "Tek Sayı",
+ROULETTE_BET_LABEL_KEYS = {
+    "kirmizi": "roulette.label_red",
+    "siyah": "roulette.label_black",
+    "cift": "roulette.label_even",
+    "tek": "roulette.label_odd",
+    "1-18": "roulette.label_1_18",
+    "19-36": "roulette.label_19_36",
+    "1.duzine": "roulette.label_dozen1",
+    "2.duzine": "roulette.label_dozen2",
+    "3.duzine": "roulette.label_dozen3",
+    "sayi": "roulette.label_number",
 }
+
+# Geriye dönük uyumluluk: eskiden ROULETTE_BET_LABELS doğrudan Türkçe
+# metin içeren bir sözlüktü. Artık her t() çağrısı o anki dile göre
+# değer döndüren dinamik bir nesne - dict[...] ve .get(...) eskisi
+# gibi çalışır ama sabit bir dile kilitli değildir.
+class _LazyTranslatedLabels:
+    def __getitem__(self, key):
+        return t(ROULETTE_BET_LABEL_KEYS[key])
+
+    def get(self, key, default=None):
+        label_key = ROULETTE_BET_LABEL_KEYS.get(key)
+        return t(label_key) if label_key else default
+
+
+ROULETTE_BET_LABELS = _LazyTranslatedLabels()
 
 
 def get_roulette_color(number: int) -> str:
     """0 yeşildir; kalan 36 sayı standart Avrupa ruleti düzenine göre
-    kırmızı/siyah olarak dağıtılmıştır."""
+    kırmızı/siyah olarak dağıtılmıştır. Dönen değer İÇSEL bir kod
+    ('red'/'black'/'green') - bahis değerlendirme mantığı bununla
+    çalışır. Oyuncuya GÖSTERİLECEK metin için get_roulette_color_label()
+    kullanılır."""
     if number == 0:
-        return "yeşil"
-    return "kırmızı" if number in ROULETTE_RED_NUMBERS else "siyah"
+        return "green"
+    return "red" if number in ROULETTE_RED_NUMBERS else "black"
+
+
+ROULETTE_COLOR_LABEL_KEYS = {
+    "red": "roulette.color_red",
+    "black": "roulette.color_black",
+    "green": "roulette.color_green",
+}
+
+
+def get_roulette_color_label(color_code: str) -> str:
+    """get_roulette_color()'ın döndürdüğü içsel kodu ('red'/'black'/
+    'green') o anki dilde oyuncuya gösterilecek metne çevirir."""
+    return t(ROULETTE_COLOR_LABEL_KEYS.get(color_code, color_code))
+
+
+def event_display_name(event: dict) -> str:
+    """Bir olay sözlüğünün ('name' alanı hâlâ Türkçe, kararlı bir
+    kimlik) o anki dilde gösterilecek adını döndürür. EVENT_TEXT_KEYS'te
+    karşılığı yoksa (örn. ileride eklenen çevrilmemiş bir olay), ham
+    Türkçe isme güvenle geri döner - oyun hiçbir zaman çökmez."""
+    key_prefix = EVENT_TEXT_KEYS.get(event.get("name"))
+    if key_prefix:
+        return t(f"{key_prefix}.name")
+    return event.get("name", t("state.unknown_event_name"))
+
+
+def event_message_text(event: dict, **kwargs) -> str:
+    """Bir olayın message_template'ini o anki dilde, yer tutucuları
+    doldurulmuş olarak döndürür. Çeviri yoksa ham Türkçe şablona
+    (aynı .format(**kwargs) mantığıyla) geri döner."""
+    key_prefix = EVENT_TEXT_KEYS.get(event.get("name"))
+    if key_prefix:
+        return t(f"{key_prefix}.message", **kwargs)
+    template = event.get("message_template", "")
+    try:
+        return template.format(**kwargs)
+    except (KeyError, IndexError):
+        return template
+
+
+def event_zero_message_text(event: dict) -> str:
+    """Bir olayın (varsa) zero_message'ını o anki dilde döndürür.
+    Ne çeviri ne de ham zero_message varsa None döner - çağıran taraf
+    kendi varsayılan mesajını kullanmalı (bkz. apply_event)."""
+    key_prefix = EVENT_TEXT_KEYS.get(event.get("name"))
+    if key_prefix:
+        translated = _get_locale_safe(f"{key_prefix}.zero")
+        if translated is not None:
+            return translated
+    return event.get("zero_message")
+
+
+def _get_locale_safe(key: str):
+    """t()'in aksine, anahtar hiçbir dilde yoksa None döndürür (t()
+    ise anahtarın kendisini döndürür) - event_zero_message_text'in
+    'hiç zero_message tanımlanmamış' ile 'çevirisi eksik' durumlarını
+    birbirinden ayırt edebilmesi için kullanılır."""
+    import i18n as _i18n
+    text = _i18n._get_locale(_i18n.get_language()).get(key)
+    if text is None and _i18n.get_language() != "en":
+        text = _i18n._get_locale("en").get(key)
+    return text
 
 
 class GameState:
@@ -154,7 +311,23 @@ class GameState:
     
     
 
-    def __init__(self, load_data=None):
+    def __init__(self, load_data=None, country=None):
+        # ÜLKE SEÇİMİ HER ŞEYDEN ÖNCE UYGULANIR: bu satırdan sonra
+        # ACTIVE_CITIES / ACTIVE_DISTRICTS_BY_CITY (game_state.py modül
+        # seviyesi globalleri) artık seçilen ülkeye ait olur - şehir/ilçe
+        # kullanan hiçbir kod (şirket açma, kayıtlı oyunun eski şehrini
+        # çözme, vb.) bu satırdan SONRA çalışır. Kayıtlı bir oyun
+        # yükleniyorsa ülke, kayıttaki "country" alanından okunur (yoksa
+        # geriye dönük uyumluluk için Türkiye varsayılır); yeni bir oyunda
+        # ülke, CountrySelectDialog'dan (main.py) gelen `country`
+        # parametresinden alınır.
+        if load_data:
+            resolved_country = load_data.get("country", DEFAULT_COUNTRY)
+        else:
+            resolved_country = country or DEFAULT_COUNTRY
+        set_active_country(resolved_country)
+        self.country = resolved_country
+
         self.lands = []
         self.land_prices = {}
         
@@ -260,6 +433,23 @@ class GameState:
             self._init_land_prices()
 
             self.employees = []
+
+        # AÇIK ARTIRMA: sahip olunan eşyalar {item_id: adet} biçiminde
+        # ayrı bir envanterde tutulur (normal ürün envanterinden bağımsız,
+        # çünkü çok daha pahalı ve tekil/koleksiyon niteliğindedir).
+        # auction_current, o an EKRANDA CANLI ilerleyen açık artırmadır
+        # (gerçek zamanlı/duvar saati bazlı olduğu için kasıtlı olarak
+        # KAYDEDİLMEZ - kaydedilseydi, oyun kapalıyken geçen süre yüzünden
+        # anlamsız/negatif bir geri sayımla karşılaşılırdı; her oturumda
+        # Açık Artırma ekranı açıldığında start_new_auction() ile sıfırdan
+        # başlar). auction_duration_seconds ise kalıcı bir tercihtir -
+        # oyuncu bunu açık artırma ekranından değiştirebilir.
+        self.auction_inventory = load_data.get("auction_inventory", {}) if load_data else {}
+        self.auction_duration_seconds = (
+            load_data.get("auction_duration_seconds", self.AUCTION_DEFAULT_DURATION_SECONDS)
+            if load_data else self.AUCTION_DEFAULT_DURATION_SECONDS
+        )
+        self.auction_current = None
 
     def _backfill_employee_defaults(self):
         """Eski kayıtlardan gelen adam kayıtlarında eksik alan varsa doldurur.
@@ -369,12 +559,12 @@ class GameState:
 
     def buy_land(self, land_type: str) -> tuple:
         if land_type not in LAND_TYPES:
-            return False, "Geçersiz arsa tipi"
+            return False, t("state.invalid_land_type")
         
         price = self.get_land_price(land_type)
         
         if self.cash < price:
-            return False, f"Yetersiz nakit. Fiyat: {format_tl(price)} TL"
+            return False, t("state.insufficient_cash_price", price=format_tl(price))
         
         self._spend_cash(price)
         self.lands.append({
@@ -386,11 +576,11 @@ class GameState:
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
         
-        return True, f"{land_type} satın alındı. Fiyat: {format_tl(price)} TL"
+        return True, t("state.land_bought", type=land_type_display_name(land_type), price=format_tl(price))
 
     def sell_land(self, land_index: int) -> tuple:
         if land_index < 0 or land_index >= len(self.lands):
-            return False, "Geçersiz arsa indeksi"
+            return False, t("state.invalid_land_index")
         
         land = self.lands[land_index]
         land_type = land["type"]
@@ -405,7 +595,7 @@ class GameState:
         
         removed = self.lands.pop(land_index)
         
-        return True, f"{land_type} satıldı. Kazanç: {format_tl(sale_price)} TL (Komisyon: {format_tl(commission)} TL)"
+        return True, t("state.land_sold", type=land_type_display_name(land_type), price=format_tl(sale_price), commission=format_tl(commission))
 
     def get_land_loan_limit(self, land_index: int) -> float:
         if land_index < 0 or land_index >= len(self.lands):
@@ -419,9 +609,9 @@ class GameState:
         return current_price * multiplier
 
     LAND_LOAN_PRESETS = [
-        ("Küçük Kredi", 0.25, 1),
-        ("Orta Kredi", 0.50, 2),
-        ("Büyük Kredi", 1.00, 3),
+        ("state.loan_preset_small", 0.25, 1),
+        ("state.loan_preset_medium", 0.50, 2),
+        ("state.loan_preset_large", 1.00, 3),
     ]
 
     def get_land_loan_options(self, land_index: int) -> list:
@@ -437,14 +627,14 @@ class GameState:
 
         interest_rate = 0.15
         options = []
-        for label, pct, installments in self.LAND_LOAN_PRESETS:
+        for label_key, pct, installments in self.LAND_LOAN_PRESETS:
             amount = round(limit * pct, 2)
             if amount <= 0:
                 continue
             total_debt = round(amount * (1 + interest_rate), 2)
             installment_amount = round(total_debt / installments, 2)
             options.append({
-                "label": label,
+                "label": t(label_key),
                 "amount": amount,
                 "installments": installments,
                 "term_days": installments * 30,
@@ -456,17 +646,17 @@ class GameState:
 
     def take_land_loan(self, land_index: int, amount: float, installments: int = 1) -> tuple:
         if land_index < 0 or land_index >= len(self.lands):
-            return False, "Geçersiz arsa indeksi"
+            return False, t("state.invalid_land_index")
         
         if amount <= 0:
-            return False, "Geçerli miktar girin"
+            return False, t("state.invalid_amount")
 
         if self.lands[land_index].get("has_loan", False):
-            return False, "Bu arsa üzerinde zaten kredi var"
+            return False, t("state.land_already_has_loan")
         
         limit = self.get_land_loan_limit(land_index)
         if amount > limit:
-            return False, f"Maksimum kredi: {format_tl(limit)} TL"
+            return False, t("state.max_loan", limit=format_tl(limit))
         
         installments = max(1, int(installments))
         interest_rate = 0.15
@@ -490,22 +680,21 @@ class GameState:
         land["loan_installment_amount"] = installment_amount
         land["loan_days_until_installment"] = 30
         
-        return True, (f"{format_tl(amount)} TL arsa teminatlı kredi onaylandı. Toplam borç: {format_tl(total_debt)} TL "
-                       f"(Faiz: %15). {installments} taksit, her 30 günde bir {format_tl(installment_amount)} TL "
-                       f"otomatik olarak çekilecek")
+        return True, t("state.land_loan_approved", amount=format_tl(amount), debt=format_tl(total_debt),
+                       installments=installments, installment=format_tl(installment_amount))
 
     def pay_land_loan_full(self, land_index: int) -> tuple:
         """Arsa kredisini erken kapatma - kalan tüm borç tek seferde ödenir."""
         if land_index < 0 or land_index >= len(self.lands):
-            return False, "Geçersiz arsa indeksi"
+            return False, t("state.invalid_land_index")
 
         land = self.lands[land_index]
         if not land.get("has_loan", False):
-            return False, "Bu arsada aktif kredi yok"
+            return False, t("state.no_active_land_loan")
 
         debt = land.get("loan_debt", 0.0)
         if self.cash < debt:
-            return False, f"Erken kapatma için yetersiz nakit. Gereken: {format_tl(debt)} TL"
+            return False, t("state.insufficient_cash_payoff", amount=format_tl(debt))
 
         self.cash -= debt
         land["has_loan"] = False
@@ -517,7 +706,7 @@ class GameState:
         land.pop("loan_installment_amount", None)
         land.pop("loan_days_until_installment", None)
 
-        return True, f"{format_tl(debt)} TL ödendi. Arsa kredisi erken kapatıldı, arsa artık satılabilir"
+        return True, t("state.land_loan_paid_off", amount=format_tl(debt))
 
     def process_land_loans_daily(self) -> list:
         """Her arsa kredisi için 30 günde bir otomatik taksit tahsilatı yapar.
@@ -541,17 +730,15 @@ class GameState:
             land["loan_debt"] = debt
 
             if paid < due - 0.01:
-                messages.append(
-                    f"{land['type']} arsa kredisi taksidi ödenemedi (Gereken: {format_tl(due)} TL, "
-                    f"ödenebilen: {format_tl(paid)} TL). Arsa bankaya devredildi (haciz)!"
-                )
+                messages.append(t("state.land_loan_installment_failed", type=land_type_display_name(land['type']),
+                                   due=format_tl(due), paid=format_tl(paid)))
                 to_remove.append(i)
                 continue
 
             land["loan_installments_paid"] = land.get("loan_installments_paid", 0) + 1
 
             if debt <= 0.01:
-                messages.append(f"{land['type']} arsa kredisi taksidi ödendi: {format_tl(paid)} TL. Kredi tamamen kapandı!")
+                messages.append(t("state.land_loan_paid_full", type=land_type_display_name(land['type']), amount=format_tl(paid)))
                 land["has_loan"] = False
                 land.pop("loan_amount", None)
                 land.pop("loan_debt", None)
@@ -562,9 +749,8 @@ class GameState:
                 land.pop("loan_days_until_installment", None)
             else:
                 land["loan_days_until_installment"] = 30
-                messages.append(
-                    f"{land['type']} arsa kredisi taksidi ödendi: {format_tl(paid)} TL. Kalan borç: {format_tl(debt)} TL"
-                )
+                messages.append(t("state.land_loan_installment_paid", type=land_type_display_name(land['type']),
+                                   amount=format_tl(paid), debt=format_tl(debt)))
 
         for i in sorted(to_remove, reverse=True):
             self.lands.pop(i)
@@ -580,28 +766,28 @@ class GameState:
             self.land_prices[land_type] = round(new_price, 2)
 
     def wallet_text(self) -> str:
-        base = f"Gün {self.day} | Nakit: {format_tl(self.cash)} TL"
+        base = t("state.wallet_day_cash", day=self.day, cash=format_tl(self.cash))
         if self.companies:
             if len(self.companies) == 1:
                 c = self.companies[0]
-                base += f" | Şirket: {c['name']} ({c['city']})"
+                base += t("state.wallet_company_single", name=c['name'], city=c['city'])
             else:
                 cities = ", ".join(c["city"] for c in self.companies)
-                base += f" | Şirketler ({len(self.companies)}): {cities}"
+                base += t("state.wallet_companies_multi", count=len(self.companies), cities=cities)
             if self.loan_amount > 0:
-                base += f" | Kredi: {format_tl(self.loan_amount)} TL"
+                base += t("state.wallet_loan", amount=format_tl(self.loan_amount))
         if self.lands:
-            base += f" | Arsa: {len(self.lands)} adet"
+            base += t("state.wallet_land", count=len(self.lands))
         if self.employees:
-            base += f" | Adamlar: {len(self.employees)}"
+            base += t("state.wallet_employees", count=len(self.employees))
         if self.has_informant:
-            base += " | Muhbir: aktif"
+            base += t("state.wallet_informant")
         if self.in_jail:
-            base += f" | HAPİSTE {self.jail_days} gün"
+            base += t("state.wallet_jail", days=self.jail_days)
         if self.police_heat > 0:
             illegal_value = self._illegal_inventory_value()
             display_risk = min(30, calculate_police_risk(illegal_value) * (1 + self.police_heat / 100) * 100)
-            base += f" | Polis riski: %{display_risk:.0f}"
+            base += t("state.wallet_police_risk", risk=f"{display_risk:.0f}")
         return base
 
     def get_average_credit_score(self) -> int:
@@ -641,42 +827,39 @@ class GameState:
     def inventory_items_text(self) -> str:
         """Sadece envanterdeki ürünleri okur; nakit, gün, şirket, arsa,
         adam gibi diğer bilgileri İÇERMEZ. 'I' kısayolu bunu kullanır."""
-        parts = ["Envanter özeti:"]
+        parts = [t("state.inventory_header")]
         has_item = False
         for category, names in PRODUCT_CATEGORIES.items():
-            owned = [f"{name}: {self.inventory.get(name, 0)} adet" for name in names if self.inventory.get(name, 0) > 0]
+            owned = [t("state.inventory_item_line", name=product_display_name(name), qty=self.inventory.get(name, 0)) for name in names if self.inventory.get(name, 0) > 0]
             if owned:
                 has_item = True
-                parts.append(f"{category}: " + ", ".join(owned))
+                parts.append(f"{category_display_name(category)}: " + ", ".join(owned))
         if not has_item:
-            parts.append("Envanterinizde ürün yok.")
+            parts.append(t("state.inventory_empty"))
         return " ".join(parts)
 
     def inventory_summary_text(self) -> str:
-        parts = [self.wallet_text(), "Envanter özeti:"]
+        parts = [self.wallet_text(), t("state.inventory_header")]
         has_item = False
         for category, names in PRODUCT_CATEGORIES.items():
-            owned = [f"{name}: {self.inventory.get(name, 0)} adet" for name in names if self.inventory.get(name, 0) > 0]
+            owned = [t("state.inventory_item_line", name=product_display_name(name), qty=self.inventory.get(name, 0)) for name in names if self.inventory.get(name, 0) > 0]
             if owned:
                 has_item = True
-                parts.append(f"{category}: " + ", ".join(owned))
+                parts.append(f"{category_display_name(category)}: " + ", ".join(owned))
         if not has_item:
-            parts.append("Envanterinizde ürün yok.")
+            parts.append(t("state.inventory_empty"))
         
         if self.lands:
-            parts.append("\nArsalarınız:")
+            parts.append(t("state.your_lands_header"))
             for i, land in enumerate(self.lands):
                 land_type = land["type"]
                 price = self.get_land_price(land_type)
-                parts.append(f"{i+1}. {land_type} - Değer: {format_tl(price)} TL")
+                parts.append(t("state.your_land_line", index=i+1, type=land_type_display_name(land_type), price=format_tl(price)))
 
         if self.employees:
-            parts.append("\nAdamlarınız:")
+            parts.append(t("state.your_employees_header"))
             for e in self.employees:
-                parts.append(
-                    f"{e['name']} ({e['city']}) - "
-                    f"maaşa {e['days_until_salary']} gün kaldı"
-                )
+                parts.append(t("state.employee_salary_line", name=e['name'], city=e['city'], days=e['days_until_salary']))
 
         return " ".join(parts)
 
@@ -696,25 +879,25 @@ class GameState:
     def buy_bulk(self, name: str, quantity: int) -> tuple:
         total_price = self.prices[name] * quantity
         if self.cash < total_price:
-            return False, 0, "Yetersiz bakiye"
+            return False, 0, t("state.insufficient_balance")
         self.cash -= total_price
         self.inventory[name] += quantity
 
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
-        return True, total_price, f"{quantity} adet {name} alındı"
+        return True, total_price, t("state.bought_line", qty=quantity, name=product_display_name(name))
 
     def sell_bulk(self, name: str, quantity: int) -> tuple:
         if self.inventory.get(name, 0) < quantity:
-            return False, 0, "Yeterli stok yok"
+            return False, 0, t("state.no_stock")
         total_price = self.prices[name] * quantity
         self.inventory[name] -= quantity
         self.cash += total_price
         self.total_crime += total_price
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
-        speak(f"{quantity} adet {name} satıldı, {format_tl(total_price)} TL kazanıldı")
-        return True, total_price, f"{quantity} adet {name} satıldı"
+        speak(t("state.sold_speak", qty=quantity, name=product_display_name(name), amount=format_tl(total_price)))
+        return True, total_price, t("state.sold_line", qty=quantity, name=product_display_name(name))
 
     
 
@@ -726,9 +909,9 @@ class GameState:
         if btype == "sayi":
             return (winning_number == bet.get("number"), 36)
         if btype == "kirmizi":
-            return (winning_color == "kırmızı", 2)
+            return (winning_color == "red", 2)
         if btype == "siyah":
-            return (winning_color == "siyah", 2)
+            return (winning_color == "black", 2)
         if btype == "cift":
             return (winning_number != 0 and winning_number % 2 == 0, 2)
         if btype == "tek":
@@ -769,9 +952,9 @@ class GameState:
         """
         total_bet = sum(b["amount"] for b in bets)
         if total_bet <= 0:
-            return {"success": False, "message": "Bahis girilmedi"}
+            return {"success": False, "message": t("state.no_bet_entered")}
         if self.cash < total_bet:
-            return {"success": False, "message": "Yetersiz bakiye"}
+            return {"success": False, "message": t("state.insufficient_balance")}
 
         self.cash -= total_bet
 
@@ -851,17 +1034,17 @@ class GameState:
         karaborsa işi çevirir; hiçbir şirket kurmaz. Oyuncu sadece kiralama
         masrafını öder ve 30 günde bir maaş verir."""
         if name not in self.get_available_people():
-            return False, "Bu kişi zaten tutulmuş ya da geçersiz"
+            return False, t("state.person_already_hired")
 
         if city not in ACTIVE_CITIES:
-            return False, "Geçersiz şehir"
+            return False, t("state.invalid_city")
 
         if city in self.get_occupied_cities():
-            return False, f"{city} ilinde zaten bir adamınız var"
+            return False, t("state.city_already_has_employee", city=city)
 
         cost = self.get_employee_hire_cost()
         if self.cash < cost:
-            return False, f"Yetersiz nakit. Gereken: {format_tl(cost)} TL"
+            return False, t("state.insufficient_cash_needed", amount=format_tl(cost))
 
         self._spend_cash(cost)
         salary = self.get_employee_salary()
@@ -879,29 +1062,24 @@ class GameState:
         }
         self.employees.append(employee)
 
-        return True, (
-            f"{name}, {city} iline gönderildi. Kiralama masrafı: {format_tl(cost)} TL. "
-            f"30 günde bir maaş: {format_tl(salary)} TL"
-        )
+        return True, t("state.employee_hired", name=name, city=city, cost=format_tl(cost), salary=format_tl(salary))
 
     def fire_employee(self, employee_id: int) -> tuple:
         for i, e in enumerate(self.employees):
             if e["id"] == employee_id:
                 name, city = e["name"], e["city"]
                 self.employees.pop(i)
-                return True, f"{name} kovuldu. {city} artık boş, başka bir adam gönderebilirsiniz."
-        return False, "Adam bulunamadı"
+                return True, t("state.employee_fired", name=name, city=city)
+        return False, t("state.employee_not_found")
 
     def employee_summary_text(self) -> str:
         if not self.employees:
-            return "Hiç adamınız yok."
-        parts = [f"Toplam {len(self.employees)} adamınız var.", "Adamlarınız:"]
+            return t("state.no_employees")
+        parts = [t("state.employee_count_header", count=len(self.employees)), t("state.employees_header")]
         for e in self.employees:
-            parts.append(
-                f"{e['name']} - {e['city']} - Aktif Gün: {e['days_active']} - "
-                f"Toplam Ürettiği: {format_tl(e['total_generated'])} TL - "
-                f"Maaş: {format_tl(e['salary'])} TL, maaşa {e['days_until_salary']} gün kaldı"
-            )
+            parts.append(t("state.employee_summary_line", name=e['name'], city=e['city'],
+                            days=e['days_active'], generated=format_tl(e['total_generated']),
+                            salary=format_tl(e['salary']), until=e['days_until_salary']))
         return " ".join(parts)
 
     def process_employees_daily(self) -> list:
@@ -930,18 +1108,14 @@ class GameState:
                 salary = e["salary"]
                 paid = self._auto_deduct(salary)
                 if paid < salary - 0.01:
-                    messages.append(
-                        f"{e['name']} ({e['city']}) maaşını alamadı ve sizi terk etti!"
-                    )
+                    messages.append(t("state.employee_salary_failed", name=e['name'], city=e['city']))
                     to_remove.append(e["id"])
                     continue
                 period_total = e["period_generated"]
                 e["days_until_salary"] = 30
                 e["period_generated"] = 0.0
-                messages.append(
-                    f"{e['name']} ({e['city']}): maaş ödendi ({format_tl(salary)} TL). "
-                    f"Bu dönem ürettiği: {format_tl(period_total)} TL"
-                )
+                messages.append(t("state.employee_salary_paid", name=e['name'], city=e['city'],
+                                   salary=format_tl(salary), generated=format_tl(period_total)))
 
         if to_remove:
             self.employees = [e for e in self.employees if e["id"] not in to_remove]
@@ -957,8 +1131,8 @@ class GameState:
         self.in_jail = True
         self.jail_days = days
         if seized > 0:
-            return f"{days} gün hapis cezası. Ayrıca paranızın yüzde 10'una ({format_tl(seized)} TL) el konuldu"
-        return f"{days} gün hapis cezası"
+            return t("state.jail_with_seizure", days=days, amount=format_tl(seized))
+        return t("state.jail_sentence", days=days)
 
     def setup_company(self, company_type: str, company_name: str, city: str = "") -> tuple:
         """Yeni bir şirket kurar ve listeye ekler. Aynı anda farklı
@@ -972,27 +1146,25 @@ class GameState:
         get_available_company_cities() tarafından üretilen "İlçe (İl)"
         biçiminde bir ilçe etiketi (ör. "Boğazlıyan (Yozgat)") olabilir."""
         if company_type not in COMPANY_TYPES:
-            return False, "Geçersiz şirket tipi"
+            return False, t("state.invalid_company_type")
 
         valid, province, district = resolve_company_location(city)
         if not valid:
-            return False, "Geçersiz şehir"
+            return False, t("state.invalid_city_short")
 
         if district and tr_casefold(province) not in self.get_company_provinces_with_active_company():
-            return False, (
-                f"{district} ilçesinde şirket açabilmek için önce "
-                f"{province} ilinde bir şirketiniz olmalı"
-            )
+            return False, t("state.need_company_in_province", district=district, province=province)
 
         if city in self.get_company_cities():
-            location_word = "ilçesinde" if district else "ilinde"
-            return False, f"{city} {location_word} zaten bir şirketiniz var"
+            if district:
+                return False, t("state.already_have_company_district", city=city)
+            return False, t("state.already_have_company_province", city=city)
 
         company_data = COMPANY_TYPES[company_type]
         cost = company_data["setup_cost"]
 
         if self.cash < cost:
-            return False, f"Yetersiz nakit. Kurulum maliyeti: {format_tl(cost)} TL"
+            return False, t("state.insufficient_cash_setup", cost=format_tl(cost))
 
         self._spend_cash(cost)
         company = {
@@ -1010,30 +1182,30 @@ class GameState:
         }
         self.companies.append(company)
 
-        return True, f"{company_name} ({city}) kuruldu. Başlangıç kredi notu: 50"
+        return True, t("state.company_founded", name=company_name, city=city)
 
     def close_company(self, company_id=None) -> tuple:
         """Belirtilen şirketi kapatır. company_id verilmezse ve tek bir
         şirketiniz varsa o kapatılır (geriye dönük uyumluluk için)."""
         if not self.companies:
-            return False, "Aktif şirket yok"
+            return False, t("state.no_active_company")
 
         if company_id is None:
             if len(self.companies) == 1:
                 company = self.companies[0]
             else:
-                return False, "Kapatılacak şirketi seçin"
+                return False, t("state.select_company_to_close")
         else:
             company = self.get_company(company_id)
             if not company:
-                return False, "Şirket bulunamadı"
+                return False, t("state.company_not_found")
 
         if len(self.companies) == 1 and self.loan_amount > 0:
-            return False, "Önce kredi borcunu kapatın"
+            return False, t("state.pay_off_loan_first")
 
         self.companies.remove(company)
 
-        return True, f"{company['name']} ({company['city']}) kapatıldı"
+        return True, t("state.company_closed", name=company['name'], city=company['city'])
 
     def _spend_cash(self, amount: float) -> None:
         """self.cash'i doğrudan azaltan (arsa/şirket/adam alımı, rüşvet,
@@ -1070,9 +1242,9 @@ class GameState:
 
         if len(due_companies) == 1:
             c = due_companies[0]
-            message = f"{c['name']} ({c['city']}) bu ay {format_tl(total_profit)} TL kâr üretti"
+            message = t("state.company_monthly_profit_single", name=c['name'], city=c['city'], amount=format_tl(total_profit))
         else:
-            message = f"Şirketleriniz bu ay toplam {format_tl(total_profit)} TL kâr üretti"
+            message = t("state.company_monthly_profit_multi", amount=format_tl(total_profit))
 
         return [message]
 
@@ -1096,7 +1268,7 @@ class GameState:
             c["credit_score"] = c.get("credit_score", 50) + credit_boost
             c["total_profit"] = c.get("total_profit", 0.0) + profit
 
-            messages.append(f"{c['name']}: {format_tl(profit)} TL kâr elde ettiniz")
+            messages.append(t("state.company_daily_profit", name=c['name'], amount=format_tl(profit)))
 
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
@@ -1107,25 +1279,23 @@ class GameState:
 
     def hire_informant(self) -> tuple:
         if self.has_informant:
-            return False, "Zaten bir muhbiriniz var"
+            return False, t("state.already_have_informant")
 
         cost = INFORMANT_CONFIG["hire_cost"]
         if self.cash < cost:
-            return False, f"Yetersiz nakit. Gereken: {format_tl(cost)} TL"
+            return False, t("state.insufficient_cash_needed", amount=format_tl(cost))
 
         self._spend_cash(cost)
         self.has_informant = True
-        return True, (
-            f"Muhbir tutuldu. Kiralama masrafı: {format_tl(cost)} TL. "
-            f"Günlük ücret: {format_tl(INFORMANT_CONFIG['daily_upkeep'])} TL"
-        )
+        return True, t("state.informant_hired", cost=format_tl(cost),
+                        upkeep=format_tl(INFORMANT_CONFIG['daily_upkeep']))
 
     def fire_informant(self) -> tuple:
         if not self.has_informant:
-            return False, "Muhbiriniz yok"
+            return False, t("state.no_informant")
         self.has_informant = False
         self.informant_warning_active = False
-        return True, "Muhbir kovuldu"
+        return True, t("state.informant_fired")
 
     def pay_informant_upkeep(self) -> bool:
         """Her gün çağrılır: muhbir varsa günlük ücretini öder. Ödenemezse
@@ -1175,6 +1345,330 @@ class GameState:
 
         return total_items, round(total_earned, 2)
 
+    
+
+    AUCTION_BIDDER_MIN_COUNT = 2
+    AUCTION_BIDDER_MAX_COUNT = 4
+    AUCTION_DEFAULT_DURATION_SECONDS = 60
+    AUCTION_MIN_DURATION_SECONDS = 5
+    AUCTION_MAX_DURATION_SECONDS = 120
+    # Ekran okuyucunun bir anonsu RAHATÇA bitirebilmesi için, iki olay
+    # (teklif ya da hatırlatma anonsu) arasında en az/en fazla bu kadar
+    # saniye boşluk bırakılır - bkz. tick_auction. Bu bilinçli olarak
+    # kısa süreli (5-15 sn) bir turda bile en fazla birkaç anons demektir;
+    # amaç heyecan değil, HER ANONSUN net bir şekilde duyulabilmesidir.
+    AUCTION_MIN_EVENT_GAP_SECONDS = 7.0
+    AUCTION_MAX_EVENT_GAP_SECONDS = 7.0
+    AUCTION_NPC_TICK_BID_CHANCE = 0.55  # her olay penceresinde bunun bir TEKLİF mi yoksa hatırlatma anonsu mu olacağı
+    AUCTION_NPC_MIN_RAISE = 0.04
+    AUCTION_NPC_MAX_RAISE = 0.18
+    AUCTION_RESALE_MIN_MULT = 0.75
+    AUCTION_RESALE_MAX_MULT = 1.35
+
+    def get_auction_duration_seconds(self) -> int:
+        return self.auction_duration_seconds
+
+    def set_auction_duration_seconds(self, seconds) -> int:
+        """Açık artırma süresini (saniye) değiştirir; AUCTION_MIN/MAX
+        aralığına sıkıştırılır. Zaten devam eden bir açık artırmayı
+        ETKİLEMEZ - yeni süre yalnızca bundan SONRA start_new_auction()
+        ile başlayacak açık artırmalarda geçerli olur. Uygulanan (sınıra
+        çekilmiş) değeri döner."""
+        try:
+            seconds = int(seconds)
+        except (TypeError, ValueError):
+            seconds = self.AUCTION_DEFAULT_DURATION_SECONDS
+        seconds = max(self.AUCTION_MIN_DURATION_SECONDS, min(self.AUCTION_MAX_DURATION_SECONDS, seconds))
+        self.auction_duration_seconds = seconds
+        return seconds
+
+    def _generate_auction_bidders(self, item: dict) -> list:
+        """Bir eşya için 2-4 gerçek rakip üretir. Her rakibin kendi ismi
+        (insanlar.txt'ten), betimleyici bir sıfatı ("şapkalı yaşlı adam"
+        gibi) ve AZAMİ BİR BÜTÇESİ vardır - bütçesi tükenen rakip
+        otomatik olarak açık artırmadan çekilir. Bütçe, eşyanın min/max
+        değer aralığına göre rastgele belirlenir; bu yüzden bazı
+        rakipler erken pes eder, bazıları çok daha inatçı çıkar -
+        gerçek bir açık artırmadaki gibi."""
+        count = random.randint(self.AUCTION_BIDDER_MIN_COUNT, self.AUCTION_BIDDER_MAX_COUNT)
+        used_names = set()
+        bidders = []
+        for _ in range(count):
+            name = random.choice(ACTIVE_PEOPLE_POOL) if ACTIVE_PEOPLE_POOL else None
+            tries = 0
+            while name in used_names and ACTIVE_PEOPLE_POOL and tries < 6:
+                name = random.choice(ACTIVE_PEOPLE_POOL)
+                tries += 1
+            if name:
+                used_names.add(name)
+            else:
+                name = t("auction.default_npc_name")
+
+            descriptor_key = random.choice(AUCTION_NPC_DESCRIPTOR_KEYS)
+            label = t(descriptor_key, name=name)
+            max_budget = round(random.uniform(item["min_value"] * 1.15, item["max_value"] * 1.5), 2)
+
+            bidders.append({
+                "label": label,
+                "max_budget": max_budget,
+                "active": True,
+            })
+        return bidders
+
+    def start_new_auction(self) -> dict:
+        """Yeni, CANLI bir açık artırma başlatır: AUCTION_ITEMS içinden
+        rastgele TEK bir eşya seçer ("X ürünü X fiyatından satılıyor,
+        teklifler nedir?" tarzı bir açılış anonsuyla), 2-4 gerçek rakip
+        üretir ve gerçek zamanlı (duvar saati bazlı) geri sayımı
+        başlatır. Dönen sözlük {"message":, "item_id":, "amount":}
+        biçimindedir - ekranda gösterilecek/duyurulacak açılış anonsu."""
+        item = random.choice(AUCTION_ITEMS)
+        opening = round(random.uniform(item["min_value"], item["min_value"] * 1.15), 2)
+
+        self.auction_current = {
+            "item_id": item["id"],
+            "starting_price": opening,
+            "current_price": opening,
+            "last_bidder": None,  # None = henüz kimse teklif vermedi
+            "bidders": self._generate_auction_bidders(item),
+            "bid_history": [],
+            "start_time": time.time(),
+            "duration_seconds": self.auction_duration_seconds,
+            "resolved": False,
+            # SADECE BİR anons/olay penceresi vardır (bkz. tick_auction) -
+            # bir sonraki olayın (teklif YA DA hatırlatma, ikisi asla
+            # AYNI ANDA değil) ne zaman değerlendirileceğini tutar.
+            # Ekran okuyucunun bir önceki anonsu bitirebilmesi için
+            # açılış anonsundan sonra da bir miktar boşluk bırakılır.
+            "next_event_time": time.time() + random.uniform(
+                self.AUCTION_MIN_EVENT_GAP_SECONDS, self.AUCTION_MAX_EVENT_GAP_SECONDS
+            ),
+        }
+
+        message = t(
+            "auction.opening_announcement",
+            item=auction_item_display_name(item["id"]),
+            amount=format_tl(opening),
+        )
+        self.auction_current["bid_history"].append({
+            "who": "system", "label": t("auction.auctioneer_label"), "amount": opening,
+        })
+
+        return {"message": message, "item_id": item["id"], "amount": opening}
+
+    def get_auction_time_remaining(self) -> float:
+        """Şu anki canlı açık artırmada kalan saniyeyi döner (0'ın
+        altına inmez). Aktif bir açık artırma yoksa 0.0 döner."""
+        if not self.auction_current:
+            return 0.0
+        elapsed = time.time() - self.auction_current["start_time"]
+        remaining = self.auction_current["duration_seconds"] - elapsed
+        return max(0.0, remaining)
+
+    def tick_auction(self) -> dict:
+        """Canlı açık artırma sırasında PERİYODİK olarak (ekranın
+        zamanlayıcısından, örn. saniyede bir) çağrılır.
+
+        ÖNEMLİ - EKRAN OKUYUCU HIZI: bir önceki sürümde NPC teklifleri
+        HER TICK'TE (saniyede bir) ayrı ayrı, hatırlatma anonsundan
+        TAMAMEN BAĞIMSIZ bir zamanlamayla değerlendiriliyordu; bu da
+        art arda (hatta AYNI ANDA) birden fazla speak() çağrısına, yani
+        ekran okuyucunun anonsları üst üste bindirmesine yol açıyordu.
+        Artık TEK BİR olay penceresi var: en az AUCTION_MIN_EVENT_GAP_
+        SECONDS, en fazla AUCTION_MAX_EVENT_GAP_SECONDS sonra bir
+        SONRAKİ olay değerlendirilir - ve bu olay YA bir teklif YA DA
+        bir hatırlatma anonsudur, ASLA ikisi birden. Bu, her anonsun
+        bir öncekini bitirmesi için yeterli boşluk bırakır.
+
+        Dönen sözlük: {"bid_event": {...}|None, "announcement": str|None,
+        "time_remaining": float, "resolved": bool}. Aktif bir açık
+        artırma yoksa ya da zaten sonuçlandıysa resolved=True ile no-op
+        döner."""
+        if not self.auction_current or self.auction_current["resolved"]:
+            return {"bid_event": None, "announcement": None, "time_remaining": 0.0, "resolved": True}
+
+        entry = self.auction_current
+        remaining = self.get_auction_time_remaining()
+
+        bid_event = None
+        announcement = None
+
+        if remaining > 1.5 and time.time() >= entry["next_event_time"]:
+            active_bidders = [
+                b for b in entry["bidders"]
+                if b["active"] and b["max_budget"] > entry["current_price"]
+            ]
+
+            if active_bidders and random.random() < self.AUCTION_NPC_TICK_BID_CHANCE:
+                bidder = random.choice(active_bidders)
+                raise_pct = random.uniform(self.AUCTION_NPC_MIN_RAISE, self.AUCTION_NPC_MAX_RAISE)
+                proposed = min(round(entry["current_price"] * (1 + raise_pct), 2), bidder["max_budget"])
+                if proposed > entry["current_price"]:
+                    entry["current_price"] = proposed
+                    entry["last_bidder"] = bidder["label"]
+                    event = {"who": "npc", "label": bidder["label"], "amount": proposed}
+                    entry["bid_history"].append(event)
+                    bid_event = event
+                    for b in entry["bidders"]:
+                        if b["active"] and b["max_budget"] <= proposed:
+                            b["active"] = False
+
+            if bid_event is None:
+                announcement = t(
+                    "auction.status_announcement",
+                    item=auction_item_display_name(entry["item_id"]),
+                    amount=format_tl(entry["current_price"]),
+                    seconds=int(remaining) + 1,
+                )
+
+            entry["next_event_time"] = time.time() + random.uniform(
+                self.AUCTION_MIN_EVENT_GAP_SECONDS, self.AUCTION_MAX_EVENT_GAP_SECONDS
+            )
+
+        return {
+            "bid_event": bid_event,
+            "announcement": announcement,
+            "time_remaining": remaining,
+            "resolved": False,
+        }
+
+    def place_live_auction_bid(self, bid_amount: float) -> dict:
+        """Oyuncu, o an EKRANDA CANLI ilerleyen açık artırmaya teklif
+        verir. Rakiplerin buna tepkisi SENKRON değildir - bir sonraki
+        tick_auction() çağrısında (ekranın zamanlayıcısı üzerinden)
+        kendiliğinden gerçekleşir, tıpkı gerçek bir açık artırmadaki
+        gibi. Dönen sözlük: {"success":, "message":}."""
+        if not self.auction_current or self.auction_current["resolved"]:
+            return {"success": False, "message": t("auction.no_active_auction")}
+
+        if self.get_auction_time_remaining() <= 0:
+            return {"success": False, "message": t("auction.time_up_cannot_bid")}
+
+        entry = self.auction_current
+        if bid_amount <= entry["current_price"]:
+            return {"success": False, "message": t("auction.bid_too_low", amount=format_tl(entry["current_price"]))}
+
+        if bid_amount > self.cash:
+            return {"success": False, "message": t("auction.insufficient_cash")}
+
+        entry["current_price"] = bid_amount
+        entry["last_bidder"] = "player"
+        entry["bid_history"].append({
+            "who": "player", "label": t("auction.you_label"), "amount": bid_amount,
+        })
+
+        for b in entry["bidders"]:
+            if b["active"] and b["max_budget"] <= bid_amount:
+                b["active"] = False
+
+        # Oyuncunun kendi teklif onayı da bir anonstur (dialog bunu ayrıca
+        # speak() eder) - hemen ardından bir NPC/hatırlatma anonsunun
+        # üstüne binmemesi için bir sonraki otomatik olayı öteliyoruz.
+        entry["next_event_time"] = max(
+            entry["next_event_time"],
+            time.time() + random.uniform(self.AUCTION_MIN_EVENT_GAP_SECONDS, self.AUCTION_MAX_EVENT_GAP_SECONDS),
+        )
+
+        return {
+            "success": True,
+            "message": t(
+                "auction.player_bid_message",
+                item=auction_item_display_name(entry["item_id"]),
+                amount=format_tl(bid_amount),
+            ),
+        }
+
+    def resolve_current_auction(self) -> dict:
+        """Süre dolduğunda (get_auction_time_remaining() <= 0) çağrılır:
+        son teklifi verene satar. Oyuncuysa nakit düşülür ve eşya
+        auction_inventory'ye eklenir; bir NPC'yse sadece bilgilendirici
+        bir mesaj döner (oyuncunun parasına/envanterine dokunulmaz); hiç
+        teklif verilmediyse eşya satılmamış sayılır. auction_current
+        "resolved" olarak işaretlenir - bir sonraki start_new_auction()
+        çağrısı yeni bir eşya seçer.
+
+        Dönen sözlük: {"message":, "won_by_player":, "item_id":, "amount":}."""
+        if not self.auction_current:
+            return {"message": "", "won_by_player": False, "item_id": None, "amount": 0}
+
+        entry = self.auction_current
+        entry["resolved"] = True
+        item_id = entry["item_id"]
+        final_price = entry["current_price"]
+
+        if entry["last_bidder"] == "player":
+            self._spend_cash(final_price)
+            self.auction_inventory[item_id] = self.auction_inventory.get(item_id, 0) + 1
+            message = t(
+                "auction.player_won_message",
+                item=auction_item_display_name(item_id), amount=format_tl(final_price),
+            )
+            won_by_player = True
+        elif entry["last_bidder"]:
+            message = t(
+                "auction.npc_won_message",
+                item=auction_item_display_name(item_id),
+                npc=entry["last_bidder"], amount=format_tl(final_price),
+            )
+            won_by_player = False
+        else:
+            message = t("auction.unsold_message", item=auction_item_display_name(item_id))
+            won_by_player = False
+
+        return {"message": message, "won_by_player": won_by_player, "item_id": item_id, "amount": final_price}
+
+    def get_auction_bid_history(self) -> list:
+        """O an ekranda ilerleyen (ya da az önce sonuçlanan) açık
+        artırmanın teklif geçmişini [{"label":, "amount":}, ...]
+        biçiminde, en eskiden en yeniye sırayla döner."""
+        if not self.auction_current:
+            return []
+        return list(self.auction_current.get("bid_history", []))
+
+    def get_auction_active_bidder_count(self) -> int:
+        """O an ekranda ilerleyen açık artırmada hâlâ bütçesi yeten
+        (çekilmemiş) rakip sayısını döner."""
+        if not self.auction_current:
+            return 0
+        return sum(1 for b in self.auction_current["bidders"] if b["active"])
+
+    def sell_auction_item(self, item_id: str) -> tuple:
+        """Elinizdeki bir açık artırma eşyasını satar. Fiyat, eşyanın
+        orijinal değer aralığı üzerinden HER SATIŞTA rastgele belirlenir
+        (AUCTION_RESALE_MIN_MULT..MAX_MULT arası bir çarpanla) - böylece
+        koleksiyon parçaları normal ürünler gibi sabit bir piyasa
+        fiyatına sahip değildir, her alıcı farklı bir teklif yapar.
+        (başarı, mesaj) döner."""
+        owned = self.auction_inventory.get(item_id, 0)
+        if owned <= 0:
+            return False, t("auction.not_owned")
+
+        item_data = next((i for i in AUCTION_ITEMS if i["id"] == item_id), None)
+        if item_data is None:
+            return False, t("auction.item_not_found")
+
+        base = random.uniform(item_data["min_value"], item_data["max_value"])
+        price = round(base * random.uniform(self.AUCTION_RESALE_MIN_MULT, self.AUCTION_RESALE_MAX_MULT), 2)
+
+        self.auction_inventory[item_id] = owned - 1
+        if self.auction_inventory[item_id] <= 0:
+            del self.auction_inventory[item_id]
+
+        self.cash += price
+        if self.cash > self.highest_cash:
+            self.highest_cash = self.cash
+
+        return True, t("auction.sold_message", item=auction_item_display_name(item_id), amount=format_tl(price))
+
+    def get_auction_inventory_summary(self) -> list:
+        """[(item_id, adet, görünen_ad), ...] biçiminde, sahip olunan
+        açık artırma eşyalarının listesini döner."""
+        result = []
+        for item_id, qty in self.auction_inventory.items():
+            if qty > 0:
+                result.append((item_id, qty, auction_item_display_name(item_id)))
+        return result
+
     def pay_company_upkeep(self) -> list:
         """Her şirket için günlük işletme giderini ayrı ayrı öder.
         Ödeyemeyen şirket batar ve listeden çıkarılır; diğer şirketleriniz
@@ -1191,17 +1685,15 @@ class GameState:
                 c["upkeep_paid"] = c.get("upkeep_paid", 0.0) + upkeep
                 still_open.append(c)
             else:
-                closed_messages.append(
-                    f"{c['name']} ({c['city']}) kapandı. İşletme giderleri karşılanamadı."
-                )
+                closed_messages.append(t("state.company_closed_bankrupt", name=c['name'], city=c['city']))
 
         self.companies = still_open
         return closed_messages
 
     LOAN_PRESETS = [
-        ("Küçük Kredi", 0.25, 1),
-        ("Orta Kredi", 0.50, 2),
-        ("Büyük Kredi", 1.00, 3),
+        ("state.loan_preset_small", 0.25, 1),
+        ("state.loan_preset_medium", 0.50, 2),
+        ("state.loan_preset_large", 1.00, 3),
     ]
 
     def get_loan_options(self) -> list:
@@ -1219,14 +1711,14 @@ class GameState:
 
         rate = tier["interest_rate"]
         options = []
-        for label, pct, installments in self.LOAN_PRESETS:
+        for label_key, pct, installments in self.LOAN_PRESETS:
             amount = round(limit * pct, 2)
             if amount <= 0:
                 continue
             total_debt = round(amount * (1 + rate), 2)
             installment_amount = round(total_debt / installments, 2)
             options.append({
-                "label": label,
+                "label": t(label_key),
                 "amount": amount,
                 "installments": installments,
                 "term_days": installments * 30,
@@ -1238,21 +1730,21 @@ class GameState:
 
     def take_loan(self, amount: float, installments: int = 1) -> tuple:
         if not self.has_company:
-            return False, "Önce şirket kurun"
+            return False, t("state.need_company_first")
 
         if self.loan_amount > 0:
-            return False, "Aktif kredi var"
+            return False, t("state.loan_already_active")
 
         if amount <= 0:
-            return False, "Geçerli miktar girin"
+            return False, t("state.invalid_amount")
 
         limit = self.get_loan_limit()
         if amount > limit:
-            return False, f"Maksimum kredi: {format_tl(limit)} TL"
+            return False, t("state.max_loan", limit=format_tl(limit))
 
         tier = self.get_credit_tier()
         if not tier or not tier["can_loan"]:
-            return False, "Kredi notu yetersiz"
+            return False, t("state.loan_credit_insufficient")
 
         installments = max(1, int(installments))
         self.loan_amount = amount
@@ -1269,22 +1761,21 @@ class GameState:
         if self.cash > self.highest_cash:
             self.highest_cash = self.cash
 
-        return True, (f"{format_tl(amount)} TL kredi onaylandı. Faiz: %{tier['interest_rate']*100:.1f}. "
-                       f"{installments} taksit, her 30 günde bir {format_tl(self.loan_installment_amount)} TL "
-                       f"otomatik olarak çekilecek")
+        return True, t("state.loan_approved", amount=format_tl(amount), rate=f"{tier['interest_rate']*100:.1f}",
+                        installments=installments, installment=format_tl(self.loan_installment_amount))
 
     def pay_loan_full(self) -> tuple:
         """Krediyi erken kapatma - kalan tüm borç tek seferde ödenir."""
         if self.loan_amount <= 0:
-            return False, "Aktif kredi yok"
+            return False, t("state.no_active_loan")
 
         debt = self.loan_total_debt
         if self.cash < debt:
-            return False, f"Erken kapatma için yetersiz nakit. Gereken: {format_tl(debt)} TL"
+            return False, t("state.insufficient_cash_payoff", amount=format_tl(debt))
 
         self.cash -= debt
         self._clear_loan()
-        return True, f"{format_tl(debt)} TL ödendi. Kredi erken kapatıldı"
+        return True, t("state.loan_paid_off", amount=format_tl(debt))
 
     def _clear_loan(self):
         self.loan_amount = 0
@@ -1325,27 +1816,26 @@ class GameState:
         self.loan_total_debt = round(self.loan_total_debt - paid, 2)
 
         if paid < due - 0.01:
-            return False, (f"Taksit ödenemedi (Gereken: {format_tl(due)} TL, "
-                            f"ödenebilen: {format_tl(paid)} TL)")
+            return False, t("state.loan_installment_failed", due=format_tl(due), paid=format_tl(paid))
 
         self.loan_installments_paid += 1
 
         if self.loan_total_debt <= 0.01:
-            msg = f"Son taksit ödendi: {format_tl(paid)} TL. Kredi tamamen kapandı!"
+            msg = t("state.loan_final_installment", amount=format_tl(paid))
             self._clear_loan()
             return True, msg
 
         self.loan_days_until_installment = 30
-        return True, f"Kredi taksidi ödendi: {format_tl(paid)} TL. Kalan borç: {format_tl(self.loan_total_debt)} TL"
+        return True, t("state.loan_installment_paid", amount=format_tl(paid), debt=format_tl(self.loan_total_debt))
 
     def default_loan(self) -> tuple:
         if not self.companies:
-            return False, "Aktif şirket yok"
+            return False, t("state.no_active_company")
 
         self.companies = []
         self._clear_loan()
 
-        return True, "İşletmeniz iflas etti. Tüm şirketleriniz kapatıldı."
+        return True, t("state.business_bankrupt")
 
     def _illegal_inventory_value(self) -> float:
         """Elde bulundurulan yasa dışı ürünlerin (Karanlık Maddeler,
@@ -1419,7 +1909,7 @@ class GameState:
                 new_price = self.prices[name] * (1 + pct)
                 new_price = max(data["min_price"], min(data["max_price"], new_price))
                 self.prices[name] = round(new_price, 2)
-            return event["message_template"].format(category=category, pct=f"{abs(pct) * 100:.1f}")
+            return event_message_text(event, category=category_display_name(category), pct=f"{abs(pct) * 100:.1f}")
         elif etype == "cash_gain":
             wealth = self._total_wealth()
             pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
@@ -1427,7 +1917,7 @@ class GameState:
             self.cash += amount
             if self.cash > self.highest_cash:
                 self.highest_cash = self.cash
-            return event["message_template"].format(amount=f"{format_tl(amount)}")
+            return event_message_text(event, amount=f"{format_tl(amount)}")
         elif etype == "cash_loss":
             
             
@@ -1436,7 +1926,7 @@ class GameState:
             pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
             amount = round(wealth * pct, 2)
             self._spend_cash(amount)
-            return event["message_template"].format(amount=f"{format_tl(amount)}")
+            return event_message_text(event, amount=f"{format_tl(amount)}")
         elif etype == "inventory_loss":
             category = event["category"]
             pct = random.uniform(event["min_pct"], event["max_pct"])
@@ -1447,8 +1937,8 @@ class GameState:
                 self.inventory[name] -= lost
                 total_lost += lost
             if total_lost == 0:
-                return event.get("zero_message", f"{event['name']}: kayıp yok")
-            return event["message_template"].format(category=category, count=total_lost)
+                return event_zero_message_text(event) or t("state.zero_no_loss", name=event_display_name(event))
+            return event_message_text(event, category=category_display_name(category), count=total_lost)
         elif etype == "inventory_gain":
             
             
@@ -1479,8 +1969,8 @@ class GameState:
                 self.inventory[name] = qty + gained
                 total_gained += gained
             if total_gained == 0:
-                return event.get("zero_message", f"{event['name']}: kazanç yok")
-            return event["message_template"].format(category=category, count=total_gained)
+                return event_zero_message_text(event) or t("state.zero_no_gain", name=event_display_name(event))
+            return event_message_text(event, category=category_display_name(category), count=total_gained)
         elif etype == "raid_combo":
             
             
@@ -1497,13 +1987,13 @@ class GameState:
                 self.inventory[name] -= lost
                 total_lost += lost
             if cash_loss == 0 and total_lost == 0:
-                return event.get("zero_message", f"{event['name']}: kayıp yok")
-            return event["message_template"].format(amount=f"{format_tl(cash_loss)}", category=category, count=total_lost)
+                return event_zero_message_text(event) or t("state.zero_no_loss", name=event_display_name(event))
+            return event_message_text(event, amount=f"{format_tl(cash_loss)}", category=category_display_name(category), count=total_lost)
         elif etype == "company_audit":
             
             
             
-            return "Maliye denetimi geçti"
+            return t("state.company_audit_passed")
         elif etype == "company_reputation":
             if self.companies:
                 boost = event.get("credit_boost", 0)
@@ -1511,13 +2001,13 @@ class GameState:
                 if boost:
                     for c in self.companies:
                         c["credit_score"] = c.get("credit_score", 50) + boost
-                    return event["message_template"].format(credit_boost=boost)
+                    return event_message_text(event, credit_boost=boost)
                 elif penalty:
                     for c in self.companies:
                         c["credit_score"] = max(0, c.get("credit_score", 50) + penalty)
-                    return event["message_template"].format(credit_penalty=abs(penalty))
-                return event["message_template"]
-            return f"{event['name']}: Şirketiniz olmadığı için etkilenmediniz"
+                    return event_message_text(event, credit_penalty=abs(penalty))
+                return event_message_text(event)
+            return t("state.no_company_unaffected", name=event_display_name(event))
         elif etype == "land_price":
             
             
@@ -1538,7 +2028,7 @@ class GameState:
                 new_price = self.land_prices.get(land_type, data["base_price"]) * (1 + pct)
                 new_price = max(data["min_price"], min(data["max_price"], new_price))
                 self.land_prices[land_type] = round(new_price, 2)
-            return event["message_template"].format(pct=f"{abs(pct) * 100:.1f}")
+            return event_message_text(event, pct=f"{abs(pct) * 100:.1f}")
         elif etype == "inheritance":
             wealth = self._total_wealth()
             pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
@@ -1546,7 +2036,7 @@ class GameState:
             self.cash += amount
             if self.cash > self.highest_cash:
                 self.highest_cash = self.cash
-            return event["message_template"].format(amount=f"{format_tl(amount)}")
+            return event_message_text(event, amount=f"{format_tl(amount)}")
         elif etype == "disaster":
             
             
@@ -1554,11 +2044,11 @@ class GameState:
             pct = random.uniform(event["min_pct_of_wealth"], event["max_pct_of_wealth"])
             amount = round(wealth * pct, 2)
             self._spend_cash(amount)
-            return event["message_template"].format(amount=f"{format_tl(amount)}")
+            return event_message_text(event, amount=f"{format_tl(amount)}")
         elif etype == "death":
             self.deaths_caused += 1
-            return f"{event['name']}. Toplam ölüm: {self.deaths_caused}"
-        return f"{event.get('name', 'Bilinmeyen olay')} gerçekleşti"
+            return t("state.death_total", name=event_display_name(event), count=self.deaths_caused)
+        return t("state.unknown_event", name=event_display_name(event))
 
     def trigger_random_events(self, probability: float = 0.70, min_events: int = 1, max_events: int = 3):
         if random.random() >= probability:
@@ -1589,19 +2079,19 @@ class GameState:
         self.fluctuate_prices()
         if self.has_company:
             if not self.pay_company_upkeep():
-                messages.append("Şirketiniz iflas etti, işletme giderleri karşılanamadı")
+                messages.append(t("state.jail_company_bankrupt"))
             else:
                 profit_msg = self.process_company_daily()
                 if profit_msg:
                     messages.append(profit_msg)
         if self.has_informant:
             if not self.pay_informant_upkeep():
-                messages.append("Muhbiriniz ücretini alamadı ve sizi terk etti")
+                messages.append(t("state.jail_informant_left"))
         if self.loan_amount > 0:
             success, msg = self.process_loan_daily()
             if not success:
                 self.default_loan()
-                messages.append(f"Kredi temerrüdüne düştünüz: {msg}")
+                messages.append(t("state.jail_loan_default", message=msg))
             elif msg:
                 messages.append(msg)
         messages.extend(self.process_land_loans_daily())
@@ -1610,12 +2100,16 @@ class GameState:
 
 
 def open_help():
-    help_path = resource_path("help.html")
-    if os.path.exists(help_path):
-        webbrowser.open(help_path)
-    else:
+    """Aktif dile göre yerelleştirilmiş bir yardım dosyası açar (ör.
+    'en_help.html', 'tr_help.html', ...). Dosya henüz yoksa, o anki
+    dilde otomatik olarak oluşturulur (bkz. create_help_file). Bu
+    isimlendirme, dialogs.py'deki _open_localized_html'in kullandığı
+    kalıpla ('{dil_kodu}_help.html') birebir aynıdır."""
+    lang = get_language()
+    help_path = resource_path(f"{lang}_help.html")
+    if not os.path.exists(help_path):
         create_help_file(help_path)
-        webbrowser.open(help_path)
+    webbrowser.open(help_path)
 
 
 def open_release_notes():
@@ -1629,47 +2123,52 @@ def open_release_notes():
     if os.path.exists(notes_path):
         webbrowser.open(notes_path)
     else:
-        speak("Yenilikler dosyası henüz eklenmemiş.")
+        speak(t("state.release_notes_missing"))
 
 
 def create_help_file(path):
-    help_content = """<!DOCTYPE html>
-<html>
+    """Yardım sayfasını o anki aktif dilde (get_language()) üretir.
+    Başlıklar/açıklamalar locales/<dil>.json'daki help.* anahtarlarından
+    gelir - yeni bir dil eklendiğinde bu anahtarlar çevrilirse yardım
+    sayfası da otomatik olarak o dilde üretilir."""
+    lang_attr = get_language()
+    help_content = f"""<!DOCTYPE html>
+<html lang="{lang_attr}">
 <head>
     <meta charset="UTF-8">
-    <title>Karaborsa Ticaret Simülasyonu - Yardım</title>
+    <title>{t("help.page_title")}</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        h2 { color: #34495e; margin-top: 25px; }
-        .shortcut { background: #2c3e50; color: white; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
-        ul { padding-left: 20px; }
-        li { margin: 8px 0; }
+        body {{ font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }}
+        h1 {{ color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
+        h2 {{ color: #34495e; margin-top: 25px; }}
+        .shortcut {{ background: #2c3e50; color: white; padding: 2px 8px; border-radius: 4px; font-family: monospace; }}
+        ul {{ padding-left: 20px; }}
+        li {{ margin: 8px 0; }}
     </style>
 </head>
 <body>
-    <h1>Karaborsa Ticaret Simülasyonu - Yardım</h1>
-    <h2>Kısayollar</h2>
+    <h1>{t("help.heading")}</h1>
+    <h2>{t("help.shortcuts_heading")}</h2>
     <ul>
-        <li><span class="shortcut">F1</span> - Yardım</li>
-        <li><span class="shortcut">F2</span> - Durum raporu</li>
-        <li><span class="shortcut">F5</span> - Gün atla</li>
-        <li><span class="shortcut">F6</span> - Arsa Yönetimi</li>
-        <li><span class="shortcut">C</span> - Nakit durumu</li>
-        <li><span class="shortcut">D</span> - Seçili ürünün kategorisi</li>
-        <li><span class="shortcut">E</span> - Envanter özeti</li>
-        <li><span class="shortcut">PgUp</span> - Ses artır</li>
-        <li><span class="shortcut">PgDn</span> - Ses azalt</li>
+        <li><span class="shortcut">F1</span> - {t("help.shortcut_f1")}</li>
+        <li><span class="shortcut">F2</span> - {t("help.shortcut_f2")}</li>
+        <li><span class="shortcut">F5</span> - {t("help.shortcut_f5")}</li>
+        <li><span class="shortcut">F6</span> - {t("help.shortcut_f6")}</li>
+        <li><span class="shortcut">C</span> - {t("help.shortcut_c")}</li>
+        <li><span class="shortcut">D</span> - {t("help.shortcut_d")}</li>
+        <li><span class="shortcut">E</span> - {t("help.shortcut_e")}</li>
+        <li><span class="shortcut">PgUp</span> - {t("help.shortcut_pgup")}</li>
+        <li><span class="shortcut">PgDn</span> - {t("help.shortcut_pgdn")}</li>
     </ul>
-    <h2>Arsa Sistemi</h2>
+    <h2>{t("help.land_heading")}</h2>
     <ul>
-        <li><strong>Arsa Satın Al:</strong> 5 farklı arsa tipi mevcut</li>
-        <li><strong>Arsa Sat:</strong> Piyasa değerinden satabilirsiniz (%5 komisyon)</li>
-        <li><strong>Arsa Teminatlı Kredi:</strong> Arsa değerinin %70'ine kadar kredi</li>
-        <li><strong>Fiyat Dalgalanmaları:</strong> Arsa fiyatları her gün değişir</li>
+        <li><strong>{t("help.land_buy")}</strong> {t("help.land_buy_desc")}</li>
+        <li><strong>{t("help.land_sell")}</strong> {t("help.land_sell_desc")}</li>
+        <li><strong>{t("help.land_loan")}</strong> {t("help.land_loan_desc")}</li>
+        <li><strong>{t("help.land_fluctuation")}</strong> {t("help.land_fluctuation_desc")}</li>
     </ul>
-    <h2>Oyun Hakkında</h2>
-    <p>Karaborsa'da ticaret yaparak para kazanın, şirket kurun, kredi çekin ve zengin olun!</p>
+    <h2>{t("help.about_heading")}</h2>
+    <p>{t("help.about_text")}</p>
 </body>
 </html>"""
     os.makedirs(os.path.dirname(path), exist_ok=True)

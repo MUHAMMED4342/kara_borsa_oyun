@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karaborsa Simülasyonu — Yardım</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px 60px;
+        line-height: 1.6;
+        color: #222;
+    }
+    h1 {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+    }
+    h2 {
+        color: #34495e;
+        margin-top: 34px;
+        border-bottom: 1px solid #dfe6e9;
+        padding-bottom: 6px;
+    }
+    h3 {
+        color: #2c3e50;
+        margin-top: 20px;
+    }
+    p.intro {
+        font-size: 1.05em;
+        color: #444;
+    }
+    .shortcut {
+        background: #2c3e50;
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: "Consolas", monospace;
+        font-size: 0.95em;
+        white-space: nowrap;
+    }
+    ul, ol {
+        padding-left: 22px;
+    }
+    li {
+        margin: 8px 0;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0 20px;
+    }
+    th, td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+        background: #f4f6f7;
+        color: #2c3e50;
+    }
+    .note {
+        background: #eef7ff;
+        border-left: 4px solid #3498db;
+        padding: 10px 16px;
+        margin: 16px 0;
+        border-radius: 0 4px 4px 0;
+    }
+    .warn {
+        background: #fff7ec;
+        border-left: 4px solid #e67e22;
+        padding: 10px 16px;
+        margin: 16px 0;
+        border-radius: 0 4px 4px 0;
+    }
+    footer {
+        margin-top: 50px;
+        padding-top: 16px;
+        border-top: 1px solid #e0e0e0;
+        color: #777;
+        font-size: 0.9em;
+    }
+    a {
+        color: #2980b9;
+    }
+</style>
+</head>
+<body>
+
+<h1>Karaborsa Simülasyonu — Yardım</h1>
+<p class="intro">
+    Hoş geldiniz! Karaborsa Simülasyonu, tamamen kurgusal bir ticaret ve
+    işletme yönetimi oyunudur. Sürekli değişen bir karaborsada mal alıp
+    satar, paranızı aklamak için paravan şirketler açar, gayrimenkule
+    yatırım yapar, çalışan tutar, bir muhbirle riskinizi yönetir ve
+    polisten kaçmaya çalışırsınız — tüm bunları yaparken elinizden
+    geldiğince büyük bir servet kurmaya çalışırsınız. Bu sayfa, her
+    şeyin nasıl çalıştığına dair hızlı bir başvuru kaynağıdır.
+</p>
+
+<h2>Klavye Kısayolları</h2>
+<p>Oyundaki her eylem aynı zamanda ekrandaki bir düğmeyle de yapılabilir,
+yani oynamak için bunları ezberlemeniz gerekmez — ama ekran okuyucu
+kullanıyorsanız ya da klavyeyi tercih ediyorsanız, işte tam liste.</p>
+<table>
+    <tr><th>Tuş</th><th>Ne işe yarar</th></tr>
+    <tr><td><span class="shortcut">F1</span></td><td>Bu Yardım sayfasını açar</td></tr>
+    <tr><td><span class="shortcut">F2</span></td><td>Şu anki durumunuzu seslendirir (nakit, gün, konum vb.)</td></tr>
+    <tr><td><span class="shortcut">F3</span></td><td>Geçmiş kaydınızı açar (o ana kadar duyurulan her şey)</td></tr>
+    <tr><td><span class="shortcut">F5</span></td><td>Bir sonraki güne geçer</td></tr>
+    <tr><td><span class="shortcut">F6</span></td><td>Arsa Yönetimini açar (arsa alma, satma ya da arsa karşılığı kredi çekme)</td></tr>
+    <tr><td><span class="shortcut">F7</span></td><td>Çalışan Yönetimini açar</td></tr>
+    <tr><td><span class="shortcut">F8</span></td><td>Açık Artırma ekranını açar</td></tr>
+    <tr><td><span class="shortcut">C</span></td><td>Şu anki nakit bakiyenizi seslendirir</td></tr>
+    <tr><td><span class="shortcut">D</span></td><td>Seçili ürünün kategorisini seslendirir</td></tr>
+    <tr><td><span class="shortcut">E</span></td><td>Envanterinizin özetini seslendirir</td></tr>
+    <tr><td><span class="shortcut">I</span></td><td>Envanterinizdeki tüm ürünleri tek tek listeler</td></tr>
+    <tr><td><span class="shortcut">Enter</span></td><td>Bir ürün seçiliyken, o ürün için alım/satım eylem menüsünü açar</td></tr>
+    <tr><td><span class="shortcut">Page Up</span> / <span class="shortcut">Page Down</span></td><td>Sesi aç / kıs</td></tr>
+    <tr><td><span class="shortcut">Home</span> / <span class="shortcut">End</span></td><td>Önceki / sonraki müzik parçası</td></tr>
+    <tr><td><span class="shortcut">↑</span> / <span class="shortcut">↓</span></td><td>Ürün listesinde gezinme</td></tr>
+</table>
+
+<h2>Alım &amp; Satım</h2>
+<p>
+    Oyunun kalbi ürün listesidir: her ürünün günden güne değişen bir
+    fiyatı vardır - bazen hafifçe, bazen rastgele bir olaydan sonra sertçe.
+    Ucuzken alın, elinizde tutun, pahalıyken satın. Her ürünün kategorisine
+    dikkat edin (duymak için <span class="shortcut">D</span>'ye basın) -
+    bazı kategoriler diğerlerinden daha riskli olup daha fazla polis
+    ilgisi çeker.
+</p>
+
+<h2>Şirketler</h2>
+<p>
+    Bir şirket, dilediğiniz bir şehirde açabileceğiniz yasal bir paravan
+    işletmedir. Şirket açmak para gerektirir ve günlük bir işletme gideri
+    vardır, ama karşılığında kendi aylık kârını üretir ve - en önemlisi -
+    para aklamanıza olanak tanır, riskli nakdi temiz, beyan edilebilir
+    gelire çevirir. Çok fazla işletme gideri ödemesini kaçırırsanız
+    şirket batabilir.
+</p>
+
+<h2>Arsa</h2>
+<p>
+    Gayrimenkul, servetinizi büyütmenin daha yavaş ama daha istikrarlı
+    bir yoludur. Arsa fiyatları zamanla ilçeye göre dalgalanır; ayrıca
+    sahip olduğunuz arsayı teminat göstererek kredi de çekebilirsiniz.
+    Tam arsa yönetimi ekranı için <span class="shortcut">F6</span>'yı
+    açın.
+</p>
+
+<h2>Banka Kredileri</h2>
+<p>
+    Nakit mi sıkıştı? Banka, belirli bir faiz oranıyla, günlük taksitler
+    halinde geri ödenmek üzere size para verir. Taksitleri kaçırmanın
+    sonuçları vardır, bu yüzden sadece gerçekçi şekilde geri
+    ödeyebileceğiniz kadar borçlanın.
+</p>
+
+<h2>Çalışanlar</h2>
+<p>
+    İşletmenizi yürütmenize yardımcı olacak personel işe alın.
+    Çalışanlara düzenli olarak maaş ödenir ve Çalışan ekranından
+    (<span class="shortcut">F7</span>) yönetilebilirler.
+</p>
+
+<h2>Muhbirler &amp; Polis</h2>
+<p>
+    Faaliyetleriniz ne kadar riskliyse, o kadar "polis riski" birikir.
+    Bir muhbir tutmak para gerektirir ama sorun gelmeden önce sizi
+    uyarır, böylece zararınızı azaltabilir ya da alçak profilde
+    kalabilirsiniz. Riskiniz çok yükselir ve yakalanırsanız, birkaç gün
+    hapse girersiniz - bu süre boyunca işletmeleriniz ve kredileriniz
+    siz yokken de işlemeye devam eder, bu yüzden hazırlıklı olmakta
+    fayda var.
+</p>
+
+<h2>Açık Artırma</h2>
+<p>
+    Açık Artırma ekranını açmak için <span class="shortcut">F8</span>'e
+    basın. Bu, canlı, gerçek zamanlı bir açık artırmadır: ekranı açar
+    açmaz rastgele bir eşya (bir antika, bir mücevher, klasik bir
+    otomobil ve daha fazlası) bir açılış anonsuyla ortaya çıkar -
+    "X, Y fiyatından satılıyor, teklifler nedir?" Buradan sonra
+    sadece izleyebilirsiniz: bir geri sayım başlar (varsayılan olarak
+    60 saniye) ve gerçek, isimli rakipler - her biri kendi kişisel
+    harcama limitiyle - herhangi bir anda kendi tekliflerini verebilir;
+    şu anki fiyat ve kalan süre de belirli aralıklarla duyurulur.
+</p>
+<p>
+    Katılmak isterseniz, süre dolmadan önce istediğiniz zaman bir teklif
+    verebilirsiniz. Süre dolduğunda önde olan kişi eşyayı kazanır -
+    turun kendi kendine ilerlemesine izin vermek için hiçbir şeye
+    tıklamanız gerekmez. Bir tur bittiğinde kısa bir aradan sonra
+    otomatik olarak yepyeni bir eşya açık artırmaya çıkar, yani Açık
+    Artırma ekranı siz açık bıraktığınız sürece çalışmaya devam eder.
+</p>
+<p>
+    Tur süresi doğrudan Açık Artırma ekranından değiştirilebilir
+    (5-120 saniye arası) - bu, o an devam eden turu değil, bir sonraki
+    turu etkiler. Kazandığınız her şey aynı ekrandaki kendi
+    koleksiyonunuza girer ve daha sonra her seferinde yeniden
+    pazarlık edilen bir fiyattan satılabilir.
+</p>
+
+<h2>Kumar</h2>
+<p>
+    Şanslı hissediyor musunuz? Oyun içi kumarhane, daha büyük bir
+    kazanç şansı için nakdinizi riske atmanıza izin verir. Her zaman
+    olduğu gibi, ev her zaman avantajlıdır - eğlence için oynayın,
+    finansal bir strateji olarak değil.
+</p>
+
+<h2>Skor Tablosu</h2>
+<p>
+    Ayarlar ekranından herkese açık skor tablosuna katılmayı
+    seçebilirsiniz. Katıldığınızda, kullanıcı adınız, nakit bakiyeniz
+    ve o anki oyun gününüz, tüm oyuncuların görebileceği paylaşımlı bir
+    "En İyi Skorlar" listesinde gösterilir. Bunu istediğiniz zaman
+    tekrar kapatabilirsiniz.
+</p>
+
+<h2>Destek</h2>
+<p>
+    Bir hata mı buldunuz, bir sorunuz mu var, yoksa bize bir şey mi
+    söylemek istiyorsunuz? Ana menüden Destek / Bilet ekranını
+    istediğiniz zaman açabilirsiniz - ayrı bir hesaba ya da web
+    sitesine gerek yok. Ne olduğunu anlamamıza yardımcı olması için
+    isteğe bağlı olarak son oyun içi geçmişinizi de bilete
+    ekleyebilirsiniz.
+</p>
+<div class="note">
+    <strong>Daha fazla dili desteklemek isteriz.</strong> Oyunu kendi
+    dilinizde görmek istiyorsanız ya da çevirisine yardımcı olmaya
+    gönüllüyseniz, lütfen Destek / Bilet ekranından bize bildirin -
+    topluluğun yardımıyla yeni diller eklemeye çok açığız.
+</div>
+
+<h2>Ayarlar</h2>
+<p>
+    Ayarlar ekranından ses ve müzik seviyesini ayarlayabilir, oyunun
+    dilini değiştirebilir, yeni bir oyun için ülkenizin Türkiye, Amerika
+    Birleşik Devletleri, İngiltere ya da Avustralya olduğunu
+    seçebilir, buluta yedeklemeyi açıp kapatabilir ve skor tablosu
+    katılımınızı yönetebilirsiniz.
+</p>
+
+<h2>Hesap &amp; Kayıt</h2>
+<p>
+    İlerlemeniz hesabınıza bağlıdır ve oynarken otomatik olarak
+    kaydedilir. Buluta yedekleme açıksa, aynı hesapla giriş yaparak
+    başka bir cihazda kaldığınız yerden devam edebilirsiniz.
+</p>
+
+<div class="warn">
+    <strong>Kısa bir hatırlatma:</strong> bu oyundaki her şey - karaborsa,
+    silahlar, uyuşturucular, para aklama ve suç - tamamen kurgusaldır ve
+    sadece eğlence amacıyla vardır. Burada hiçbir şey gerçek hayattaki
+    yasa dışı faaliyetleri yansıtmaz ya da onaylamaz.
+</div>
+
+<footer>
+    Tam Kullanım Şartları ve Gizlilik Politikamız için ana menüdeki
+    ilgili ekranlara bakabilirsiniz.
+</footer>
+
+</body>
+</html>

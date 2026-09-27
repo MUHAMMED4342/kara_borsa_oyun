@@ -144,6 +144,9 @@ def build_save_data(username: str, game_state) -> dict:
         "lands": getattr(game_state, "lands", []),
         "land_prices": getattr(game_state, "land_prices", {}),
         "employees": getattr(game_state, "employees", []),
+        "country": getattr(game_state, "country", "tr"),
+        "auction_inventory": getattr(game_state, "auction_inventory", {}),
+        "auction_duration_seconds": getattr(game_state, "auction_duration_seconds", 15),
     }
 
 

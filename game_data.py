@@ -39,6 +39,32 @@ PRODUCT_CATEGORIES = {
 }
 
 
+# PRODUCT_CATEGORIES'in anahtarları (kategori adları) KASITLI olarak
+# Türkçe bırakıldı - PRODUCT_CATEGORIES[category] şeklindeki tüm
+# lookup'lar (fiyat olayları, envanter özetleri, vb.) bu anahtarlara
+# bağımlı ve kayıt dosyalarında da bu isimler kullanılıyor olabilir.
+# Oyuncuya GÖSTERİLECEK kategori adı için her zaman
+# category_display_name() kullanılmalı, ham anahtar asla doğrudan
+# speak()'e verilmemeli.
+PRODUCT_CATEGORY_KEYS = {
+    "Karanlık Maddeler": "category.dark_substances",
+    "Mühimmat & Silahlar": "category.ammo_weapons",
+    "Döviz & Değerli Metaller": "category.forex_metals",
+    "Kripto & Dijital Varlıklar": "category.crypto",
+    "Kaçak Eşya & Elektronik": "category.contraband_electronics",
+}
+
+
+def category_display_name(category: str) -> str:
+    """PRODUCT_CATEGORIES'teki (Türkçe, kararlı) bir kategori anahtarını
+    o anki dilde oyuncuya gösterilecek metne çevirir. Çevirisi
+    tanımlanmamış bir kategori gelirse (olmamalı ama olursa) ham
+    anahtara güvenle geri döner."""
+    from i18n import t
+    key = PRODUCT_CATEGORY_KEYS.get(category)
+    return t(key) if key else category
+
+
 PRODUCTS = {
     
     "Esrar":          {"base_price": 150,   "min_price": 50,    "max_price": 500},
@@ -100,11 +126,66 @@ PRODUCTS = {
 }
 
 
+# PRODUCTS'un anahtarları (ürün adları) KASITLI olarak Türkçe
+# bırakıldı - self.inventory / self.prices sözlükleri ve KAYIT
+# DOSYALARI bu isimleri anahtar olarak kullanıyor. İsimleri
+# değiştirmek mevcut oyuncuların kayıtlarını bozar. Oyuncuya
+# GÖSTERİLECEK ürün adı için her zaman product_display_name()
+# kullanılmalı, ham anahtar asla doğrudan speak()'e verilmemeli.
+PRODUCT_NAME_KEYS = {
+    "Esrar": "product.cannabis",
+    "Eroin": "product.heroin",
+    "Kokain": "product.cocaine",
+    "Amfetamin": "product.amphetamine",
+    "Metamfetamin": "product.methamphetamine",
+    "Captagon": "product.captagon",
+    "LSD": "product.lsd",
+    "Ekstazi": "product.ecstasy",
+    "Fentanil": "product.fentanyl",
+    "Ketamin": "product.ketamine",
+    "Tabanca": "product.pistol",
+    "Tüfek": "product.rifle",
+    "Mermi": "product.ammo",
+    "El Bombası": "product.grenade",
+    "Susturucu": "product.silencer",
+    "Zırh Yeleği": "product.body_armor",
+    "Av Tüfeği": "product.shotgun",
+    "Pompalı Tüfek": "product.pump_shotgun",
+    "Gece Görüş Dürbünü": "product.night_vision",
+    "Bıçak": "product.knife",
+    "Dolar": "product.usd",
+    "Euro": "product.eur",
+    "Sterlin": "product.gbp",
+    "Altın": "product.gold",
+    "Gümüş": "product.silver",
+    "Platin": "product.platinum",
+    "İsviçre Frangı": "product.chf",
+    "Paladyum": "product.palladium",
+    "Elmas": "product.diamond",
+    "Bitcoin": "product.bitcoin",
+    "Ethereum": "product.ethereum",
+    "Monero": "product.monero",
+    "Solana": "product.solana",
+    "Ripple": "product.ripple",
+    "Litecoin": "product.litecoin",
+    "Sahte Pasaport": "product.fake_passport",
+    "Çalıntı Telefon": "product.stolen_phone",
+    "Kaçak Sigara": "product.smuggled_cigarettes",
+    "Kaçak İçki": "product.smuggled_alcohol",
+    "Çalıntı Araç Parçası": "product.stolen_car_parts",
+    "Kaçak İlaç": "product.smuggled_medicine",
+    "Sahte Marka Ürün": "product.counterfeit_goods",
+    "Çalıntı Laptop": "product.stolen_laptop",
+}
 
 
-
-
-
+def product_display_name(name: str) -> str:
+    """PRODUCTS'taki (Türkçe, kararlı) bir ürün anahtarını o anki
+    dilde oyuncuya gösterilecek metne çevirir. Çevirisi tanımlanmamış
+    bir ürün gelirse ham anahtara güvenle geri döner."""
+    from i18n import t
+    key = PRODUCT_NAME_KEYS.get(name)
+    return t(key) if key else name
 
 
 COMPANY_TYPES = {
@@ -207,6 +288,41 @@ COMPANY_TYPES = {
 }
 
 
+# COMPANY_TYPES'ın anahtarları KASITLI olarak Türkçe bırakıldı -
+# company["type"] bu anahtarları kullanıyor ve kayıt dosyalarına
+# yazılıyor. Oyuncuya GÖSTERİLECEK ad/açıklama için her zaman
+# company_type_display_name() / company_type_description()
+# kullanılmalı.
+COMPANY_TYPE_KEYS = {
+    "Oto Galeri": "company_type.car_dealership",
+    "Gece Kulübü": "company_type.night_club",
+    "Restoran": "company_type.restaurant",
+    "Tekstil Atölyesi": "company_type.textile_workshop",
+    "Kripto Madenciliği": "company_type.crypto_mining",
+    "Oto Yıkama": "company_type.car_wash",
+    "İnternet Kafe": "company_type.internet_cafe",
+    "Emlak Ofisi": "company_type.real_estate_office",
+    "Nakliyat Şirketi": "company_type.shipping_company",
+    "Market Zinciri": "company_type.supermarket_chain",
+    "İnşaat Firması": "company_type.construction_company",
+    "Otel": "company_type.hotel",
+}
+
+
+def company_type_display_name(company_type: str) -> str:
+    from i18n import t
+    key = COMPANY_TYPE_KEYS.get(company_type)
+    return t(key) if key else company_type
+
+
+def company_type_description(company_type: str) -> str:
+    from i18n import t
+    key = COMPANY_TYPE_KEYS.get(company_type)
+    if key:
+        return t(f"{key}.desc")
+    return COMPANY_TYPES.get(company_type, {}).get("description", "")
+
+
 
 
 
@@ -298,6 +414,34 @@ LAND_TYPES = {
     },
 }
 
+
+# LAND_TYPES'ın anahtarları KASITLI olarak Türkçe bırakıldı -
+# land["type"] ve land_prices sözlüğü bu anahtarları kullanıyor ve
+# kayıt dosyalarına yazılıyor. Oyuncuya GÖSTERİLECEK ad/açıklama için
+# her zaman land_type_display_name() / land_type_description()
+# kullanılmalı.
+LAND_TYPE_KEYS = {
+    "Arsa": "land_type.plot",
+    "Tarla": "land_type.field",
+    "İmarlı Arsa": "land_type.zoned_plot",
+    "Sahil Arsa": "land_type.coastal_plot",
+    "Sanayi Arsa": "land_type.industrial_plot",
+}
+
+
+def land_type_display_name(land_type: str) -> str:
+    from i18n import t
+    key = LAND_TYPE_KEYS.get(land_type)
+    return t(key) if key else land_type
+
+
+def land_type_description(land_type: str) -> str:
+    from i18n import t
+    key = LAND_TYPE_KEYS.get(land_type)
+    if key:
+        return t(f"{key}.desc")
+    return LAND_TYPES.get(land_type, {}).get("description", "")
+
 def calculate_police_risk(illegal_inventory_value: float) -> float:
     """Elinizde bulunan yasa dışı ürünlerin (Karanlık Maddeler, Mühimmat &
     Silahlar) toplam piyasa değerine göre polis yakalama riskini hesaplar.
@@ -335,6 +479,47 @@ INFORMANT_CONFIG = {
 
 
 
+
+
+# AÇIK ARTIRMA - eşya kataloğu. Her giriş: benzersiz "id", görünen ad
+# çeviri anahtarı ("name_key" - i18n.py'de "auction_item.<id>" biçiminde
+# olmalı), açılış fiyatı aralığı (min_value/max_value) ve yeniden
+# satışta kullanılacak kabaca oynaklık payı. Bunlar normal PRODUCTS'tan
+# TAMAMEN AYRI, çok pahalı ve envanterde ayrı bir bölümde ("auction_inventory")
+# tutulan eşyalardır - bkz. GameState.generate_daily_auction_listing /
+# place_auction_bid / sell_auction_item.
+AUCTION_ITEMS = [
+    {"id": "antika_vazo", "name_key": "auction_item.antika_vazo", "min_value": 40000, "max_value": 120000},
+    {"id": "osmanli_kilici", "name_key": "auction_item.osmanli_kilici", "min_value": 80000, "max_value": 250000},
+    {"id": "eski_tablo", "name_key": "auction_item.eski_tablo", "min_value": 60000, "max_value": 300000},
+    {"id": "antika_saat", "name_key": "auction_item.antika_saat", "min_value": 25000, "max_value": 90000},
+    {"id": "elmas_kolye", "name_key": "auction_item.elmas_kolye", "min_value": 150000, "max_value": 600000},
+    {"id": "nadir_pul_koleksiyonu", "name_key": "auction_item.nadir_pul_koleksiyonu", "min_value": 15000, "max_value": 70000},
+    {"id": "eski_el_yazmasi", "name_key": "auction_item.eski_el_yazmasi", "min_value": 50000, "max_value": 400000},
+    {"id": "gumus_takim", "name_key": "auction_item.gumus_takim", "min_value": 20000, "max_value": 65000},
+    {"id": "klasik_otomobil", "name_key": "auction_item.klasik_otomobil", "min_value": 500000, "max_value": 2000000},
+    {"id": "antika_hali", "name_key": "auction_item.antika_hali", "min_value": 30000, "max_value": 110000},
+]
+
+# NPC rakip yazıcı - "şapkalı yaşlı adam" tarzı kısa, tırnaksız betimlemeler.
+# Gerçek bir isimle birleştirilir (ör. "şapkalı yaşlı adam" + rastgele
+# insanlar.txt ismi), bkz. GameState.place_auction_bid.
+AUCTION_NPC_DESCRIPTOR_KEYS = [
+    "auction.npc_hat_old_man",
+    "auction.npc_fur_coat_lady",
+    "auction.npc_suited_man",
+    "auction.npc_mysterious_caller",
+    "auction.npc_glasses_collector",
+    "auction.npc_foreign_buyer",
+]
+
+
+def auction_item_display_name(item_id: str) -> str:
+    from i18n import t
+    for item in AUCTION_ITEMS:
+        if item["id"] == item_id:
+            return t(item["name_key"])
+    return item_id
 
 
 EMPLOYEE_HIRE_FEE = 5000
@@ -1403,6 +1588,140 @@ RARE_EVENTS = [
 ]
 
 
+# Her rastgele olayın Türkçe "name" alanını, o olayın çevrilebilir
+# metinlerine (name/message/zero) ait i18n anahtar önekine eşler.
+# EVENTS/RARE_EVENTS listelerindeki "name" alanları KASITLI olarak
+# Türkçe bırakıldı - bunlar hâlâ olayın kararlı iç kimliğidir (kayıt
+# dosyalarına yazılmaz ama kod içinde referans olarak kullanılabilir).
+# Görüntülenen isim/mesaj için HER ZAMAN game_state.py'deki
+# event_display_name() / event_message_text() / event_zero_message_text()
+# fonksiyonları kullanılmalı - ham "name"/"message_template" alanları
+# doğrudan speak()'e verilmemeli.
+EVENT_TEXT_KEYS = {
+    "Ekonomik Kriz": "event.econ_crisis",
+    "Ekonomik Rahatlama": "event.econ_relief",
+    "Merkez Bankası Müdahalesi": "event.central_bank_intervention",
+    "Altın Rezervi Keşfi": "event.gold_reserve_discovery",
+    "Dolar Baskısı": "event.dollar_pressure",
+    "Polis Baskını (Piyasa Etkisi)": "event.police_raid_market_effect",
+    "Yeni Tedarik Hattı": "event.new_supply_line",
+    "Uluslararası Kartel Savaşı": "event.international_cartel_war",
+    "Laboratuvar Patlaması": "event.lab_explosion",
+    "Afganistan'dan Büyük Sevkiyat": "event.big_shipment_from_afghanistan",
+    "Sınır Kapılarının Kapanması": "event.border_gates_closed",
+    "Silah Fabrikası Anlaşması": "event.weapons_factory_deal",
+    "Yerel Çete Savaşları": "event.local_gang_wars",
+    "Askeri Depodan Sızıntı": "event.military_depot_leak",
+    "Barış Anlaşması": "event.peace_agreement",
+    "Uluslararası Ambargo": "event.international_embargo",
+    "Kripto Balinası Alım Yaptı": "event.crypto_whale_buy",
+    "Kripto Piyasası Çöktü": "event.crypto_market_crash",
+    "Ünlü Milyarderin Tweeti": "event.celebrity_billionaire_tweet",
+    "Büyük Kripto Borsası Hacklendi": "event.major_crypto_exchange_hacked",
+    "Kripto Piyasası Düzeldi": "event.crypto_market_recovered",
+    "Yeni Kripto Düzenlemesi": "event.new_crypto_regulation",
+    "Elektronik Kaçakçılığı Talebi Arttı": "event.smuggled_electronics_demand_up",
+    "Gümrük Denetimi Gevşetildi": "event.customs_checks_loosened",
+    "Sınırda Yeni X-Ray Cihazları": "event.new_border_xray_machines",
+    "Büyük Depo Tasfiyesi": "event.major_warehouse_liquidation",
+    "Kaçak Telefon Fabrikası Açıldı": "event.smuggled_phone_factory_opened",
+    "Liman Grevi": "event.port_strike",
+    "Rakip Kartelin Çökmesi": "event.rival_cartel_collapse",
+    "Silah Amnestisi Kampanyası": "event.weapons_amnesty_campaign",
+    "Merkez Bankası Faiz Kararı": "event.central_bank_rate_decision",
+    "Büyük Borsa Şirketi İflas Etti": "event.major_exchange_company_bankrupt",
+    "Yeni Kaçakçılık Rotası Açıldı": "event.new_smuggling_route_opened",
+    "Beklenmedik Bahşiş": "event.unexpected_tip",
+    "Eski Bir Borç Geri Ödendi": "event.old_debt_repaid",
+    "Tefecilik Tahsilatı": "event.loan_shark_collection",
+    "Yasa Dışı Kumar Kazancı": "event.illegal_gambling_win",
+    "Kaçakçılıktan Komisyon": "event.smuggling_commission",
+    "Eski Müşteriden Sipariş": "event.order_from_old_customer",
+    "Nakit Sayım Fazlası": "event.cash_count_surplus",
+    "Sahte Evrak Komisyonu": "event.fake_documents_commission",
+    "Eski Ortaktan Pay": "event.share_from_old_partner",
+    "Sigorta Ödemesi": "event.insurance_payout",
+    "Nakit Taşıma İşinden Pay": "event.cash_courier_share",
+    "Gizli Turnuva Kazancı": "event.secret_tournament_win",
+    "Tedarikçiden İndirim İadesi": "event.supplier_discount_refund",
+    "Rakipten Ele Geçirilen Kasa": "event.seized_rival_stash",
+    "Yüklü Bahşiş Verildi": "event.generous_tip",
+    "Sokak Vergisi Tahsilatı": "event.street_tax_collection",
+    "Ortak İşin Payı": "event.joint_venture_share",
+    "Sahte Fatura Dolandırıcılığı": "event.fake_invoice_fraud",
+    "Terk Edilmiş Aracın Bagajı": "event.abandoned_car_trunk",
+    "Kripto Airdrop Kazancı": "event.crypto_airdrop_gain",
+    "Bedava Numune Kutusu": "event.free_sample_box",
+    "Yanlış Adrese Gelen Sevkiyat": "event.misdelivered_shipment",
+    "Tedarikçiden Konsinye Mal": "event.consignment_goods",
+    "Rakip Kuryeden Gasp": "event.robbed_rival_courier",
+    "Unutulmuş Soğuk Cüzdan": "event.forgotten_cold_wallet",
+    "Silah Kaçakçısı İflas Etti": "event.arms_dealer_bankrupt",
+    "Laboratuvardan Sızan Parti": "event.leaked_batch_from_lab",
+    "Soygun": "event.mugging",
+    "Rüşvet Talebi": "event.bribe_demand",
+    "Siber Dolandırıcılık": "event.cyber_fraud",
+    "Haraç Kesilmesi": "event.extortion",
+    "Sahte Ürün Tazminatı": "event.fake_product_compensation",
+    "Zula Baskını": "event.stash_raid",
+    "Ceza Kesildi": "event.fined",
+    "Sahte Para ile Dolandırılma": "event.counterfeit_money_scam",
+    "Avukat Masrafı": "event.lawyer_fee",
+    "Kumar Borcu": "event.gambling_debt",
+    "Sahte Yatırım Vaadi": "event.fake_investment_promise",
+    "Araç Arızası": "event.vehicle_breakdown",
+    "Polis Baskını - Mal Müsadere": "event.police_raid_seizure",
+    "Silah Deposu Basıldı": "event.weapons_depot_raided",
+    "Bozuk Parti İmhası": "event.spoiled_batch_disposal",
+    "Köstebek İhaneti": "event.mole_betrayal",
+    "Gümrükte Mallara El Konuldu": "event.customs_seizure",
+    "Kasa Soygunu": "event.safe_robbery",
+    "Cüzdan Hacklendi": "event.wallet_hacked",
+    "Nemden Bozulma": "event.humidity_damage",
+    "Nakliye Kazası": "event.transport_accident",
+    "Rakip Çete Baskını": "event.rival_gang_raid",
+    "Büyük Çete Operasyonu": "event.major_gang_operation",
+    "Sınır Ötesi Yakalanma": "event.cross_border_capture",
+    "Muhbir İhbarı": "event.informant_tip_off",
+    "Kara Para Aklama Operasyonu": "event.money_laundering_operation",
+    "Siber Suçlar Birimi Baskını": "event.cybercrime_unit_raid",
+    "Ortak Baskını": "event.partner_betrayal_raid",
+    "Yılın Girişimcisi Ödülü": "event.entrepreneur_of_the_year",
+    "Sosyal Medyada Skandal İddiası": "event.social_media_scandal_claim",
+    "Şirket İtibarı Arttı": "event.company_reputation_boost",
+    "Rakip Şirket İftirası": "event.rival_company_slander",
+    "Devlet Teşviği": "event.government_incentive",
+    "Ticari Casusluk": "event.corporate_espionage",
+    "Bankayla İyi İlişkiler": "event.good_bank_relations",
+    "Vergi İncelemesi": "event.tax_audit",
+    "Yerel Basında Olumlu Haber": "event.positive_local_press",
+    "Ödeme Gecikmesi Kaydı": "event.late_payment_record",
+    "Sektör Ödülü": "event.industry_award",
+    "Arsa Değerinde Patlama": "event.land_value_boom",
+    "Arsa Değerinde Düşüş": "event.land_value_drop",
+    "Deprem Riski Uyarısı": "event.earthquake_risk_warning",
+    "Yeni Metro Hattı": "event.new_metro_line",
+    "Tarım Desteklemesi": "event.agricultural_subsidy",
+    "Sahil Kirliliği": "event.coastal_pollution",
+    "Turizm Bölgesi İlanı": "event.tourism_zone_declared",
+    "Yeni Organize Sanayi Bölgesi": "event.new_industrial_zone",
+    "Fabrika Kapanmaları": "event.factory_closures",
+    "Otoyol Bağlantısı Müjdesi": "event.highway_connection_news",
+    "Çevre Kirliliği Davası": "event.environmental_pollution_lawsuit",
+    "Serbest Bölge İlanı": "event.free_trade_zone_declared",
+    "İmar Affı": "event.zoning_amnesty",
+    "Erozyon Tehlikesi": "event.erosion_hazard",
+    "Miras Kaldı": "event.inheritance_received",
+    "Büyük İkramiye": "event.jackpot_won",
+    "Büyük Felaket": "event.major_disaster",
+    "Gizli Yatırımcı Ortaklığı": "event.secret_investor_partnership",
+    "Kripto Çılgınlığı": "event.crypto_frenzy",
+    "Sel Felaketi": "event.flood_disaster",
+    "Ortağın İhaneti": "event.partner_betrayal",
+}
+
+
+
 def get_flat_product_order():
     flat = []
     for names in PRODUCT_CATEGORIES.values():
@@ -1412,9 +1731,10 @@ def get_flat_product_order():
 
 def clean_username(username: str) -> str:
     import re
+    from i18n import t
     
     if not username:
-        return "Anonim"
+        return t("common.anonymous")
     
     turkish_map = {
         'ğ': 'g', 'ü': 'u', 'ş': 's', 'ı': 'i', 'ö': 'o', 'ç': 'c',
@@ -1428,7 +1748,7 @@ def clean_username(username: str) -> str:
     if len(username) > 20:
         username = username[:20]
     
-    return username or "Anonim"
+    return username or t("common.anonymous")
 
 
 

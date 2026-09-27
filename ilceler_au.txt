@@ -1,0 +1,8 @@
+"(New South Wales) Sydney, Newcastle, Wollongong, Parramatta, Penrith, Bondi, Bathurst, Albury"
+"(Victoria) Melbourne, Geelong, Ballarat, Bendigo, St Kilda, Frankston, Shepparton"
+"(Queensland) Brisbane, Gold Coast, Cairns, Townsville, Sunshine Coast, Toowoomba, Mackay"
+"(Western Australia) Perth, Fremantle, Bunbury, Geraldton, Broome, Kalgoorlie"
+"(South Australia) Adelaide, Glenelg, Mount Gambier, Whyalla, Port Augusta"
+"(Tasmania) Hobart, Launceston, Devonport, Burnie"
+"(Australian Capital Territory) Canberra, Belconnen, Gungahlin, Tuggeranong"
+"(Northern Territory) Darwin, Alice Springs, Palmerston, Katherine"

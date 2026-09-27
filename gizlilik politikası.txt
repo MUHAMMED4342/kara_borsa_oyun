@@ -1,9 +1,10 @@
+"tr:
 Gizlilik Politikası — Karaborsa Simülasyonu
-Son güncelleme: 4 Eylül 2026 Cuma
+Son güncelleme: 23 Eylül 2026 Çarşamba
 
 1. Kapsam
 Bu politika, Karaborsa Simülasyonu masaüstü oyununu ("Oyun") ve oyunla ilgili web sayfalarını (ör. iletişim ve şifremi unuttum sayfaları) kullanırken hangi verilerin toplandığını, nasıl kullanıldığını ve kimlerle paylaşıldığını açıklar. Oyunu kullanarak bu politikayı kabul etmiş olursunuz.
-Geliştirici: muhammed.ali ve emir.yakup
+Geliştirici: muhammed.ali 
 İletişim: https://bilgisayar-xi.vercel.app/iletisim.html
 
 2. Hangi Verileri Topluyoruz
@@ -61,4 +62,69 @@ Bulunduğunuz ülkenin mevzuatına (örn. KVKK, GDPR) bağlı olarak verileriniz
 Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğunda oyun içi bir onay ekranı ile yeniden bilgilendirilir ve onayınız istenir.
 
 9. İletişim
-Sorularınız için: https://bilgisayar-xi.vercel.app/iletisim.html veya oyun içindeki Destek / Bilet ekranı.
+Sorularınız için: https://bilgisayar-xi.vercel.app/iletisim.html veya oyun içindeki Destek / Bilet ekranı."
+"en:
+Privacy Policy — Karaborsa Simülasyonu
+Last updated: Wednesday, September 23, 2026
+
+1. Scope
+This policy explains what data is collected, how it is used, and with whom it is shared when you use the Karaborsa Simülasyonu desktop game ("the Game") and its related web pages (e.g. the contact and forgot-password pages). By using the Game, you accept this policy.
+Developers: muhammed.ali 
+Contact: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. What Data We Collect
+
+2.1 Account Information
+You must create an account to play the Game. When you create an account, we collect:
+- Username (3-20 characters)
+- Password (at least 8 characters; stored securely server-side, never stored as plain text)
+- Email address (only requested when creating an account; recorded and viewable from the admin panel, but not used for everyday login)
+
+2.2 Game Progress Data
+Your cash balance, inventory, companies, land holdings, employees, loan status, and in-game day are stored in the cloud, tied to your account. This lets you continue where you left off when you log in on a different device. You can turn off cloud backup from the Settings screen; in that case your progress is stored only on your own device.
+
+2.3 Leaderboard
+When you opt in to the "Top Scores" screen, your username, cash balance, and in-game day are sent to a public leaderboard visible to all other players. Once submitted, this information can be seen by other players. You can turn off this participation at any time from the Settings screen.
+If you do not want to reveal your real name or an identity you use elsewhere, we recommend choosing your username accordingly.
+
+2.4 Support Requests (Tickets)
+When you open a request from the "Support / Ticket" screen, your username and message are recorded in the developer's support system and kept until your request is resolved. If you use the "Upload Log" button on the ticket screen, your in-game history and the technical error logs on your device (application log) are also attached to your message; this is entirely optional and these are added only if you use that button. You are responsible for anything you share in a ticket; we recommend not writing sensitive information such as passwords or ID numbers in ticket messages.
+
+2.5 Password Reset Requests
+If you forget your password, the "Forgot Password" link on the game's login screen takes you to a form on our website. The username and email address requested on this form are sent to us via a third-party form service (web3forms) so we can evaluate your request and provide you with a new password, and are kept until your request is resolved.
+
+2.6 Local Device Data
+The following data is stored only on your own computer and is not sent to us (unless you voluntarily attach it to a ticket via the "Upload Log" button described in 2.4):
+- Session information (so you can continue without logging in again)
+- Your local save backup and ticket history
+- Your preferences such as sound/music volume, cloud backup, and score submission
+- The "spoken messages" history kept for the screen reader
+- The local log file where the application's technical error/event records are kept
+
+3. What We Use Your Data For
+- Creating, verifying, and protecting your account
+- Synchronizing your progress across devices
+- Responding to your support requests and password reset requests
+- Running the leaderboard (only with voluntary participation)
+- Making sure the Game works technically
+We do not use your data for advertising purposes and do not sell it to third parties.
+
+4. Where Your Data Is Stored
+Your account and progress data are stored on a cloud database infrastructure operated by the developer (a PocketBase-based server).
+Your support requests and the leaderboard are hosted on GitHub's infrastructure; your password reset requests are transmitted via web3forms. Therefore, these services' own privacy policies also apply to the relevant data.
+These services are required for the Game to function; the Game cannot use account verification, cloud sync, support, or leaderboard features without an internet connection.
+
+5. Data Security
+Your password is stored securely on the server side and cannot be viewed by us as plain text. Still, no internet service is 100% secure; we recommend not reusing your password on other services and choosing one that is hard to guess.
+
+6. Data Retention and Account Deletion
+Your progress data is kept for as long as your account is active. You can contact us via our contact page to request deletion of your account or your data. Because leaderboard entries are public, deletion requests are processed within a reasonable time, but we may not have control over records that have already been viewed or copied by others.
+
+7. Your Rights
+Depending on the laws of your country (e.g. KVKK, GDPR), you may have the right to access, correct, request the transfer of, or request the deletion of your data. You can submit these requests via our contact page (https://bilgisayar-xi.vercel.app/iletisim.html).
+
+8. Changes to This Policy
+We may update this policy from time to time. When significant changes are made, you will be informed again via an in-game confirmation screen and your consent will be requested.
+
+9. Contact
+For questions: https://bilgisayar-xi.vercel.app/iletisim.html or the Support / Ticket screen in the Game."

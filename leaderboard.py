@@ -15,6 +15,7 @@ import requests
 from typing import List, Dict, Optional, Tuple
 
 from formatting import format_tl
+from i18n import t
 
 
 GIST_ID = "5cde0d504dec8aac37cdfc211d91a891"
@@ -366,7 +367,7 @@ def _merge_entry(score_data: List[Dict], username: str,
             entry.pop("total", None)
             entry.pop("score", None)
             _log(f"[Bilgi] Kullanıcı güncellendi: {username} -> Yeni nakit: {format_tl(cash)} TL")
-            return score_data, True, f"Bakiyeniz gönderildi! Nakit: {format_tl(cash)} TL"
+            return score_data, True, t("leaderboard.balance_sent", amount=format_tl(cash))
 
     score_data.append({
         "username": username,
@@ -376,7 +377,7 @@ def _merge_entry(score_data: List[Dict], username: str,
         "last_updated": __import__("datetime").datetime.now().isoformat()
     })
     _log(f"[Bilgi] Yeni kullanıcı eklendi: {username}, Nakit: {format_tl(cash)} TL")
-    return score_data, True, f"Bakiyeniz gönderildi! Nakit: {format_tl(cash)} TL"
+    return score_data, True, t("leaderboard.balance_sent", amount=format_tl(cash))
 
 
 def _entry_matches(score_data: List[Dict], username: str, cash: float) -> bool:
@@ -417,21 +418,21 @@ def rename_leaderboard_entry(old_username: str, new_username: str) -> Tuple[bool
     Dönüş: (başarılı_mı, mesaj)
     """
     if not old_username or not new_username:
-        return False, "Geçersiz kullanıcı adı."
+        return False, t("leaderboard.invalid_username")
 
     if old_username == new_username:
-        return True, "Değişiklik yok."
+        return True, t("leaderboard.no_change")
 
     if not skor_gonderimi_aktif:
-        return False, "Skor gönderimi devre dışı, skor tablosu güncellenmedi."
+        return False, t("leaderboard.submission_disabled_no_update")
 
     with _score_lock:
-        last_error = "Skor tablosu güncellenemedi. Bağlantı hatası."
+        last_error = t("leaderboard.update_failed_connection")
 
         for attempt in range(1, _MAX_RETRIES + 1):
             data = get_gist_content()
             if data is None:
-                return False, "Skor tablosu verileri alınamadı."
+                return False, t("leaderboard.data_fetch_failed")
 
             score_data = data.get("score_data", [])
 
@@ -445,22 +446,18 @@ def rename_leaderboard_entry(old_username: str, new_username: str) -> Tuple[bool
                 
                 
                 
-                return True, "Skor tablosunda bu isimde bir kayıt bulunamadı."
+                return True, t("leaderboard.name_not_found")
 
             if any(e is not old_entry and e.get("username") == new_username
                    for e in score_data):
-                return False, (
-                    f"'{new_username}' skor tablosunda zaten BAŞKA bir "
-                    f"oyuncu tarafından kullanılıyor, skor tablosundaki "
-                    f"adınız değiştirilemedi."
-                )
+                return False, t("leaderboard.name_taken", name=new_username)
 
             old_entry["username"] = new_username
             old_entry["last_updated"] = __import__("datetime").datetime.now().isoformat()
             data["score_data"] = score_data
 
             if not update_gist_content(data):
-                last_error = "Skor tablosu güncellenemedi. Bağlantı hatası."
+                last_error = t("leaderboard.update_failed_connection")
                 time.sleep(0.5 + random.random())
                 continue
 
@@ -469,12 +466,12 @@ def rename_leaderboard_entry(old_username: str, new_username: str) -> Tuple[bool
                 e.get("username") == new_username
                 for e in verify_data.get("score_data", [])
             ):
-                return True, f"Skor tablosundaki adınız '{new_username}' olarak güncellendi."
+                return True, t("leaderboard.name_updated", name=new_username)
 
             _log("[Bilgi] İsim değişikliği doğrulanamadı (muhtemelen başka "
                  "bir gönderimle çakıştı), tekrar deneniyor... "
                  f"({attempt}/{_MAX_RETRIES})")
-            last_error = "Güncellendi ama başka bir gönderimle çakıştığı için doğrulanamadı."
+            last_error = t("leaderboard.update_conflict_unverified")
             time.sleep(0.5 + random.random())
 
         return False, last_error
@@ -495,19 +492,19 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
     _log(f"[Bilgi] Gönderim başlatıldı. Kullanıcı: {username}, Gün: {day}, Nakit: {cash}")
 
     if not skor_gonderimi_aktif:
-        return False, "Skor gönderimi devre dışı."
+        return False, t("leaderboard.submission_disabled")
 
     if not username:
-        return False, "Kullanıcı adı boş."
+        return False, t("leaderboard.empty_username")
 
     with _score_lock:
-        last_error = "Gönderilemedi. Bağlantı hatası."
+        last_error = t("leaderboard.send_failed_connection")
 
         for attempt in range(1, _MAX_RETRIES + 1):
             
             data = get_gist_content()
             if data is None:
-                return False, "Gist verileri alınamadı. Token kontrol edin."
+                return False, t("leaderboard.gist_data_failed")
 
             score_data = data.get("score_data", [])
 
@@ -521,7 +518,7 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
 
             
             if not update_gist_content(data):
-                last_error = "Gönderilemedi. Bağlantı hatası."
+                last_error = t("leaderboard.send_failed_connection")
                 time.sleep(0.5 + random.random())
                 continue
 
@@ -533,7 +530,7 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
 
             _log(f"[Bilgi] Doğrulama başarısız (muhtemelen başka bir gönderimle çakıştı), "
                   f"tekrar deneniyor... ({attempt}/{_MAX_RETRIES})")
-            last_error = "Gönderildi ama başka bir gönderimle çakıştığı için doğrulanamadı."
+            last_error = t("leaderboard.send_conflict_unverified")
             time.sleep(0.5 + random.random())
 
         return False, last_error

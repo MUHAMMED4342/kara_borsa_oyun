@@ -1,9 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('sounds', 'sounds'), ('iller.txt', '.'), ('insanlar.txt', '.')]
+datas = [('locales', 'locales'), ('sounds', 'sounds'), ('insanlar.txt', '.'), ('iller.txt', '.'), ('ilceler.txt', '.'), ('dist/KaraborsaGuncelleyici.exe', '.'), ('token.txt', '.'), ('github.txt', '.'), ('iller_us.txt', '.'), ('ilceler_us.txt', '.'), ('iller_uk.txt', '.'), ('ilceler_uk.txt', '.'), ('iller_au.txt', '.'), ('ilceler_au.txt', '.'), ('en_help.html', '.'), ('tr_help.html', '.'), ('release_notes.html', '.'), ('gizlilik politikası.txt', '.'), ('kullanimsartlari.txt', '.')]
 binaries = []
 hiddenimports = []
+tmp_ret = collect_all('accessible_output2')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('pygame')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 

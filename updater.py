@@ -89,8 +89,17 @@ _lock = threading.Lock()
 
 
 def _is_frozen() -> bool:
-    """Sadece PyInstaller ile paketlenmiş .exe içinde True döner."""
-    return bool(getattr(sys, "frozen", False))
+    """PyInstaller VEYA Nuitka ile paketlenmiş bir .exe içinde
+    çalışırken True döner; python script olarak çalıştırılırken
+    False döner.
+
+    PyInstaller çalışma zamanında sys.frozen = True ayarlar. Nuitka
+    ise bunu AYARLAMAZ - onun yerine derlenmiş kodun modül
+    namespace'ine özel bir __compiled__ adı ekler. Sadece sys.frozen'a
+    bakılırsa Nuitka ile paketlenmiş exe'de bu fonksiyon hep False
+    döner ve otomatik güncelleme sistemi sessizce hiç çalışmaz - bu
+    yüzden ikisini de kontrol ediyoruz."""
+    return bool(getattr(sys, "frozen", False)) or "__compiled__" in globals()
 
 
 def _version_tuple(v: str):
@@ -110,7 +119,23 @@ def _is_newer(remote: str, local: str) -> bool:
 
 
 def _get_exe_path() -> str:
-    return sys.executable if _is_frozen() else os.path.abspath(__file__)
+    """Kendi exe'mizin GERÇEK, KALICI yolunu döndürür (self-update
+    sırasında üzerine yazılacak/değiştirilecek dosya budur).
+
+    PyInstaller'da sys.executable, hem onedir hem onefile modunda
+    orijinal exe'nin gerçek yoludur.
+
+    Nuitka'nın onefile modunda ise durum farklı: onefile exe, ilk
+    çalıştığında kendini bir GEÇİCİ klasöre açıp asıl programı oradan
+    çalıştırır; bu geçici çalışma sırasında sys.executable o geçici
+    (atılabilir) kopyayı gösterir, kullanıcının diskte tuttuğu asıl
+    exe'yi DEĞİL. Nuitka'nın kendi belgelerine göre, kalıcı/orijinal
+    exe yolu için sys.argv[0] kullanılmalıdır."""
+    if getattr(sys, "frozen", False):
+        return sys.executable
+    if "__compiled__" in globals():
+        return os.path.abspath(sys.argv[0])
+    return os.path.abspath(__file__)
 
 
 def _get_update_dir() -> str:
@@ -147,11 +172,22 @@ def _get_helper_exe_path() -> str:
 def _get_bundled_helper_exe_path():
     """
     Ana oyunun onefile paketine gömülü olan yardımcı güncelleyici
-    exe'nin, çalışma anında açılan geçici klasördeki (_MEIPASS) yolunu
-    döndürür. Script olarak (frozen değilken) çalışıyorsa ya da
-    build.spec'e gömme adımı atlanmışsa None döner.
+    exe'nin, çalışma anında açılan geçici klasördeki yolunu döndürür.
+    Script olarak (frozen değilken) çalışıyorsa ya da paketleme
+    adımında gömme atlanmışsa None döner.
+
+    PyInstaller bu geçici klasörü sys._MEIPASS olarak sağlar. Nuitka
+    bunu sağlamaz; onun belgelerine göre --include-data-files/
+    --include-data-dir ile eklenen dosyalar, çalışma anında
+    __file__'in bulunduğu klasörün altında yer alır - bu yüzden
+    Nuitka'da (__compiled__ varlığıyla anlaşılır) o yola düşüyoruz.
     """
     base = getattr(sys, "_MEIPASS", None)
+    if not base and "__compiled__" in globals():
+        try:
+            base = os.path.dirname(os.path.abspath(__file__))
+        except Exception:
+            base = None
     if not base:
         return None
     candidate = os.path.join(base, _HELPER_EXE_NAME)
