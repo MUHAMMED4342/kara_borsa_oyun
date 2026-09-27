@@ -1,5 +1,5 @@
 "tr:
-Son güncelleme: 23 Eylül 2026 Çarşamba
+Son güncelleme: 27 Eylül 2026 Pazar
 
 1. Kabul
 Karaborsa Simülasyonu'nu ("Oyun") indirip oynayarak bu Kullanım Şartları'nı kabul etmiş sayılırsınız. Bu şartları kabul etmiyorsanız Oyunu kullanmamalısınız.
@@ -9,37 +9,37 @@ Geliştirici: muhammed.ali
 2. İçerik Uyarısı
 Oyun; kara borsa ticareti, silah, uyuşturucu benzeri kurgusal ürünler, kara para aklama, hapis ve suç temalarını tamamen kurgusal ve simülasyon amaçlı olarak içerir. Oyun içindeki hiçbir öğe, gerçek hayatta yasa dışı faaliyetleri teşvik etmez veya onaylamaz.
 
-3. Hesap Kuralları
-Oyunu oynamak için bir hesap oluşturmanız zorunludur.
-Her oyuncunun tek bir hesabı olması esastır; ilerlemeniz bu hesaba bağlı olarak saklanır.
-Hesap bilgilerinizin (özellikle şifrenizin) gizliliğinden siz sorumlusunuz. Hesabınız üzerinden gerçekleşen tüm etkinliklerden siz sorumlu tutulursunuz.
-Kayıt sırasında verdiğiniz bilgilerin (kullanıcı adı, e-posta) doğru olması beklenir.
-Kullanıcı adınızı yanlış girdiyseniz, oyun içindeki Ana Menü > Ayarlar ekranından ilerlemenizi kaybetmeden yeniden adlandırabilirsiniz.
+3. Oyunun Yapısı ve Hesap Gerektirmemesi
+Oyun, tek oyunculu (single-player) bir masaüstü simülasyonudur ve oynamak için herhangi bir hesap oluşturmanız, giriş yapmanız veya kişisel bilgi vermeniz GEREKMEZ.
+Oyun ilerlemeniz (nakit, envanter, şirketler, arsalar, çalışanlar, kredi durumu, oyun günü vb.) yalnızca kendi bilgisayarınızda, oyunun yerel kayıt dosyasında saklanır. Bu veriler sunucularımıza gönderilmez ve cihazınızdan dışarı çıkmaz.
+Oyunu başlatırken belirlediğiniz kullanıcı adı, yalnızca yerel kayıt dosyanızı tanımlamak ve gönüllü olarak katıldığınız Skor Tablosu'nda görünmesi için kullanılır; bir hesap veya kimlik doğrulama anlamı taşımaz.
+Farklı bir bilgisayarda oynamaya başlarsanız ilerlemeniz oraya taşınmaz; her cihazın kendi yerel kaydı ayrıdır.
 
 4. Kabul Edilebilir Kullanım
-Aşağıdaki davranışlar yasaktır ve tespit edilmesi halinde hesabınızın askıya alınmasına veya kalıcı olarak kapatılmasına yol açabilir:
+Aşağıdaki davranışlar yasaktır ve tespit edilmesi halinde Skor Tablosu ve/veya Destek Sistemi'ne erişiminizin kısıtlanmasına yol açabilir:
 - Hile, exploit, oyunun normal akışını bozan üçüncü taraf araçlar veya otomasyon (bot) kullanmak
-- Başka bir oyuncunun hesabına izinsiz erişmeye çalışmak
 - Skor tablosunu manipüle etmeye yönelik girişimlerde bulunmak
 - Destek / Bilet sistemini kötüye kullanmak (spam, taciz, uygunsuz veya yasa dışı içerik göndermek)
-- Oyunun sunucularına (bulut senkronu, destek, skor tablosu) zarar verecek veya aşırı yük bindirecek şekilde kullanmak
+- Oyunun bağlı olduğu resmi servislere (skor tablosu, destek sistemi) zarar verecek veya aşırı yük bindirecek şekilde kullanmak
 
 5. Skor Tablosu ve Kullanıcı İçeriği
-"En İyi Skorlar" ekranına katılmayı seçtiğinizde kullanıcı adınız ve skorunuz herkese açık olarak görünür hale gelir. Bu katılım, Ayarlar ekranından istediğiniz zaman kapatılabilir. Destek biletlerinde paylaştığınız içerikten de siz sorumlusunuz; uygunsuz, hakaret içeren veya yasa dışı içerik paylaşılması durumunda ilgili bilet kapatılabilir ve hesabınız hakkında işlem yapılabilir.
+"En İyi Skorlar" ekranına katılmayı seçtiğinizde (Ayarlar > Skor Gönderimi), oyunu başlatırken belirlediğiniz kullanıcı adınız, nakit bakiyeniz ve oyun gününüz herkese açık bir sıralamaya gönderilir ve diğer oyuncular tarafından görülebilir. Bu katılımı Ayarlar ekranından istediğiniz zaman kapatabilirsiniz.
+Gerçek adınızı ya da başka yerlerde kullandığınız kimliğinizi ifşa etmek istemiyorsanız, oyunu başlatırken kullanıcı adınızı buna göre seçmenizi öneririz.
+Destek biletlerinde paylaştığınız içerikten de siz sorumlusunuz; uygunsuz, hakaret içeren veya yasa dışı içerik paylaşılması durumunda ilgili bilet kapatılabilir.
 
 6. Fikri Mülkiyet ve Açık Kaynak
-Oyun açık kaynaklıdır; kodunu ve içeriğini özgürce inceleyebilir, kopyalayabilir, değiştirebilir ve dağıtabilirsiniz. Ancak topluluk sağlığı ve adil oyun ortamı için resmi Skor Tablosu, Destek Sistemi ve resmi bulut altyapısı üzerinde manipülasyon yapmak veya bu resmi servisleri izinsiz kendi dış projeleriniz için kötüye kullanmak yasaktır.
+Oyun açık kaynaklıdır; kodunu ve içeriğini özgürce inceleyebilir, kopyalayabilir, değiştirebilir ve dağıtabilirsiniz. Ancak topluluk sağlığı ve adil oyun ortamı için resmi Skor Tablosu ve Destek Sistemi üzerinde manipülasyon yapmak veya bu resmi servisleri izinsiz kendi dış projeleriniz için kötüye kullanmak yasaktır.
 
 7. Hizmetin Sağlanması
-Hesap doğrulama, bulut senkronu, destek sistemi ve skor tablosu gibi özellikler internet bağlantısı gerektirir ve üçüncü taraf altyapılara (bulut veritabanı barındırma hizmeti, GitHub) bağlıdır.
-Bu hizmetlerin kesintisiz veya hatasız çalışacağını garanti etmiyoruz; bakım, altyapı sorunları veya üçüncü taraf kesintileri nedeniyle geçici erişim sorunları yaşanabilir.
+Skor tablosu ve destek sistemi gibi özellikler internet bağlantısı gerektirir ve üçüncü taraf altyapılara (GitHub) bağlıdır. Oyunun kendisi (yerel kayıt, ticaret, şirketler, arsalar, çalışanlar vb.) internet bağlantısı olmadan tam olarak oynanabilir.
+Bu üçüncü taraf hizmetlerin kesintisiz veya hatasız çalışacağını garanti etmiyoruz; bakım, altyapı sorunları veya üçüncü taraf kesintileri nedeniyle geçici erişim sorunları yaşanabilir.
 Oyun "olduğu gibi" sunulur; belirli bir amaca uygunluk dahil, açık ya da zımni hiçbir garanti verilmez.
 
 8. Sorumluluğun Sınırlandırılması
-Yürürlükteki mevzuatın izin verdiği azami ölçüde, geliştiriciler; Oyunun kullanımından veya kullanılamamasından, veri kaybından ya da üçüncü taraf hizmetlerindeki (bulut barındırma, GitHub vb.) aksaklıklardan kaynaklanan dolaylı, arızi veya sonuç niteliğindeki zararlardan sorumlu tutulamaz.
+Yürürlükteki mevzuatın izin verdiği azami ölçüde, geliştiriciler; Oyunun kullanımından veya kullanılamamasından, yerel kayıt dosyalarının kaybından veya bozulmasından ya da üçüncü taraf hizmetlerdeki (GitHub vb.) aksaklıklardan kaynaklanan dolaylı, arızi veya sonuç niteliğindeki zararlardan sorumlu tutulamaz.
 
 9. Fesih
-Bu Kullanım Şartları'nı ihlal ettiğinizi tespit etmemiz halinde hesabınızı önceden bildirimde bulunmaksızın askıya alma veya kapatma hakkımız saklıdır. Hesabınızı kapatmak isterseniz Destek / Bilet ekranından veya iletişim adresimiz üzerinden bize ulaşabilirsiniz.
+Bu Kullanım Şartları'nı ihlal ettiğinizi tespit etmemiz halinde, Skor Tablosu ve/veya Destek Sistemi'ne erişiminizi önceden bildirimde bulunmaksızın kısıtlama hakkımız saklıdır.
 
 10. Değişiklikler
 Bu şartları zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğunda oyun içi bir onay ekranı ile yeniden bilgilendirilir ve onayınız istenir; Oyunu kullanmaya devam etmeniz güncellenmiş şartları kabul ettiğiniz anlamına gelir.
@@ -47,7 +47,7 @@ Bu şartları zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğunda
 11. Uygulanacak Hukuk
 Bu şartlar Türkiye kanunlarına tabidir ve buna göre yorumlanır."
 "en:
-Last updated: Wednesday, September 23, 2026
+Last updated: Sunday, September 27, 2026
 
 1. Acceptance
 By downloading and playing Karaborsa Simülasyonu ("the Game"), you accept these Terms of Service. If you do not accept these terms, you must not use the Game.
@@ -57,37 +57,37 @@ Contact: https://bilgisayar-xi.vercel.app/iletisim.html
 2. Content Warning
 The Game contains purely fictional, simulation-only themes of black-market trading, fictional weapon- and drug-like products, money laundering, prison, and crime. Nothing in the Game encourages or endorses real-world illegal activity.
 
-3. Account Rules
-You must create an account to play the Game.
-Each player must have only one account; your progress is stored tied to that account.
-You are responsible for keeping your account credentials (especially your password) confidential. You are responsible for all activity that occurs on your account.
-Information you provide at registration (username, email) is expected to be accurate.
-If you entered your username incorrectly, you can rename it without losing your progress from the in-game Main Menu > Settings screen.
+3. Game Structure and No Account Required
+The Game is a single-player desktop simulation and does NOT require you to create an account, log in, or provide any personal information in order to play.
+Your game progress (cash, inventory, companies, land, employees, loan status, in-game day, etc.) is stored only on your own computer, in the game's local save file. This data is not sent to our servers and does not leave your device.
+The username you choose when launching the Game is used only to identify your local save file and, if you voluntarily opt in to the Leaderboard, to appear there; it does not represent an account or authentication in any way.
+If you start playing on a different computer, your progress will not carry over; each device has its own separate local save.
 
 4. Acceptable Use
-The following behaviors are prohibited and may result in suspension or permanent closure of your account if detected:
+The following behaviors are prohibited and may result in restricted access to the Leaderboard and/or Support System if detected:
 - Cheating, exploits, third-party tools, or automation (bots) that disrupt the Game's normal flow
-- Attempting to access another player's account without authorization
 - Attempting to manipulate the leaderboard
 - Abusing the Support / Ticket system (spam, harassment, or sharing inappropriate or illegal content)
-- Using the Game in a way that damages or overloads its servers (cloud sync, support, leaderboard)
+- Using the Game in a way that damages or overloads its official services (leaderboard, support system)
 
 5. Leaderboard and User Content
-When you opt in to the "Top Scores" screen, your username and score become publicly visible. You can turn this off at any time from the Settings screen. You are also responsible for the content you share in support tickets; if inappropriate, abusive, or illegal content is shared, the related ticket may be closed and action may be taken against your account.
+When you opt in to the "Top Scores" screen (Settings > Score Submission), the username you chose when launching the Game, along with your cash balance and in-game day, is sent to a public ranking visible to other players. You can turn this off at any time from the Settings screen.
+If you do not want to reveal your real name or an identity you use elsewhere, we recommend choosing your username accordingly when launching the Game.
+You are also responsible for the content you share in support tickets; if inappropriate, abusive, or illegal content is shared, the related ticket may be closed.
 
 6. Intellectual Property and Open Source
-The Game is open source; you may freely inspect, copy, modify, and redistribute its code and content. However, manipulating the official Leaderboard, Support System, or official cloud infrastructure, or misusing these official services for your own unauthorized external projects, is prohibited for the sake of community health and fair play.
+The Game is open source; you may freely inspect, copy, modify, and redistribute its code and content. However, manipulating the official Leaderboard or Support System, or misusing these official services for your own unauthorized external projects, is prohibited for the sake of community health and fair play.
 
 7. Provision of Service
-Features such as account verification, cloud sync, the support system, and the leaderboard require an internet connection and depend on third-party infrastructure (cloud database hosting, GitHub).
-We do not guarantee these services will be uninterrupted or error-free; temporary access issues may occur due to maintenance, infrastructure problems, or third-party outages.
+Features such as the leaderboard and support system require an internet connection and depend on third-party infrastructure (GitHub). The Game itself (local saves, trading, companies, land, employees, etc.) is fully playable without an internet connection.
+We do not guarantee these third-party services will be uninterrupted or error-free; temporary access issues may occur due to maintenance, infrastructure problems, or third-party outages.
 The Game is provided "as is", without any warranty, express or implied, including fitness for a particular purpose.
 
 8. Limitation of Liability
-To the maximum extent permitted by applicable law, the developers shall not be liable for any indirect, incidental, or consequential damages arising from your use or inability to use the Game, data loss, or disruptions in third-party services (cloud hosting, GitHub, etc.).
+To the maximum extent permitted by applicable law, the developers shall not be liable for any indirect, incidental, or consequential damages arising from your use or inability to use the Game, loss of or corruption of local save files, or disruptions in third-party services (GitHub, etc.).
 
 9. Termination
-We reserve the right to suspend or close your account without prior notice if we determine you have violated these Terms of Service. If you wish to close your account, you may contact us via the Support / Ticket screen or our contact page.
+We reserve the right to restrict your access to the Leaderboard and/or Support System without prior notice if we determine you have violated these Terms of Service.
 
 10. Changes
 We may update these terms from time to time. When significant changes are made, you will be informed again via an in-game confirmation screen and your consent will be requested; continuing to use the Game means you accept the updated terms.

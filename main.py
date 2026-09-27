@@ -1,4 +1,3 @@
-
 import os
 import random
 import sys
@@ -17,7 +16,6 @@ from formatting import format_tl
 from audio_manager import AudioManager
 from save_manager import save_game, load_game, apply_one_time_heat_reset, import_cloud_save, build_save_data
 
-import auth_manager
 import ticket_manager
 import settings_manager
 from i18n import t, get_language
@@ -28,7 +26,7 @@ from dialogs import (
     InformantDialog, BankLoanDialog, LandLoanDialog, BankingDialog, JailDialog,
     HistoryDialog, EmployeeManagementDialog, GamblingDialog, DailyMessageDialog,
     TermsDialog, TERMS_VERSION,
-    ProductActionDialog, AuthDialog, TicketsDialog,
+    ProductActionDialog, TicketsDialog,
     CountrySelectDialog, AuctionDialog,
     open_localized_help,
 )
@@ -928,10 +926,6 @@ class MainFrame(wx.Frame):
                 _speak_narration(narration)
                 self.refresh_product_list()
                 self.update_wallet_display()
-                # auto_save() burada ÇAĞRILMIYOR: bu fonksiyonu çağıran
-                # on_next_day()'in finally bloğu, buradan dönüldükten hemen
-                # sonra zaten kaydı yapıyor. Burada da çağrılırsa her gün
-                # ilerlemesinde kayıt iki kez (ve buluta iki kez) gönderilir.
                 return
             elif msg:
                 narration.append(msg)
@@ -987,8 +981,6 @@ class MainFrame(wx.Frame):
             _speak_narration(narration)
             self.update_wallet_display()
             self.refresh_product_list()
-            # auto_save() burada ÇAĞRILMIYOR (bkz. yukarıdaki not) - on_next_day()
-            # finally bloğu kaydı zaten yapacak.
             self.audio.play_sound(self.SOUND_JAIL_DOOR)
             wx.CallAfter(self.start_jail_dialog)
             return
@@ -1015,9 +1007,6 @@ class MainFrame(wx.Frame):
         if self.days_since_last_score_update >= self.score_update_interval:
             self.days_since_last_score_update = 0
             self.update_score()
-
-        # auto_save() burada ÇAĞRILMIYOR (bkz. yukarıdaki not) - on_next_day()
-        # finally bloğu kaydı zaten yapacak.
 
     def check_game_over(self):
         """
@@ -1139,96 +1128,7 @@ class MainFrame(wx.Frame):
             # kaybı riski yok, ayarlardan kapatılamaz).
             save_game(self.username, self.state)
 
-            if not settings_manager.is_cloud_backup_enabled():
-                # Ayarlardan buluta yedekleme kapatılmışsa, kapanışta
-                # ağ isteği hiç atılmaz - "lütfen bekleyin" penceresi
-                # de gösterilmez, oyun anında kapanır.
-                event.Skip()
-                return
-
-            if event.CanVeto():
-                # Kapanmayı bir an için engelleyip buluta SON HALİ tek
-                # seferlik göndermeyi deniyoruz; kullanıcı beklerken
-                # bunu görsün diye küçük bir bilgi penceresi gösteriyoruz.
-                event.Veto()
-                self._exit_with_final_cloud_push()
-                return
-            else:
-                # Sistem tarafında kapanma engellenemiyorsa (ör. Windows
-                # kapanıyor), en azından arka planda göndermeyi dene ama
-                # kapanmayı bekletme.
-                try:
-                    save_data = build_save_data(self.username, self.state)
-                    auth_manager.push_active_save_async(save_data, force=True)
-                except Exception as e:
-                    print(f"[Bulut Kayıt] Kapanışta (zorunlu) gönderim denemesi hata verdi: {e}")
-
         event.Skip()
-
-    def _exit_with_final_cloud_push(self):
-        """Pencere kapatılırken buluta SON kez ve TEK SEFERLİK gönderim
-        yapar. 'Lütfen bekleyin' yazan küçük bir pencere gösterir; bu
-        gönderim 10 saniyeden uzun sürerse ya da hiç bitmezse (internet
-        yok, sunucu yanıt vermiyor vb.) süre dolduğunda oyunu yine de
-        kapatır - kullanıcı asla ekranda takılı kalmaz."""
-        try:
-            save_data = build_save_data(self.username, self.state)
-        except Exception as e:
-            print(f"[Bulut Kayıt] Kapanışta save_data oluşturulamadı: {e}")
-            self.Destroy()
-            return
-
-        wait_dlg = wx.Dialog(
-            self, title=t("app.name"),
-            style=wx.CAPTION | wx.STAY_ON_TOP,
-        )
-        panel = wx.Panel(wait_dlg)
-        msg = wx.StaticText(panel, label=t("close.please_wait_body"))
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(msg, 0, wx.ALL, 20)
-        panel.SetSizer(sizer)
-        wait_dlg.Fit()
-        wait_dlg.CenterOnScreen()
-        wait_dlg.Show()
-        speak(t("close.please_wait_speak"))
-
-        finished = threading.Event()
-
-        def worker():
-            try:
-                sess = auth_manager.get_current_session()
-                if sess.get("access_token") and sess.get("user_id"):
-                    auth_manager.push_cloud_save(sess["access_token"], sess["user_id"], save_data)
-            except Exception as e:
-                print(f"[Bulut Kayıt] Kapanışta gönderim hatası: {e}")
-            finally:
-                finished.set()
-
-        threading.Thread(target=worker, daemon=True).start()
-
-        state = {"done": False}
-
-        def finalize():
-            if state["done"]:
-                return
-            state["done"] = True
-            try:
-                wait_dlg.Destroy()
-            except Exception:
-                pass
-            self.Destroy()
-
-        def poll():
-            if state["done"]:
-                return
-            if finished.is_set():
-                finalize()
-            else:
-                wx.CallLater(200, poll)
-
-        # 10 saniyelik SERT sınır: gönderim bitmese bile burada kapanır.
-        wx.CallLater(10000, finalize)
-        wx.CallLater(200, poll)
 
 
 class App(wx.App):
@@ -1236,9 +1136,6 @@ class App(wx.App):
         self._play_startup_logo_sound()
 
         if not self._ensure_terms_accepted():
-            return False
-
-        if not self._ensure_authenticated():
             return False
 
         dlg = MainMenu()
@@ -1271,7 +1168,6 @@ class App(wx.App):
                 return False
         return False
 
-
     def _play_startup_logo_sound(self):
         """Oyun açılır açılmaz, ana menü (hatta gizlilik/kullanım şartları
         onay ekranı) görünmeden HEMEN ÖNCE çalınan kısa logo/açılış sesi.
@@ -1291,9 +1187,7 @@ class App(wx.App):
     def _ensure_terms_accepted(self) -> bool:
         """Gizlilik politikası ve kullanım şartlarının bu CİHAZDA en az
         bir kez kabul edilmesini zorunlu kılar. Hesaptan tamamen
-        bağımsızdır - giriş ekranından (_ensure_authenticated) bile
-        ÖNCE çağrılır, böylece hangi hesapla oynanacağından bağımsız
-        olarak sadece cihaz başına bir kez gösterilir. Daha önce
+        bağımsızdır - sadece cihaz başına bir kez gösterilir. Daha önce
         (aynı TERMS_VERSION ile) kabul edilmişse hiçbir şey
         göstermeden True döner."""
         if settings_manager.is_terms_accepted(TERMS_VERSION):
@@ -1307,48 +1201,6 @@ class App(wx.App):
             return False
 
         settings_manager.set_terms_accepted(TERMS_VERSION)
-        return True
-
-    def _ensure_authenticated(self) -> bool:
-        """PocketBase üzerinden ZORUNLU giriş akışı. Kullanıcı geçerli bir
-        kullanıcı adı/şifre hesabıyla giriş yapmadan/hesap oluşturmadan
-        bu fonksiyon False döner ve uygulama hiçbir içeriğe (ana menü,
-        oyun ekranı) geçmeden kapanır.
-
-        Önceden kaydedilmiş bir oturum varsa (aynı hesapla daha önce
-        giriş yapılmışsa) sessizce yenilenir; bu SADECE oturum hâlâ
-        PocketBase tarafında geçerliyse çalışır - geçersizse (örn.
-        token süresi dolmuşsa) giriş ekranı yine de zorunlu olarak
-        gösterilir.
-
-        Giriş başarılı olduktan sonra, bu hesaba ait PocketBase'deki
-        bulut kaydı varsa bu cihaza indirilir; böylece oyuncunun
-        ilerlemesi hiçbir zaman kaybolmaz."""
-        session = auth_manager.try_restore_session()
-
-        if not session:
-            auth_dlg = AuthDialog()
-            result = auth_dlg.ShowModal()
-            session = auth_dlg.session
-            auth_dlg.Destroy()
-
-            if result != wx.ID_OK or not session:
-                return False
-
-            auth_manager.save_session(session)
-        elif session.get("_offline"):
-            speak(t("auth.offline_continue"))
-
-        auth_manager.set_current_session(session)
-
-        sess = auth_manager.get_current_session()
-        try:
-            cloud_save = auth_manager.fetch_cloud_save(sess["access_token"], sess["user_id"])
-            if cloud_save:
-                import_cloud_save(cloud_save)
-        except Exception as e:
-            print(f"[Bilgi] Bulut kaydı kontrol edilemedi (internet yok olabilir): {e}")
-
         return True
 
 

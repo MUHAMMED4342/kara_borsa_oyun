@@ -1,4 +1,3 @@
-
 import math
 import os
 import random
@@ -25,7 +24,6 @@ import daily_message
 import leaderboard
 from leaderboard import get_leaderboard, get_gist_content
 
-import auth_manager
 import ticket_manager
 import settings_manager
 import app_log
@@ -499,332 +497,14 @@ class TermsDialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
 
-class AuthDialog(wx.Dialog):
-    """Uygulama açılışında ZORUNLU olarak gösterilen giriş / hesap
-    oluşturma ekranı (PocketBase, kullanıcı adı + şifre).
-
-    Kullanıcı ya başarıyla giriş yapar/hesap oluşturur (self.session
-    dolu döner, ShowModal() -> wx.ID_OK) ya da 'Çıkış'ı seçer
-    (self.session None, ShowModal() -> wx.ID_CANCEL). main.py bu
-    ekranı atlamadan hiçbir zaman ana menüyü/oyunu açmaz."""
-
-    def __init__(self, parent=None):
-        super().__init__(
-            parent, title=t("auth.title"),
-            size=(380, 430),
-        )
-        self.session = None
-        self.audio = AudioManager()
-        self._busy = False
-
-        self._build_ui()
-        self._bind_events()
-        self.CenterOnScreen()
-
-        speak(t("auth.speak_intro"))
-
-    def _build_ui(self):
-        panel = wx.Panel(self)
-        outer = wx.BoxSizer(wx.VERTICAL)
-
-        title = wx.StaticText(panel, label=t("auth.header"))
-        title.SetFont(wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
-        outer.Add(title, 0, wx.ALL | wx.CENTER, 12)
-
-        grid = wx.FlexGridSizer(3, 2, 8, 8)
-        grid.AddGrowableCol(1, 1)
-
-        user_label = wx.StaticText(panel, label=t("auth.username_label"))
-        self.username_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
-        grid.Add(user_label, 0, wx.ALIGN_CENTER_VERTICAL)
-        grid.Add(self.username_ctrl, 1, wx.EXPAND)
-
-        pass_label = wx.StaticText(panel, label=t("auth.password_label"))
-        self.password_ctrl = wx.TextCtrl(panel, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
-        grid.Add(pass_label, 0, wx.ALIGN_CENTER_VERTICAL)
-        grid.Add(self.password_ctrl, 1, wx.EXPAND)
-
-        email_label = wx.StaticText(panel, label=t("auth.email_label"))
-        self.email_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
-        grid.Add(email_label, 0, wx.ALIGN_CENTER_VERTICAL)
-        grid.Add(self.email_ctrl, 1, wx.EXPAND)
-
-        outer.Add(grid, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 20)
-
-        bind_typing_sound(self.username_ctrl, self.audio)
-        bind_typing_sound(self.password_ctrl, self.audio)
-        bind_typing_sound(self.email_ctrl, self.audio)
-
-        hint = wx.StaticText(
-            panel,
-            label=t("auth.hint")
-        )
-        hint.Wrap(330)
-        outer.Add(hint, 0, wx.LEFT | wx.RIGHT | wx.TOP, 20)
-
-        self.status_label = wx.StaticText(panel, label="")
-        self.status_label.Wrap(330)
-        outer.Add(self.status_label, 0, wx.ALL | wx.EXPAND, 10)
-
-        btn_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.btn_login = wx.Button(panel, label=t("auth.login_btn"))
-        self.btn_signup = wx.Button(panel, label=t("auth.signup_btn"))
-        self.btn_forgot_password = wx.Button(panel, label=t("auth.forgot_password_btn"))
-        self.btn_quit = wx.Button(panel, label=t("auth.quit_btn"))
-        for b in (self.btn_login, self.btn_signup, self.btn_forgot_password, self.btn_quit):
-            btn_sizer.Add(b, 0, wx.EXPAND | wx.BOTTOM, 6)
-        outer.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 15)
-
-        panel.SetSizer(outer)
-        self.username_ctrl.SetFocus()
-
-    def _bind_events(self):
-        self.btn_login.Bind(wx.EVT_BUTTON, self.on_login)
-        self.btn_signup.Bind(wx.EVT_BUTTON, self.on_signup)
-        self.btn_forgot_password.Bind(wx.EVT_BUTTON, self.on_forgot_password)
-        self.btn_quit.Bind(wx.EVT_BUTTON, self.on_quit)
-        self.username_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_login)
-        self.password_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_login)
-        self.Bind(wx.EVT_CLOSE, self.on_quit)
-
-    def _set_busy(self, busy: bool, message: str = ""):
-        self._busy = busy
-        for b in (self.btn_login, self.btn_signup, self.btn_quit):
-            b.Enable(not busy)
-        self.username_ctrl.Enable(not busy)
-        self.password_ctrl.Enable(not busy)
-        self.email_ctrl.Enable(not busy)
-        self.status_label.SetLabel(message)
-        self.status_label.GetParent().Layout()
-
-    def _get_credentials(self):
-        username = self.username_ctrl.GetValue().strip()
-        password = self.password_ctrl.GetValue()
-        email = self.email_ctrl.GetValue().strip()
-        return username, password, email
-
-    def on_login(self, event):
-        if self._busy:
-            return
-        username, password, _email = self._get_credentials()
-        self._set_busy(True, t("auth.signing_in"))
-        speak(t("auth.signing_in_speak"))
-
-        def worker():
-            try:
-                session = auth_manager.sign_in(username, password)
-                wx.CallAfter(self._on_login_success, session)
-            except auth_manager.AuthError as e:
-                wx.CallAfter(self._on_auth_error, e.message)
-            except Exception as e:
-                wx.CallAfter(self._on_auth_error, t("auth.unexpected_error", error=e))
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def _on_login_success(self, session):
-        self.session = session
-        self._set_busy(False, "")
-        speak(t("auth.login_success_speak"))
-        self.EndModal(wx.ID_OK)
-
-    def _on_auth_error(self, message):
-        self._set_busy(False, message)
-        speak(message)
-        wx.MessageBox(message, t("auth.login_error_title"), wx.OK | wx.ICON_ERROR)
-
-    def on_signup(self, event):
-        if self._busy:
-            return
-        username, password, email = self._get_credentials()
-        if not email or "@" not in email or "." not in email:
-            wx.MessageBox(
-                t("auth.email_required_body"),
-                t("auth.email_required_title"), wx.OK | wx.ICON_WARNING
-            )
-            return
-
-        self._set_busy(True, t("auth.creating_account"))
-        speak(t("auth.creating_account_speak"))
-
-        def worker():
-            try:
-                session = auth_manager.sign_up(username, password, email)
-                wx.CallAfter(self._on_login_success, session)
-            except auth_manager.AuthError as e:
-                wx.CallAfter(self._on_auth_error, e.message)
-            except Exception as e:
-                wx.CallAfter(self._on_auth_error, t("auth.unexpected_error", error=e))
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def on_quit(self, event):
-        if self._busy:
-            return
-        self.session = None
-        self.EndModal(wx.ID_CANCEL)
-
-    def on_forgot_password(self, event):
-        # Ana sayfanın menüsünde/gezinmesinde YER ALMAYAN, sadece bu
-        # bağlantı üzerinden erişilen bir sayfa (bkz. sifremi-unuttum.html).
-        webbrowser.open("https://bilgisayar-xi.vercel.app/sifremi-unuttum.html")
-        speak(t("auth.forgot_password_speak"))
-
-
-class ChangePasswordDialog(wx.Dialog):
-    """Ana menüden açılan 'Şifre Değiştir' ekranı. Mevcut şifre +
-    yeni şifre (+ tekrar) ister ve auth_manager.update_password ile
-    PocketBase'e gönderir. Başarılı olursa oturum otomatik olarak
-    yeni şifreyle tazelenir (bkz. auth_manager.update_password),
-    oyuncunun ayrıca tekrar giriş yapması GEREKMEZ."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent, title=t("changepw.title_case"), size=(380, 340))
-        self.audio = AudioManager()
-        self._busy = False
-        self.success = False
-
-        self._build_ui()
-        self._bind_events()
-        self.CenterOnScreen()
-
-        speak(t("changepw.intro_speak"))
-
-    def _build_ui(self):
-        panel = wx.Panel(self)
-        outer = wx.BoxSizer(wx.VERTICAL)
-
-        title = wx.StaticText(panel, label=t("changepw.title"))
-        title.SetFont(wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
-        outer.Add(title, 0, wx.ALL | wx.CENTER, 12)
-
-        grid = wx.FlexGridSizer(3, 2, 8, 8)
-        grid.AddGrowableCol(1, 1)
-
-        old_label = wx.StaticText(panel, label=t("changepw.current_label"))
-        self.old_password_ctrl = wx.TextCtrl(panel, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
-        grid.Add(old_label, 0, wx.ALIGN_CENTER_VERTICAL)
-        grid.Add(self.old_password_ctrl, 1, wx.EXPAND)
-
-        new_label = wx.StaticText(panel, label=t("changepw.new_label"))
-        self.new_password_ctrl = wx.TextCtrl(panel, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
-        grid.Add(new_label, 0, wx.ALIGN_CENTER_VERTICAL)
-        grid.Add(self.new_password_ctrl, 1, wx.EXPAND)
-
-        confirm_label = wx.StaticText(panel, label=t("changepw.confirm_label"))
-        self.confirm_password_ctrl = wx.TextCtrl(panel, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
-        grid.Add(confirm_label, 0, wx.ALIGN_CENTER_VERTICAL)
-        grid.Add(self.confirm_password_ctrl, 1, wx.EXPAND)
-
-        outer.Add(grid, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 20)
-
-        bind_typing_sound(self.old_password_ctrl, self.audio)
-        bind_typing_sound(self.new_password_ctrl, self.audio)
-        bind_typing_sound(self.confirm_password_ctrl, self.audio)
-
-        hint = wx.StaticText(panel, label=t("changepw.hint"))
-        hint.Wrap(330)
-        outer.Add(hint, 0, wx.LEFT | wx.RIGHT | wx.TOP, 20)
-
-        self.status_label = wx.StaticText(panel, label="")
-        self.status_label.Wrap(330)
-        outer.Add(self.status_label, 0, wx.ALL | wx.EXPAND, 10)
-
-        btn_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.btn_submit = wx.Button(panel, label=t("changepw.submit_btn"))
-        self.btn_cancel = wx.Button(panel, label=t("changepw.cancel_btn"))
-        for b in (self.btn_submit, self.btn_cancel):
-            btn_sizer.Add(b, 0, wx.EXPAND | wx.BOTTOM, 6)
-        outer.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 15)
-
-        panel.SetSizer(outer)
-        self.old_password_ctrl.SetFocus()
-
-    def _bind_events(self):
-        self.btn_submit.Bind(wx.EVT_BUTTON, self.on_submit)
-        self.btn_cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
-        self.old_password_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_submit)
-        self.new_password_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_submit)
-        self.confirm_password_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_submit)
-        self.Bind(wx.EVT_CLOSE, self.on_cancel)
-
-    def _set_busy(self, busy: bool, message: str = ""):
-        self._busy = busy
-        for b in (self.btn_submit, self.btn_cancel):
-            b.Enable(not busy)
-        self.old_password_ctrl.Enable(not busy)
-        self.new_password_ctrl.Enable(not busy)
-        self.confirm_password_ctrl.Enable(not busy)
-        self.status_label.SetLabel(message)
-        self.status_label.GetParent().Layout()
-
-    def on_submit(self, event):
-        if self._busy:
-            return
-
-        old_password = self.old_password_ctrl.GetValue()
-        new_password = self.new_password_ctrl.GetValue()
-        confirm_password = self.confirm_password_ctrl.GetValue()
-
-        if not old_password:
-            msg = t("changepw.enter_current")
-            self.status_label.SetLabel(msg)
-            speak(msg)
-            return
-        if len(new_password) < 8:
-            msg = t("changepw.min_length")
-            self.status_label.SetLabel(msg)
-            speak(msg)
-            return
-        if new_password != confirm_password:
-            msg = t("changepw.mismatch")
-            self.status_label.SetLabel(msg)
-            speak(msg)
-            return
-
-        self._set_busy(True, t("changepw.changing"))
-        speak(t("changepw.changing_speak"))
-
-        def worker():
-            try:
-                auth_manager.update_password(old_password, new_password)
-                wx.CallAfter(self._on_success)
-            except auth_manager.AuthError as e:
-                wx.CallAfter(self._on_error, e.message)
-            except Exception as e:
-                wx.CallAfter(self._on_error, t("auth.unexpected_error", error=e))
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def _on_success(self):
-        self.success = True
-        self._set_busy(False, "")
-        speak(t("changepw.success_speak"))
-        wx.MessageBox(t("changepw.success_body"), t("changepw.success_title"), wx.OK | wx.ICON_INFORMATION)
-        self.EndModal(wx.ID_OK)
-
-    def _on_error(self, message):
-        self._set_busy(False, message)
-        speak(message)
-        wx.MessageBox(message, t("changepw.failed_title"), wx.OK | wx.ICON_ERROR)
-
-    def on_cancel(self, event):
-        if self._busy:
-            return
-        self.success = False
-        self.EndModal(wx.ID_CANCEL)
-
-
 class SettingsDialog(wx.Dialog):
     """Ana menüden açılan 'Ayarlar' ekranı. Bu cihaza özel ayarları
-    (buluta yedekleme, skor gönderimi, günün mesajı, ses seviyesi)
-    tek bir yerden açıp kapatmayı sağlar. wx.CheckBox kullanıyoruz
-    çünkü ekran okuyucular "işaretli / işaretsiz" durumunu kendisi
-    anons ediyor - bu, önceki menüdeki "Skor Gönderimi: Etkin/Devre
-    Dışı" gibi metni elle güncellemekten (ve yanlış öğeyi güncelleme
-    riskinden) tamamen kaçınıyor."""
+    (skor gönderimi, günün mesajı, ses seviyesi) tek bir yerden açıp
+    kapatmayı sağlar. wx.CheckBox kullanıyoruz çünkü ekran okuyucular
+    "işaretli / işaretsiz" durumunu kendisi anons ediyor."""
 
     def __init__(self, parent=None):
-        super().__init__(parent, title=t("settings.title"), size=(420, 640))
+        super().__init__(parent, title=t("settings.title"), size=(420, 560))
         self.audio = AudioManager()
         self._last_vol_speak_time = 0.0
         self._build_ui()
@@ -841,32 +521,14 @@ class SettingsDialog(wx.Dialog):
         title.SetFont(wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         outer.Add(title, 0, wx.ALL | wx.CENTER, 12)
 
-        # Hesap: kullanıcı adı/şifre değiştirme, MainMenu'nün kendi
-        # change_username/change_password metotlarına devrediyor (kod
-        # tekrarı yok - Ayarlar sadece bunun için bir kapı).
-        account_label = wx.StaticText(panel, label=t("settings.account_section"))
-        account_label.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
-        outer.Add(account_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 15)
-
-        account_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.btn_change_username = wx.Button(panel, label=t("settings.change_username_btn"))
-        self.btn_change_password = wx.Button(panel, label=t("settings.change_password_btn"))
-        account_btn_sizer.Add(self.btn_change_username, 1, wx.EXPAND | wx.RIGHT, 6)
-        account_btn_sizer.Add(self.btn_change_password, 1, wx.EXPAND)
-        outer.Add(account_btn_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, 15)
-
         self.btn_change_language = wx.Button(panel, label=t("settings.change_language_btn"))
         outer.Add(self.btn_change_language, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
 
         outer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 15)
 
-        self.cb_cloud_backup = wx.CheckBox(panel, label=t("settings.cloud_backup"))
-        self.cb_cloud_backup.SetValue(settings_manager.is_cloud_backup_enabled())
-        outer.Add(self.cb_cloud_backup, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, 15)
-
         self.cb_score_submission = wx.CheckBox(panel, label=t("settings.score_submission"))
         self.cb_score_submission.SetValue(leaderboard.is_score_submission_enabled())
-        outer.Add(self.cb_score_submission, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+        outer.Add(self.cb_score_submission, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, 15)
 
         self.cb_daily_message = wx.CheckBox(panel, label=t("settings.daily_message"))
         self.cb_daily_message.SetValue(settings_manager.is_daily_message_enabled())
@@ -885,8 +547,6 @@ class SettingsDialog(wx.Dialog):
 
         outer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 15)
 
-        # Müzik sesi - sürgü, odaktayken sol/sağ ok tuşlarıyla
-        # (wx.Slider'ın kendi doğal davranışı) değiştirilebilir.
         self.music_volume_label = wx.StaticText(
             panel, label=t("settings.music_volume", vol=int(self.audio.music_volume * 100))
         )
@@ -898,7 +558,6 @@ class SettingsDialog(wx.Dialog):
         self.music_slider.SetLineSize(10)
         outer.Add(self.music_slider, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
 
-        # Efekt sesi
         self.sfx_volume_label = wx.StaticText(
             panel, label=t("settings.sfx_volume", vol=int(self.audio.sfx_volume * 100))
         )
@@ -914,13 +573,10 @@ class SettingsDialog(wx.Dialog):
         outer.Add(self.btn_close, 0, wx.EXPAND | wx.ALL, 15)
 
         panel.SetSizer(outer)
-        self.btn_change_username.SetFocus()
+        self.btn_change_language.SetFocus()
 
     def _bind_events(self):
-        self.btn_change_username.Bind(wx.EVT_BUTTON, self.on_change_username)
-        self.btn_change_password.Bind(wx.EVT_BUTTON, self.on_change_password)
         self.btn_change_language.Bind(wx.EVT_BUTTON, self.on_change_language)
-        self.cb_cloud_backup.Bind(wx.EVT_CHECKBOX, self.on_toggle_cloud_backup)
         self.cb_score_submission.Bind(wx.EVT_CHECKBOX, self.on_toggle_score_submission)
         self.cb_daily_message.Bind(wx.EVT_CHECKBOX, self.on_toggle_daily_message)
         self.cb_typing_sound.Bind(wx.EVT_CHECKBOX, self.on_toggle_typing_sound)
@@ -930,27 +586,12 @@ class SettingsDialog(wx.Dialog):
         self.sfx_slider.Bind(wx.EVT_SLIDER, self.on_sfx_slider)
         self.btn_close.Bind(wx.EVT_BUTTON, self.on_close_dialog)
 
-    def on_change_username(self, event):
-        # Ayarlar sadece bir kapı - gerçek işlemi (PocketBase + yerel
-        # dosya + skor tablosu adı güncellemesi) MainMenu.change_username
-        # zaten yapıyor, burada TEKRAR yazmıyoruz.
-        parent = self.GetParent()
-        if parent is not None and hasattr(parent, "change_username"):
-            parent.change_username()
-
-    def on_change_password(self, event):
-        parent = self.GetParent()
-        if parent is not None and hasattr(parent, "change_password"):
-            parent.change_password()
-
     def on_change_language(self, event):
         dlg = LanguageDialog(self)
         dlg.ShowModal()
         changed = dlg.changed
         dlg.Destroy()
         if changed:
-            # Hem Ayarlar penceresini hem de (varsa) onu açan Ana
-            # Menü'yü anında yeni dilde yeniden çizer.
             self._rebuild_ui()
             parent = self.GetParent()
             if parent is not None and hasattr(parent, "_rebuild_ui"):
@@ -966,12 +607,6 @@ class SettingsDialog(wx.Dialog):
         self._bind_events()
         self.Layout()
         speak(t("settings.speak_intro"))
-
-    def on_toggle_cloud_backup(self, event):
-        enabled = self.cb_cloud_backup.GetValue()
-        settings_manager.set_cloud_backup_enabled(enabled)
-        speak(t("settings.cloud_backup_toggled",
-                state=t("settings.state_enabled") if enabled else t("settings.state_disabled")))
 
     def on_toggle_score_submission(self, event):
         enabled = self.cb_score_submission.GetValue()
@@ -998,11 +633,6 @@ class SettingsDialog(wx.Dialog):
                 state=t("settings.state_enabled") if enabled else t("settings.state_disabled")))
 
     def on_check_update_now(self, event):
-        # Bu buton, ayardan BAĞIMSIZ - kapalı olsa bile elle kontrol
-        # edilebilir. Kontrol arka planda yapılıyor; yeni bir sürüm
-        # bulunursa _ask_update_confirmation penceresi açılır, yoksa
-        # (zaten güncel / bağlantı hatası vb.) _on_no_update ile
-        # kullanıcıya bir mesaj gösterilir.
         speak(t("settings.checking_updates_speak"))
 
         def _on_no_update(message):
@@ -1015,9 +645,6 @@ class SettingsDialog(wx.Dialog):
         )
 
     def _throttled_speak(self, text):
-        # Fare ile sürüklerken EVT_SLIDER art arda çok sayıda tetiklenir;
-        # her seferinde konuşursa sesli anons üst üste biner. Ok
-        # tuşlarıyla tek tek değiştirmede bu limite takılmaz.
         now = time.time()
         if now - self._last_vol_speak_time >= 0.15:
             speak(text)
@@ -1184,25 +811,8 @@ class MainMenu(wx.Dialog):
         sizer.Add(title, 0, wx.ALL | wx.CENTER, 15)
 
         # (etiket, işleyici) çiftleri - liste, menünün TEK doğruluk
-        # kaynağıdır. Önceden execute_selection() sabit sayısal
-        # index'lerle (idx == 4 gibi) çalışıyordu; yeni bir öğe
-        # eklendiğinde ya da sıra değiştiğinde bu index'ler elle
-        # senkronize edilmek zorundaydı ve bir yerde unutulunca (Skor
-        # Gönderimi güncellemesinde olduğu gibi) menüde yanlış öğe
-        # güncenip iki "Skor Gönderimi" satırı görünür hale
-        # gelebiliyordu. Artık her öğe kendi işleyicisiyle birlikte
-        # taşınıyor, index kayması mümkün değil.
-        #
-        # NOT: "Skor Gönderimi: Etkin/Devre Dışı" artık burada ayrı bir
-        # metin-güncellenen menü öğesi DEĞİL - Ayarlar ekranındaki bir
-        # onay kutusuna taşındı (bkz. SettingsDialog). Böylece ayarlar
-        # tek bir yerde toplanıyor ve dinamik etiket senkron sorunu
-        # kökten ortadan kalkıyor.
-        # NOT: "Kullanıcı Adı Değiştir" ve "Şifre Değiştir" artık burada
-        # ayrı menü satırları DEĞİL - Ayarlar ekranındaki "Hesap"
-        # bölümüne taşındı (bkz. SettingsDialog). change_username ve
-        # change_password metotları burada duruyor; SettingsDialog
-        # bunları GetParent() üzerinden çağırıyor.
+        # kaynağıdır. Her öğe kendi işleyicisiyle birlikte taşınıyor,
+        # index kayması mümkün değil.
         self._menu_actions = [
             (t("menu.item_new_game"), self.start_new_game),
             (t("menu.item_continue"), self.continue_game),
@@ -1273,22 +883,6 @@ class MainMenu(wx.Dialog):
             _label, handler = self._menu_actions[idx]
             handler()
 
-    def change_password(self):
-        """Ana menüden 'Şifre Değiştir' seçilince açılır. Giriş
-        yapılmış olması gerekir (AuthDialog atlanamadığı için
-        buraya gelindiğinde zaten girişlidir)."""
-        if not auth_manager.is_logged_in():
-            wx.MessageBox(
-                t("menu.login_required_body"),
-                t("menu.login_required_title"), wx.OK | wx.ICON_INFORMATION
-            )
-            speak(t("menu.login_required_body"))
-            return
-
-        dlg = ChangePasswordDialog(self)
-        dlg.ShowModal()
-        dlg.Destroy()
-
     def open_settings(self):
         dlg = SettingsDialog(self)
         dlg.ShowModal()
@@ -1300,17 +894,12 @@ class MainMenu(wx.Dialog):
         changed = dlg.changed
         dlg.Destroy()
         if changed:
-            # Menü kendi kendini yeniden çiziyor ki dil değişikliği
-            # yeniden başlatma gerekmeden anında görünsün.
             self._rebuild_ui()
 
     def _rebuild_ui(self):
         """Panel ve tüm çocuklarını yok edip _build_ui()'yi tekrar
         çağırır - dil değiştiğinde menüyü anında yeni dilde yeniden
-        çizmek için kullanılır. _bind_events() tekrar çağrılmıyor
-        çünkü o yalnızca self (Dialog) üzerine bağlanan olayları
-        (EVT_CHAR_HOOK, EVT_CLOSE) içeriyor ve bunlar zaten hâlâ
-        geçerli."""
+        çizmek için kullanılır."""
         for child in list(self.GetChildren()):
             child.Destroy()
         self._build_ui()
@@ -1360,15 +949,7 @@ class MainMenu(wx.Dialog):
     def show_daily_message_now(self):
         """Ana menüden 'Günün Mesajını Görüntüle' seçilince açılır.
         main.py'deki OTOMATİK kontrolün (check_for_new_message) aksine,
-        burada mesaj daha önce görülmüş olsa bile HER ZAMAN gösterilir -
-        bu, kullanıcının kendi isteğiyle tetiklediği bir görüntülemedir,
-        "yeni mesaj" bildirimi değildir. Bu yüzden mark_seen() de HİÇ
-        çağrılmaz: zaten görülmüş bir mesajın görülme tarihini
-        değiştirmenin bir anlamı yoktur, henüz görülmemiş bir mesaj
-        varsa da otomatik kontrol onu normal akışında zaten
-        işaretleyecektir - buradaki manuel görüntüleme o akışı
-        etkilemez.
-
+        burada mesaj daha önce görülmüş olsa bile HER ZAMAN gösterilir.
         Ağ isteği ARKA PLANDA yapılır ki ana menü kilitlenmesin."""
         speak(t("menu.daily_message_fetching"))
 
@@ -1400,80 +981,6 @@ class MainMenu(wx.Dialog):
         dlg = DailyMessageDialog(self, date_str, message_text)
         dlg.ShowModal()
         dlg.Destroy()
-
-    def change_username(self):
-        """Mevcut kayıtlı hesabın kullanıcı adını değiştirir - HEM gerçek
-        PocketBase hesabının (giriş kimliğinin) adını HEM de yerel kayıt
-        dosyasının adını. Nakit, envanter, şirketler (il/ilçe dahil),
-        arsalar, çalışanlar, kredi, hapis durumu vb. HİÇBİR ilerleme
-        kaybolmaz; sadece isim (hesap + kayıt dosyası) güncellenir."""
-        saves = list_saves()
-        if not saves:
-            wx.MessageBox(
-                t("menu.no_account_to_change_body"),
-                t("menu.no_account_to_change_title"), wx.OK | wx.ICON_INFORMATION
-            )
-            speak(t("menu.no_account_to_change_speak"))
-            return
-
-        current_username = saves[0]
-
-        dlg = wx.TextEntryDialog(
-            self,
-            t("menu.change_username_prompt", current=current_username),
-            t("menu.change_username_title"),
-            value=current_username,
-        )
-        bind_typing_sound_to_dialog(dlg, self.audio)
-        result = dlg.ShowModal()
-        new_username = dlg.GetValue().strip()
-        dlg.Destroy()
-
-        if result != wx.ID_OK:
-            return
-        if not new_username:
-            speak(t("menu.username_empty"))
-            return
-
-        # 1) ÖNCE gerçek hesabı (giriş kimliğini) PocketBase'de değiştir.
-        # Bu başarısız olursa (örn. ad başkası tarafından alınmışsa)
-        # yerel dosyalara hiç dokunmadan burada duruyoruz.
-        try:
-            new_username = auth_manager.update_username(new_username)
-        except auth_manager.AuthError as e:
-            wx.MessageBox(e.message, t("menu.username_change_failed_title"), wx.OK | wx.ICON_ERROR)
-            speak(e.message)
-            return
-        except Exception as e:
-            wx.MessageBox(t("auth.unexpected_error", error=e), t("menu.unexpected_error_title"), wx.OK | wx.ICON_ERROR)
-            return
-
-        # 2) Hesap tarafı başarılıysa, yerel kayıt dosyasını da aynı isme
-        # taşı (nakit/envanter/vb. korunarak).
-        success, info = rename_save(current_username, new_username)
-        if success:
-            wx.MessageBox(
-                t("menu.username_changed_body", name=info),
-                t("menu.username_changed_title"), wx.OK | wx.ICON_INFORMATION
-            )
-            speak(t("menu.username_changed_speak", name=info))
-
-            def rename_leaderboard_async():
-                try:
-                    lb_success, lb_msg = leaderboard.rename_leaderboard_entry(
-                        current_username, info
-                    )
-                    log_history(
-                        t("log.leaderboard_updated", message=lb_msg) if lb_success
-                        else t("log.leaderboard_name_update_failed", message=lb_msg)
-                    )
-                except Exception as e:
-                    log_history(t("log.leaderboard_name_update_error", error=e))
-
-            threading.Thread(target=rename_leaderboard_async, daemon=True).start()
-        else:
-            wx.MessageBox(info, t("menu.username_change_failed_title"), wx.OK | wx.ICON_ERROR)
-            speak(f"{t('menu.username_change_failed_title')}: {info}")
 
     def start_new_game(self):
         saves = list_saves()
@@ -1591,9 +1098,6 @@ class MainMenu(wx.Dialog):
         dlg.ShowModal()
         dlg.Destroy()
 
-    # NOT: Skor gönderimi toggle'ı artık SettingsDialog.on_toggle_score_submission
-    # içinde; burada ayrıca tutulmuyor (bkz. yukarıdaki _menu_actions notu).
-    
     def play_sound(self, sound_path):
         if os.path.exists(sound_path):
             self.audio.play_sound(sound_path)
@@ -1884,6 +1388,7 @@ class DailyMessageDialog(wx.Dialog):
             self.EndModal(wx.ID_OK)
             return
         event.Skip()
+
 
 class CompanyDialog(wx.Dialog):
     def __init__(self, parent, state):
@@ -3704,12 +3209,6 @@ class JailDialog(wx.Dialog):
         keycode = event.GetKeyCode()
 
         if self.is_running:
-            
-            
-            
-            
-            
-            
             return
 
         if keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
@@ -3865,5 +3364,3 @@ class JailDialog(wx.Dialog):
             speak(t("jail.exit_blocked_speak"))
             if hasattr(event, "Veto"):
                 event.Veto()
-
-

@@ -1,62 +1,60 @@
 "tr:
 Gizlilik Politikası — Karaborsa Simülasyonu
-Son güncelleme: 23 Eylül 2026 Çarşamba
+Son güncelleme: 27 Eylül 2026 Pazar
 
 1. Kapsam
-Bu politika, Karaborsa Simülasyonu masaüstü oyununu ("Oyun") ve oyunla ilgili web sayfalarını (ör. iletişim ve şifremi unuttum sayfaları) kullanırken hangi verilerin toplandığını, nasıl kullanıldığını ve kimlerle paylaşıldığını açıklar. Oyunu kullanarak bu politikayı kabul etmiş olursunuz.
+Bu politika, Karaborsa Simülasyonu masaüstü oyununu ("Oyun") ve oyunla ilgili web sayfalarını (ör. iletişim sayfası) kullanırken hangi verilerin toplandığını, nasıl kullanıldığını ve kimlerle paylaşıldığını açıklar. Oyunu kullanarak bu politikayı kabul etmiş olursunuz.
 Geliştirici: muhammed.ali 
 İletişim: https://bilgisayar-xi.vercel.app/iletisim.html
 
 2. Hangi Verileri Topluyoruz
 
 2.1 Hesap Bilgileri
-Oyunu oynayabilmek için bir hesap oluşturmanız zorunludur. Hesap oluştururken şu bilgileri alırız:
-- Kullanıcı adı (3-20 karakter)
-- Şifre (en az 8 karakter; sunucu tarafında güvenli şekilde saklanır, düz metin olarak tutulmaz)
-- E-posta adresi (yalnızca hesap oluştururken istenir; kayıt altına alınır ve yönetim panelinden görülebilir, ancak günlük girişte kullanılmaz)
+Oyunu oynamak için hesap oluşturmanız GEREKMEZ. Oyun; kullanıcı adı, şifre, e-posta veya benzeri kişisel kimlik bilgisi TOPLAMAZ ve sunucularımıza GÖNDERMEZ.
+Oyunu başlatırken belirlediğiniz kullanıcı adı yalnızca yerel kayıt dosyanızı tanımlamak için kullanılır ve cihazınızdan dışarı gönderilmez (gönüllü olarak katıldığınız Skor Tablosu hariç — bkz. 2.3).
 
 2.2 Oyun İlerleme Verisi
-Nakit bakiyeniz, envanteriniz, şirketleriniz, arsalarınız, çalışanlarınız, kredi durumunuz ve oyun günü gibi ilerleme verileriniz hesabınıza bağlı olarak bulutta saklanır. Bu sayede farklı bir cihazda giriş yaptığınızda kaldığınız yerden devam edebilirsiniz. Ayarlar ekranından buluta yedeklemeyi kapatabilirsiniz; bu durumda ilerlemeniz yalnızca kendi cihazınızda saklanır.
+Nakit bakiyeniz, envanteriniz, şirketleriniz, arsalarınız, çalışanlarınız, kredi durumunuz ve oyun günü gibi tüm ilerleme verileriniz YALNIZCA kendi bilgisayarınızda, oyunun yerel kayıt dosyasında saklanır. Bu veriler buluta yüklenmez ve cihazınızdan dışarı çıkmaz.
+Farklı bir cihazda oynamaya başlarsanız ilerlemeniz otomatik olarak taşınmaz; her cihazın kendi yerel kaydı ayrıdır. Kaydınızı başka bir cihaza taşımak isterseniz, kayıt dosyasını elle kopyalamanız gerekir.
 
 2.3 Skor Tablosu
-"En İyi Skorlar" ekranına katılmayı seçtiğinizde kullanıcı adınız, nakit bakiyeniz ve oyun gününüz, diğer tüm oyuncuların görebileceği herkese açık bir sıralamaya gönderilir. Bu bilgiler gönderildikten sonra başka oyuncular tarafından görülebilir hale gelir. Bu katılımı Ayarlar ekranından istediğiniz zaman kapatabilirsiniz.
-Gerçek adınızı ya da başka yerlerde kullandığınız kimliğinizi ifşa etmek istemiyorsanız, kullanıcı adınızı buna göre seçmenizi öneririz.
+"En İyi Skorlar" ekranına katılmayı seçtiğinizde (Ayarlar > Skor Gönderimi), oyunu başlatırken belirlediğiniz kullanıcı adınız, nakit bakiyeniz ve oyun gününüz, diğer tüm oyuncuların görebileceği herkese açık bir sıralamaya gönderilir. Bu bilgiler gönderildikten sonra başka oyuncular tarafından görülebilir hale gelir. Bu katılımı Ayarlar ekranından istediğiniz zaman kapatabilirsiniz.
+Gerçek adınızı ya da başka yerlerde kullandığınız kimliğinizi ifşa etmek istemiyorsanız, oyunu başlatırken kullanıcı adınızı buna göre seçmenizi öneririz.
+Skor tablosu GitHub'ın altyapısı (Gist) üzerinde barındırılır; bu nedenle GitHub'ın kendi gizlilik politikası da gönderilen bu veriler için geçerlidir.
 
 2.4 Destek Talepleri (Biletler)
-"Destek / Bilet" ekranından bir talep açtığınızda, kullanıcı adınız ve yazdığınız mesaj, geliştiricinin destek sisteminde kayıt altına alınır ve talebiniz yanıtlanana kadar saklanır. Bilet ekranındaki "Log Yükle" butonunu kullanırsanız, oyun içi geçmişiniz ve cihazınızdaki teknik hata kayıtları (uygulama günlüğü) da mesajınıza eklenir; bu tamamen isteğe bağlıdır, buton kullanılmadıkça bu bilgiler bilete eklenmez. Bilet içeriğine paylaştığınız her bilgiden siz sorumlusunuz; şifre, kimlik numarası gibi hassas bilgileri bilet mesajlarına yazmamanızı öneririz.
+"Destek / Bilet" ekranından bir talep açtığınızda, oyunu başlatırken belirlediğiniz kullanıcı adınız ve yazdığınız mesaj, geliştiricinin destek sisteminde (GitHub Issues) kayıt altına alınır ve talebiniz yanıtlanana kadar saklanır. Bilet ekranındaki "Log Yükle" butonunu kullanırsanız, oyun içi geçmişiniz ve cihazınızdaki teknik hata kayıtları (uygulama günlüğü) da mesajınıza eklenir; bu tamamen isteğe bağlıdır, buton kullanılmadıkça bu bilgiler bilete eklenmez. Bilet içeriğine paylaştığınız her bilgiden siz sorumlusunuz; şifre, kimlik numarası gibi hassas bilgileri bilet mesajlarına yazmamanızı öneririz.
 
-2.5 Şifre Sıfırlama Talepleri
-Şifrenizi unutursanız, oyunun giriş ekranındaki "Şifremi Unuttum" bağlantısı sizi web sitemizdeki bir forma yönlendirir. Bu formda istediğimiz kullanıcı adı ve e-posta adresi, talebinizi değerlendirip size yeni bir şifre bildirebilmemiz için üçüncü taraf bir form hizmeti (web3forms) üzerinden tarafımıza iletilir ve talebiniz sonuçlanana kadar saklanır.
-
-2.6 Yerel Cihaz Verileri
+2.5 Yerel Cihaz Verileri
 Aşağıdaki veriler yalnızca kendi bilgisayarınızda saklanır ve bize gönderilmez (2.4'te açıklanan "Log Yükle" butonuyla kendi isteğinizle bir bilete eklemediğiniz sürece):
-- Oturum bilgisi (tekrar giriş yapmadan devam edebilmeniz için)
+- Yerel kayıt dosyanız (nakit, envanter, şirketler, arsalar, çalışanlar vb.)
 - Yerel kayıt yedeği ve bilet geçmişiniz
-- Ses/müzik seviyesi, buluta yedekleme, skor gönderimi gibi tercihleriniz
+- Ses/müzik seviyesi, skor gönderimi, günün mesajı gibi tercihleriniz
 - Ekran okuyucu için tutulan "söylenen mesajlar" geçmişi
 - Uygulamanın teknik hata/olay kayıtlarının tutulduğu yerel günlük dosyası
 
 3. Verilerinizi Ne İçin Kullanıyoruz
-- Hesabınızı oluşturmak, doğrulamak ve korumak
-- İlerlemenizi cihazlar arasında senkronize etmek
-- Destek taleplerinizi ve şifre sıfırlama taleplerinizi yanıtlamak
+- Oyunun teknik olarak çalışmasını sağlamak (yerel kayıt, ayarlar vb.)
+- Destek taleplerinizi yanıtlamak
 - Skor tablosunu (yalnızca gönüllü katılımla) yürütmek
-- Oyunun teknik olarak çalışmasını sağlamak
-Verilerinizi reklam amacıyla kullanmıyor, üçüncü taraflara satmıyoruz.
+Verilerinizi reklam amacıyla kullanmıyor, üçüncü taraflara satmıyoruz. Oyun, hesap ve ilerleme verilerini sunucularımıza göndermez.
 
 4. Verileriniz Nerede Saklanıyor
-Hesap ve ilerleme verileriniz, geliştiricinin işlettiği bir bulut veritabanı altyapısında (PocketBase tabanlı bir sunucu) saklanır.
-Destek talepleriniz ve skor tablosu, GitHub'ın altyapısı üzerinde barındırılır; şifre sıfırlama talepleriniz web3forms üzerinden iletilir. Bu nedenle bu hizmetlerin kendi gizlilik politikaları da ilgili veriler için geçerlidir.
-Bu hizmetler oyunun çalışması için gereklidir; oyun internet bağlantısı olmadan hesap doğrulaması, bulut senkronu, destek veya skor tablosu özelliklerini kullanamaz.
+Oyun ilerlemeniz, ayarlarınız ve geçmişiniz YALNIZCA kendi cihazınızda saklanır.
+Gönüllü olarak katıldığınız Skor Tablosu ve açtığınız Destek Talepleri, GitHub'ın altyapısı (Gist / Issues) üzerinde barındırılır; bu nedenle GitHub'ın kendi gizlilik politikası da ilgili veriler için geçerlidir.
+Skor tablosu ve destek sistemi internet bağlantısı gerektirir. Oyunun kendisi (yerel kayıt, ticaret, şirketler, arsalar, çalışanlar vb.) internet bağlantısı olmadan tam olarak oynanabilir.
 
 5. Veri Güvenliği
-Şifreniz sunucu tarafında güvenli biçimde saklanır ve tarafımızca düz metin olarak görülemez. Yine de hiçbir internet hizmeti %100 güvenli değildir; şifrenizi başka hizmetlerle paylaşmamanızı ve tahmin edilmesi zor bir şifre seçmenizi öneririz.
+Oyun, hesap veya şifre toplamadığı için tarafımızca saklanan bir şifreniz yoktur. Yerel kayıt dosyanızın güvenliği (yedekleme, cihaz güvenliği vb.) tamamen sizin sorumluluğunuzdadır.
+Skor Tablosu'na gönderdiğiniz kullanıcı adı ve nakit bilgisi herkese açıktır; kişisel bilgi paylaşmamanızı öneririz.
 
-6. Verilerinizin Saklanma Süresi ve Hesap Silme
-İlerleme verileriniz, hesabınız aktif olduğu sürece saklanır. Hesabınızın veya verilerinizin silinmesini talep etmek için iletişim sayfamız üzerinden bize ulaşabilirsiniz. Skor tablosuna gönderilmiş kayıtlar herkese açık olduğu için silme talepleri makul süre içinde işleme alınır ancak önceden görülmüş/kopyalanmış kayıtlar üzerinde kontrolümüz olmayabilir.
+6. Verilerinizin Saklanma Süresi ve Silme
+Yerel kayıt dosyanız cihazınızda kaldığı sürece saklanır; silmek için oyun içindeki "Kayıtlı Oyunu Yükle" ekranından silebilir veya cihazınızdaki kayıt klasörünü elle temizleyebilirsiniz.
+Skor tablosuna gönderilmiş kayıtlar herkese açık olduğu için silme talepleri makul süre içinde işleme alınır ancak önceden görülmüş/kopyalanmış kayıtlar üzerinde kontrolümüz olmayabilir. Destek biletleri, talep sonuçlandıktan sonra makul bir süre içinde kapatılır.
+Silme talepleriniz için iletişim sayfamız üzerinden bize ulaşabilirsiniz.
 
 7. Haklarınız
-Bulunduğunuz ülkenin mevzuatına (örn. KVKK, GDPR) bağlı olarak verilerinize erişme, düzeltme, taşınmasını isteme ve silinmesini talep etme hakkına sahip olabilirsiniz. Bu taleplerinizi iletişim sayfamız (https://bilgisayar-xi.vercel.app/iletisim.html) üzerinden iletebilirsiniz.
+Bulunduğunuz ülkenin mevzuatına (örn. KVKK, GDPR) bağlı olarak, tarafımızca işlenen verilerinize ilişkin erişme, düzeltme ve silinmesini talep etme hakkına sahip olabilirsiniz. Oyun yerel çalıştığı ve hesap toplamadığı için bu hakların büyük kısmı zaten doğal olarak sizdedir (veriler yalnızca sizin cihazınızda). Skor tablosu ve destek biletleriyle ilgili taleplerinizi iletişim sayfamız (https://bilgisayar-xi.vercel.app/iletisim.html) üzerinden iletebilirsiniz.
 
 8. Politikada Değişiklik
 Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğunda oyun içi bir onay ekranı ile yeniden bilgilendirilir ve onayınız istenir.
@@ -65,63 +63,61 @@ Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğund
 Sorularınız için: https://bilgisayar-xi.vercel.app/iletisim.html veya oyun içindeki Destek / Bilet ekranı."
 "en:
 Privacy Policy — Karaborsa Simülasyonu
-Last updated: Wednesday, September 23, 2026
+Last updated: Sunday, September 27, 2026
 
 1. Scope
-This policy explains what data is collected, how it is used, and with whom it is shared when you use the Karaborsa Simülasyonu desktop game ("the Game") and its related web pages (e.g. the contact and forgot-password pages). By using the Game, you accept this policy.
+This policy explains what data is collected, how it is used, and with whom it is shared when you use the Karaborsa Simülasyonu desktop game ("the Game") and its related web pages (e.g. the contact page). By using the Game, you accept this policy.
 Developers: muhammed.ali 
 Contact: https://bilgisayar-xi.vercel.app/iletisim.html
 
 2. What Data We Collect
 
 2.1 Account Information
-You must create an account to play the Game. When you create an account, we collect:
-- Username (3-20 characters)
-- Password (at least 8 characters; stored securely server-side, never stored as plain text)
-- Email address (only requested when creating an account; recorded and viewable from the admin panel, but not used for everyday login)
+You do NOT need to create an account to play the Game. The Game does not collect or send to our servers any username, password, email, or similar personal identity information.
+The username you choose when launching the Game is used only to identify your local save file and does not leave your device (except for the Leaderboard you voluntarily opt in to — see 2.3).
 
 2.2 Game Progress Data
-Your cash balance, inventory, companies, land holdings, employees, loan status, and in-game day are stored in the cloud, tied to your account. This lets you continue where you left off when you log in on a different device. You can turn off cloud backup from the Settings screen; in that case your progress is stored only on your own device.
+All your progress data — cash balance, inventory, companies, land holdings, employees, loan status, in-game day, etc. — is stored ONLY on your own computer, in the game's local save file. This data is not uploaded to the cloud and does not leave your device.
+If you start playing on a different computer, your progress will not carry over automatically; each device has its own separate local save. If you want to move your save to another device, you must copy the save file manually.
 
 2.3 Leaderboard
-When you opt in to the "Top Scores" screen, your username, cash balance, and in-game day are sent to a public leaderboard visible to all other players. Once submitted, this information can be seen by other players. You can turn off this participation at any time from the Settings screen.
-If you do not want to reveal your real name or an identity you use elsewhere, we recommend choosing your username accordingly.
+When you opt in to the "Top Scores" screen (Settings > Score Submission), the username you chose when launching the Game, along with your cash balance and in-game day, is sent to a public ranking visible to all other players. Once submitted, this information can be seen by other players. You can turn off this participation at any time from the Settings screen.
+If you do not want to reveal your real name or an identity you use elsewhere, we recommend choosing your username accordingly when launching the Game.
+The leaderboard is hosted on GitHub's infrastructure (Gist); therefore GitHub's own privacy policy also applies to the data submitted there.
 
 2.4 Support Requests (Tickets)
-When you open a request from the "Support / Ticket" screen, your username and message are recorded in the developer's support system and kept until your request is resolved. If you use the "Upload Log" button on the ticket screen, your in-game history and the technical error logs on your device (application log) are also attached to your message; this is entirely optional and these are added only if you use that button. You are responsible for anything you share in a ticket; we recommend not writing sensitive information such as passwords or ID numbers in ticket messages.
+When you open a request from the "Support / Ticket" screen, the username you chose when launching the Game and your message are recorded in the developer's support system (GitHub Issues) and kept until your request is resolved. If you use the "Upload Log" button on the ticket screen, your in-game history and the technical error logs on your device (application log) are also attached to your message; this is entirely optional and these are added only if you use that button. You are responsible for anything you share in a ticket; we recommend not writing sensitive information such as passwords or ID numbers in ticket messages.
 
-2.5 Password Reset Requests
-If you forget your password, the "Forgot Password" link on the game's login screen takes you to a form on our website. The username and email address requested on this form are sent to us via a third-party form service (web3forms) so we can evaluate your request and provide you with a new password, and are kept until your request is resolved.
-
-2.6 Local Device Data
+2.5 Local Device Data
 The following data is stored only on your own computer and is not sent to us (unless you voluntarily attach it to a ticket via the "Upload Log" button described in 2.4):
-- Session information (so you can continue without logging in again)
+- Your local save file (cash, inventory, companies, land, employees, etc.)
 - Your local save backup and ticket history
-- Your preferences such as sound/music volume, cloud backup, and score submission
+- Your preferences such as sound/music volume, score submission, daily message
 - The "spoken messages" history kept for the screen reader
 - The local log file where the application's technical error/event records are kept
 
 3. What We Use Your Data For
-- Creating, verifying, and protecting your account
-- Synchronizing your progress across devices
-- Responding to your support requests and password reset requests
+- Making sure the Game works technically (local saves, settings, etc.)
+- Responding to your support requests
 - Running the leaderboard (only with voluntary participation)
-- Making sure the Game works technically
-We do not use your data for advertising purposes and do not sell it to third parties.
+We do not use your data for advertising purposes and do not sell it to third parties. The Game does not send account or progress data to our servers.
 
 4. Where Your Data Is Stored
-Your account and progress data are stored on a cloud database infrastructure operated by the developer (a PocketBase-based server).
-Your support requests and the leaderboard are hosted on GitHub's infrastructure; your password reset requests are transmitted via web3forms. Therefore, these services' own privacy policies also apply to the relevant data.
-These services are required for the Game to function; the Game cannot use account verification, cloud sync, support, or leaderboard features without an internet connection.
+Your game progress, settings, and history are stored ONLY on your own device.
+The Leaderboard you voluntarily opt in to and the Support Requests you open are hosted on GitHub's infrastructure (Gist / Issues); therefore GitHub's own privacy policy also applies to the relevant data.
+The leaderboard and support system require an internet connection. The Game itself (local save, trading, companies, land, employees, etc.) is fully playable without an internet connection.
 
 5. Data Security
-Your password is stored securely on the server side and cannot be viewed by us as plain text. Still, no internet service is 100% secure; we recommend not reusing your password on other services and choosing one that is hard to guess.
+Because the Game does not collect an account or password, we do not store any password for you. The security of your local save file (backups, device security, etc.) is entirely your responsibility.
+The username and cash information you submit to the Leaderboard is public; we recommend not sharing personal information.
 
-6. Data Retention and Account Deletion
-Your progress data is kept for as long as your account is active. You can contact us via our contact page to request deletion of your account or your data. Because leaderboard entries are public, deletion requests are processed within a reasonable time, but we may not have control over records that have already been viewed or copied by others.
+6. Data Retention and Deletion
+Your local save file is kept for as long as it remains on your device; you can delete it from the in-game "Load Saved Game" screen or by manually clearing the save folder on your device.
+Because leaderboard entries are public, deletion requests are processed within a reasonable time, but we may not have control over records that have already been viewed or copied by others. Support tickets are closed within a reasonable time after the request is resolved.
+You can contact us via our contact page for deletion requests.
 
 7. Your Rights
-Depending on the laws of your country (e.g. KVKK, GDPR), you may have the right to access, correct, request the transfer of, or request the deletion of your data. You can submit these requests via our contact page (https://bilgisayar-xi.vercel.app/iletisim.html).
+Depending on the laws of your country (e.g. KVKK, GDPR), you may have the right to access, correct, and request the deletion of data we process about you. Because the Game runs locally and collects no account, most of these rights already belong to you naturally (the data is only on your device). You can submit requests regarding the leaderboard and support tickets via our contact page (https://bilgisayar-xi.vercel.app/iletisim.html).
 
 8. Changes to This Policy
 We may update this policy from time to time. When significant changes are made, you will be informed again via an in-game confirmation screen and your consent will be requested.
