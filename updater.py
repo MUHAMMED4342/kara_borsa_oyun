@@ -66,6 +66,8 @@ import subprocess
 import appdirs
 import wx
 
+from i18n import t
+
 CURRENT_VERSION = "1.0.0"  
 VERSION_URL = "https://github.com/MUHAMMED4342/kara_borsa_oyun/raw/refs/heads/main/versiyon.txt"
 DOWNLOAD_URL = (
@@ -310,7 +312,7 @@ def check_for_update_async(ask_user_callback=None, on_no_update_callback=None) -
     bildirim vermek için doldurulur.
     """
     if not _is_frozen():
-        _notify_no_update(on_no_update_callback, "Güncelleme kontrolü yalnızca kurulu uygulamada çalışır.")
+        _notify_no_update(on_no_update_callback, t("update.checking_only_in_installed_app"))
         return
 
     _log("check_for_update_async baslatildi")
@@ -337,7 +339,7 @@ def _check_and_download(ask_user_callback=None, on_no_update_callback=None) -> N
     try:
         import requests
     except Exception:
-        _notify_no_update(on_no_update_callback, "Güncelleme kontrolü yapılamadı (ağ modülü eksik).")
+        _notify_no_update(on_no_update_callback, t("update.network_module_missing"))
         return
 
     try:
@@ -346,7 +348,7 @@ def _check_and_download(ask_user_callback=None, on_no_update_callback=None) -> N
         remote_version = resp.text.strip()
     except Exception as e:
         _log(f"versiyon.txt okunamadi: {e}")
-        _notify_no_update(on_no_update_callback, "Güncelleme sunucusuna ulaşılamadı. İnternet bağlantınızı kontrol edin.")
+        _notify_no_update(on_no_update_callback, t("update.server_unreachable"))
         return
 
     installed = get_installed_version()
@@ -354,7 +356,7 @@ def _check_and_download(ask_user_callback=None, on_no_update_callback=None) -> N
 
     if not remote_version or not _is_newer(remote_version, installed):
         _log("yeni surum yok, cikiliyor")
-        _notify_no_update(on_no_update_callback, f"Zaten en güncel sürümü kullanıyorsunuz ({installed}).")
+        _notify_no_update(on_no_update_callback, t("update.already_latest", version=installed))
         return
 
     if ask_user_callback:
@@ -416,8 +418,8 @@ def _download_with_progress(url: str, dest_path: str) -> bool:
     def _create_dialog():
         try:
             dlg = wx.ProgressDialog(
-                "Güncelleniyor",
-                "Yeni sürüm indiriliyor, lütfen bekleyin...",
+                t("update.progress_title"),
+                t("update.progress_message"),
                 maximum=100,
                 style=wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_ELAPSED_TIME,
             )
@@ -462,13 +464,13 @@ def _download_with_progress(url: str, dest_path: str) -> bool:
                     downloaded += len(chunk)
                     if total:
                         percent = min(100, int(downloaded * 100 / total))
-                        message = (
-                            f"İndiriliyor... {downloaded // 1024} KB / "
-                            f"{total // 1024} KB"
+                        message = t(
+                            "update.downloading_with_total",
+                            downloaded=downloaded // 1024, total=total // 1024,
                         )
                     else:
                         percent = 0
-                        message = f"İndiriliyor... {downloaded // 1024} KB"
+                        message = t("update.downloading_without_total", downloaded=downloaded // 1024)
                     wx.CallAfter(_update_dialog, percent, message)
     except Exception:
         wx.CallAfter(_destroy_dialog)
@@ -479,7 +481,7 @@ def _download_with_progress(url: str, dest_path: str) -> bool:
             pass
         return False
 
-    wx.CallAfter(_update_dialog, 100, "Tamamlandı")
+    wx.CallAfter(_update_dialog, 100, t("update.download_complete_status"))
     wx.CallAfter(_destroy_dialog)
     return True
 
@@ -500,8 +502,8 @@ def _notify_download_complete_and_close():
     try:
         dlg = wx.MessageDialog(
             None,
-            "Güncelleme indirildi. Uygulama şimdi kapanıp yeniden başlatılacak.",
-            "Güncelleme",
+            t("update.download_complete_body"),
+            t("update.title"),
             wx.OK | wx.ICON_INFORMATION,
         )
         dlg.ShowModal()
