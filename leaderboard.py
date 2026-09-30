@@ -6,6 +6,7 @@ GitHub Gist ile skor tablosu entegrasyonu.
 """
 
 import os
+import app_paths
 import sys
 import json
 import time
@@ -47,30 +48,33 @@ SCORE_FILE = "skorlar.json"
 def _get_appdata_dir() -> str:
     """
     Ayar (skor_ayarlari.json) ve log (skor_log.txt) dosyalarının
-    saklanacağı klasörü döndürür. Bunlar kullanıcının göreceği bir yer
-    değil (oyun klasörünü/masaüstünü kirletmemesi için), Windows'un
-    standart uygulama verisi klasörüne (%LOCALAPPDATA%) yazılır.
+    saklanacağı klasörü döndürür. Normal modda Windows'un standart
+    uygulama verisi klasörü (%LOCALAPPDATA%\\KaraborsaSimulasyonu, eski
+    davranış); taşınabilir modda oyunun kayıt klasörü (bkz. app_paths).
     token.txt buna dahil DEĞİL: o hâlâ kullanıcının kendi elle koyduğu
     exe'nin yanındaki klasörde aranıyor.
     """
-    appdata = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
-    if appdata:
-        base = os.path.join(appdata, "KaraborsaSimulasyonu")
+    if app_paths.is_portable():
+        base = app_paths.user_data_dir()
     else:
-        
-        base = os.path.join(os.path.expanduser("~"), ".karaborsa_simulasyonu")
+        appdata = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+        if appdata:
+            base = os.path.join(appdata, "KaraborsaSimulasyonu")
+        else:
+            base = os.path.join(os.path.expanduser("~"), ".karaborsa_simulasyonu")
     try:
         os.makedirs(base, exist_ok=True)
         return base
     except Exception:
-        
         return BASE_DIR
 
 
-APPDATA_DIR = _get_appdata_dir()
-SETTINGS_FILE = os.path.join(APPDATA_DIR, "skor_ayarlari.json")
-LOG_FILE = os.path.join(APPDATA_DIR, "skor_log.txt")
+def _settings_file() -> str:
+    return os.path.join(_get_appdata_dir(), "skor_ayarlari.json")
 
+
+def _log_file() -> str:
+    return os.path.join(_get_appdata_dir(), "skor_log.txt")
 
 
 _score_lock = threading.Lock()
@@ -88,7 +92,7 @@ def _log(msg: str) -> None:
     print(msg)
     try:
         with _log_lock:
-            with open(LOG_FILE, "a", encoding="utf-8") as f:
+            with open(_log_file(), "a", encoding="utf-8") as f:
                 f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}  {msg}\n")
     except Exception:
         
@@ -97,8 +101,8 @@ def _log(msg: str) -> None:
 
 def _load_settings() -> Dict:
     try:
-        if os.path.exists(SETTINGS_FILE):
-            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+        if os.path.exists(_settings_file()):
+            with open(_settings_file(), "r", encoding="utf-8") as f:
                 return json.load(f)
     except Exception as e:
         _log(f"[Hata] Ayarlar okunamadı: {e}")
@@ -107,7 +111,7 @@ def _load_settings() -> Dict:
 
 def _save_settings(settings: Dict) -> None:
     try:
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        with open(_settings_file(), "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False, indent=2)
     except Exception as e:
         _log(f"[Hata] Ayarlar kaydedilemedi: {e}")

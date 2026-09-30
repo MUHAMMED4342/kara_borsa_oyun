@@ -14,6 +14,10 @@ from game_data import (
     COMPANY_TYPES, CREDIT_TIERS, calculate_police_risk, INFORMANT_CONFIG,
     LAND_TYPES, EMPLOYEE_HIRE_FEE,
     EMPLOYEE_BASE_SALARY, EMPLOYEE_DAILY_MIN, EMPLOYEE_DAILY_MAX,
+    EMPLOYEE_HIRE_FEE_GROWTH, EMPLOYEE_MAX_EXPERIENCE_BONUS, SELL_COMMISSION,
+    INVENTORY_GAIN_PCT_SCALE, INVENTORY_GAIN_NEW_MAX_PRODUCTS,
+    INVENTORY_GAIN_NEW_VALUE_MIN, INVENTORY_GAIN_NEW_VALUE_MAX,
+    INVENTORY_BASE_CAPACITY, LAND_STORAGE_RATIO, WAREHOUSE_POLICE_VISIBILITY,
     load_names_from_file, load_cities_from_file, load_districts_from_file,
     tr_casefold, EVENT_TEXT_KEYS, category_display_name, product_display_name,
     land_type_display_name,
@@ -451,6 +455,24 @@ class GameState:
         )
         self.auction_current = None
 
+        # ARSA DEPOSU: {ürün_adı: adet}. Envanterden ayrı, ortak bir depo;
+        # kapasitesi sahip olunan arsaların alış fiyatına bağlıdır
+        # (bkz. get_warehouse_capacity). Eski kayıtlarda alan yoktur.
+        self.warehouse = self._load_warehouse(load_data)
+
+    def _load_warehouse(self, load_data) -> dict:
+        raw = (load_data or {}).get("warehouse") or {}
+        warehouse = {}
+        if isinstance(raw, dict):
+            for name, qty in raw.items():
+                try:
+                    qty = int(qty)
+                except (TypeError, ValueError):
+                    continue
+                if name in PRODUCTS and qty > 0:
+                    warehouse[name] = qty
+        return warehouse
+
     def _backfill_employee_defaults(self):
         """Eski kayıtlardan gelen adam kayıtlarında eksik alan varsa doldurur.
         NOT: Adamlar artık şirket kurmuyor; eski kayıtlarda kalmış olabilecek
@@ -584,6 +606,15 @@ class GameState:
         
         land = self.lands[land_index]
         land_type = land["type"]
+
+        # Bu arsa satılırsa depo kapasitesi düşer; depodaki mal yeni
+        # kapasiteye sığmıyorsa satış engellenir (önce depodan alınmalı).
+        remaining_capacity = self.get_warehouse_capacity(exclude_land_index=land_index)
+        stored_value = self.get_warehouse_value()
+        if stored_value > remaining_capacity + 0.01:
+            return False, t("state.land_sell_blocked_storage",
+                            excess=format_tl(stored_value - remaining_capacity))
+
         current_price = self.get_land_price(land_type)
         
         commission = current_price * 0.05
@@ -848,6 +879,9 @@ class GameState:
                 parts.append(f"{category_display_name(category)}: " + ", ".join(owned))
         if not has_item:
             parts.append(t("state.inventory_empty"))
+        parts.append(t("state.inventory_capacity_line",
+                       used=format_tl(self.get_inventory_value()),
+                       cap=format_tl(self.get_inventory_capacity())))
         
         if self.lands:
             parts.append(t("state.your_lands_header"))
@@ -876,10 +910,84 @@ class GameState:
         
         self.fluctuate_land_prices()
 
+    # ------------------------------------------------------------------
+    # ENVANTER KAPASİTESİ ve ARSA DEPOSU
+    # ------------------------------------------------------------------
+    def get_inventory_value(self) -> float:
+        """Ana envanterdeki malların güncel piyasa değeri."""
+        return sum(qty * self.prices.get(name, 0.0) for name, qty in self.inventory.items() if qty > 0)
+
+    def get_inventory_capacity(self) -> float:
+        return float(INVENTORY_BASE_CAPACITY)
+
+    def get_inventory_free_capacity(self) -> float:
+        return self.get_inventory_capacity() - self.get_inventory_value()
+
+    def get_warehouse_capacity(self, exclude_land_index: int = None) -> float:
+        """Sahip olunan arsaların ALIŞ fiyatlarının toplamı x
+        LAND_STORAGE_RATIO. (Alış fiyatı kullanılır: arsa piyasası
+        dalgalansa da depo kapasitesi sabit ve öngörülebilir kalır.)"""
+        total = 0.0
+        for i, land in enumerate(self.lands):
+            if exclude_land_index is not None and i == exclude_land_index:
+                continue
+            total += float(land.get("purchase_price", 0.0))
+        return total * LAND_STORAGE_RATIO
+
+    def get_warehouse_value(self) -> float:
+        return sum(qty * self.prices.get(name, 0.0) for name, qty in self.warehouse.items() if qty > 0)
+
+    def get_warehouse_free_capacity(self) -> float:
+        return self.get_warehouse_capacity() - self.get_warehouse_value()
+
+    def max_deposit_quantity(self, name: str) -> int:
+        """Bu üründen depoya en fazla kaç adet konabilir (envanterdeki
+        adet ve depoda kalan boş kapasiteyle sınırlı)."""
+        price = self.prices.get(name, 0.0)
+        if price <= 0:
+            return 0
+        free = self.get_warehouse_free_capacity()
+        if free <= 0:
+            return 0
+        return max(0, min(self.inventory.get(name, 0), int(free // price)))
+
+    def deposit_to_warehouse(self, name: str, quantity: int) -> tuple:
+        if quantity <= 0:
+            return False, t("common.enter_valid_quantity")
+        if not self.lands:
+            return False, t("state.warehouse_no_land")
+        if self.inventory.get(name, 0) < quantity:
+            return False, t("state.no_stock")
+        if quantity > self.max_deposit_quantity(name):
+            return False, t("state.warehouse_full",
+                            free=format_tl(max(0.0, self.get_warehouse_free_capacity())),
+                            max_qty=self.max_deposit_quantity(name))
+        self.inventory[name] -= quantity
+        self.warehouse[name] = self.warehouse.get(name, 0) + quantity
+        return True, t("state.warehouse_deposited", qty=quantity, name=product_display_name(name))
+
+    def withdraw_from_warehouse(self, name: str, quantity: int) -> tuple:
+        """Depodan envantere geri alır. Ana envanter kapasitesine
+        BAKMAZ (kapasite sadece yeni alımı sınırlar) - böylece oyuncu
+        kendi malını asla depoda mahsur bırakılmaz."""
+        if quantity <= 0:
+            return False, t("common.enter_valid_quantity")
+        if self.warehouse.get(name, 0) < quantity:
+            return False, t("state.warehouse_not_enough")
+        self.warehouse[name] -= quantity
+        if self.warehouse[name] <= 0:
+            del self.warehouse[name]
+        self.inventory[name] = self.inventory.get(name, 0) + quantity
+        return True, t("state.warehouse_withdrawn", qty=quantity, name=product_display_name(name))
+
     def buy_bulk(self, name: str, quantity: int) -> tuple:
         total_price = self.prices[name] * quantity
         if self.cash < total_price:
             return False, 0, t("state.insufficient_balance")
+        free = self.get_inventory_free_capacity()
+        if total_price > free:
+            max_qty = max(0, int(free // self.prices[name])) if self.prices[name] > 0 else 0
+            return False, 0, t("state.inventory_full", free=format_tl(max(0.0, free)), max_qty=max_qty)
         self.cash -= total_price
         self.inventory[name] += quantity
 
@@ -890,7 +998,9 @@ class GameState:
     def sell_bulk(self, name: str, quantity: int) -> tuple:
         if self.inventory.get(name, 0) < quantity:
             return False, 0, t("state.no_stock")
-        total_price = self.prices[name] * quantity
+        # Satışta piyasa fiyatından SELL_COMMISSION kadar komisyon kesilir
+        # (alışta kesinti yok). Listede görünen fiyat alış fiyatıdır.
+        total_price = round(self.prices[name] * quantity * (1 - SELL_COMMISSION), 2)
         self.inventory[name] -= quantity
         self.cash += total_price
         self.total_crime += total_price
@@ -1014,7 +1124,9 @@ class GameState:
         return list(ACTIVE_CITIES)
 
     def get_employee_hire_cost(self) -> float:
-        return float(EMPLOYEE_HIRE_FEE)
+        # Her mevcut çalışan bir sonraki adamın ücretini artırır
+        # (bkz. game_data.EMPLOYEE_HIRE_FEE_GROWTH).
+        return float(round(EMPLOYEE_HIRE_FEE * (1 + EMPLOYEE_HIRE_FEE_GROWTH * len(self.employees))))
 
     def get_employee_salary(self) -> float:
         return float(EMPLOYEE_BASE_SALARY)
@@ -1093,7 +1205,7 @@ class GameState:
             e["days_active"] += 1
 
             
-            experience_bonus = min(0.5, e["days_active"] / 200)
+            experience_bonus = min(EMPLOYEE_MAX_EXPERIENCE_BONUS, e["days_active"] / 200)
             gross = round(random.uniform(EMPLOYEE_DAILY_MIN, EMPLOYEE_DAILY_MAX) * (1 + experience_bonus), 2)
 
             self.cash += gross
@@ -1333,7 +1445,7 @@ class GameState:
             if qty <= 0:
                 continue
             price = self.prices.get(name, 0)
-            earned = round(price * qty, 2)
+            earned = round(price * qty * (1 - SELL_COMMISSION), 2)
             total_earned += earned
             total_items += qty
             self.inventory[name] = 0
@@ -1845,6 +1957,8 @@ class GameState:
         for category in ("Karanlık Maddeler", "Mühimmat & Silahlar"):
             for name in PRODUCT_CATEGORIES.get(category, []):
                 total += self.inventory.get(name, 0) * self.prices.get(name, 0.0)
+                total += (self.warehouse.get(name, 0) * self.prices.get(name, 0.0)
+                          * WAREHOUSE_POLICE_VISIBILITY)
         return total
 
     def update_police_heat(self) -> None:
@@ -1886,6 +2000,8 @@ class GameState:
 
         for name, qty in self.inventory.items():
             total += qty * self.prices.get(name, 0.0)
+
+        total += self.get_warehouse_value()
 
         for c in self.companies:
             company_data = COMPANY_TYPES.get(c.get("type"), {})
@@ -1953,21 +2069,38 @@ class GameState:
             
             
             category = event["category"]
-            pct = random.uniform(event["min_pct"], event["max_pct"])
+            raw_pct = random.uniform(event["min_pct"], event["max_pct"])
             total_gained = 0
+            not_held = []
             for name in PRODUCT_CATEGORIES[category]:
                 qty = self.inventory.get(name, 0)
                 if qty > 0:
-                    gained = max(1, int(round(qty * pct)))
+                    # Stoğu olan ürün: stoğun ölçeklenmiş yüzdesi kadar,
+                    # "en az 1" YOK (kayıp olaylarıyla aynı yuvarlama).
+                    gained = int(round(qty * raw_pct * INVENTORY_GAIN_PCT_SCALE))
+                    if gained > 0:
+                        self.inventory[name] = qty + gained
+                        total_gained += gained
                 else:
-                    price = self.prices.get(name) or PRODUCTS.get(name, {}).get("base_price", 500)
-                    
-                    
-                    
-                    baseline_value = random.uniform(300, 1500) * (pct / event["max_pct"])
-                    gained = max(1, int(round(baseline_value / max(price, 1))))
-                self.inventory[name] = qty + gained
-                total_gained += gained
+                    not_held.append(name)
+
+            # Stoğu olmayan ürünlerden en fazla birkaçına küçük bir değer
+            # kadar mal. Değere sığmayan pahalı ürünler (Bitcoin, Elmas
+            # vb.) elenir; eskiden bunlara da 1 adet verilirdi.
+            baseline_value = random.uniform(
+                INVENTORY_GAIN_NEW_VALUE_MIN, INVENTORY_GAIN_NEW_VALUE_MAX
+            ) * (raw_pct / event["max_pct"])
+            affordable = [
+                n for n in not_held
+                if max(self.prices.get(n) or PRODUCTS.get(n, {}).get("base_price", 500), 1) <= baseline_value
+            ]
+            random.shuffle(affordable)
+            for name in affordable[:INVENTORY_GAIN_NEW_MAX_PRODUCTS]:
+                price = max(self.prices.get(name) or PRODUCTS.get(name, {}).get("base_price", 500), 1)
+                gained = int(baseline_value / price)
+                if gained > 0:
+                    self.inventory[name] = self.inventory.get(name, 0) + gained
+                    total_gained += gained
             if total_gained == 0:
                 return event_zero_message_text(event) or t("state.zero_no_gain", name=event_display_name(event))
             return event_message_text(event, category=category_display_name(category), count=total_gained)

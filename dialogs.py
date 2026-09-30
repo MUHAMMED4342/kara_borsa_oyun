@@ -9,7 +9,7 @@ import webbrowser
 from game_data import (
     COMPANY_TYPES, LAND_TYPES, EMPLOYEE_HIRE_FEE, EMPLOYEE_BASE_SALARY, INFORMANT_CONFIG,
     land_type_display_name, land_type_description, company_type_display_name, company_type_description,
-    AUCTION_ITEMS, auction_item_display_name,
+    AUCTION_ITEMS, auction_item_display_name, product_display_name,
 )
 from accessibility_helper import speak as _tts_speak
 from history_log import log_history
@@ -25,6 +25,7 @@ import leaderboard
 from leaderboard import get_leaderboard, get_gist_content
 
 import ticket_manager
+import app_paths
 import settings_manager
 import app_log
 import updater
@@ -245,8 +246,10 @@ class LandManagementDialog(wx.Dialog):
         btn_sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         self.buy_btn = wx.Button(panel, label=t("ui.buy"))
         self.sell_btn = wx.Button(panel, label=t("ui.sell"))
+        self.warehouse_btn = wx.Button(panel, label=t("land.warehouse_btn"))
         btn_sizer1.Add(self.buy_btn, 0, wx.ALL, 5)
         btn_sizer1.Add(self.sell_btn, 0, wx.ALL, 5)
+        btn_sizer1.Add(self.warehouse_btn, 0, wx.ALL, 5)
         sizer.Add(btn_sizer1, 0, wx.ALIGN_CENTER, 5)
 
         info_note = wx.StaticText(panel, label=t("land.loan_note"))
@@ -264,6 +267,7 @@ class LandManagementDialog(wx.Dialog):
     def _bind_events(self):
         self.buy_btn.Bind(wx.EVT_BUTTON, self.on_buy_land)
         self.sell_btn.Bind(wx.EVT_BUTTON, self.on_sell_land)
+        self.warehouse_btn.Bind(wx.EVT_BUTTON, self.on_warehouse)
         self.done_btn.Bind(wx.EVT_BUTTON, lambda e: self.EndModal(wx.ID_OK))
         self.land_list.Bind(wx.EVT_LISTBOX, self.on_land_select)
         self.market_list.Bind(wx.EVT_LISTBOX, self.on_market_select)
@@ -297,10 +301,20 @@ class LandManagementDialog(wx.Dialog):
         total_land_value = sum(self.state.get_land_price(land["type"]) for land in self.state.lands)
         status = t("land.status_summary", count=len(self.state.lands),
                     value=f"{total_land_value:,.0f}", cash=f"{self.state.cash:,.0f}")
+        status += "\n" + t("land.warehouse_status",
+                          used=f"{self.state.get_warehouse_value():,.0f}",
+                          cap=f"{self.state.get_warehouse_capacity():,.0f}")
         self.status_text.SetValue(status)
 
         has_land = len(self.state.lands) > 0
         self.sell_btn.Enable(has_land)
+
+    def on_warehouse(self, event):
+        dlg = WarehouseDialog(self, self.state)
+        dlg.ShowModal()
+        dlg.Destroy()
+        self._update_ui()
+        self.parent.auto_save()
 
     def on_land_select(self, event):
         idx = self.land_list.GetSelection()
@@ -353,6 +367,161 @@ class LandManagementDialog(wx.Dialog):
             if success:
                 self._update_ui()
                 self.parent.auto_save()
+
+
+class WarehouseDialog(wx.Dialog):
+    """Arsa deposu: ana envanterle depo arasında mal taşır. Depodaki mal
+    ana ekrandaki envanterde görünmez; kapasite sahip olunan arsaların
+    alış fiyatına bağlıdır (bkz. GameState.get_warehouse_capacity)."""
+
+    def __init__(self, parent, state):
+        super().__init__(parent, title=t("warehouse.title"), size=(620, 520))
+        self.state = state
+        self._names = []
+        self._last_status = None
+        self._pending_speech = None
+        self._build_ui()
+        self._bind_events()
+        self._update_ui()
+        self.CenterOnParent()
+        speak(t("warehouse.title"))
+
+    def _build_ui(self):
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        title = wx.StaticText(panel, label=t("warehouse.header"))
+        title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        sizer.Add(title, 0, wx.ALL | wx.CENTER, 10)
+
+        self.status_text = wx.TextCtrl(panel, style=wx.TE_READONLY | wx.TE_MULTILINE)
+        self.status_text.SetMinSize((500, 70))
+        sizer.Add(self.status_text, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
+
+        sizer.Add(wx.StaticText(panel, label=t("warehouse.product_list")), 0, wx.LEFT | wx.TOP, 10)
+        self.product_list = wx.ListBox(panel, style=wx.LB_SINGLE)
+        self.product_list.SetMinSize((500, 200))
+        sizer.Add(self.product_list, 1, wx.EXPAND | wx.ALL, 10)
+
+        qty_row = wx.BoxSizer(wx.HORIZONTAL)
+        qty_row.Add(wx.StaticText(panel, label=t("warehouse.qty_label")), 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+        self.qty_spin = wx.SpinCtrl(panel, min=1, max=10000000, initial=1)
+        qty_row.Add(self.qty_spin, 0)
+        sizer.Add(qty_row, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+
+        btn_row = wx.BoxSizer(wx.HORIZONTAL)
+        self.deposit_btn = wx.Button(panel, label=t("warehouse.deposit"))
+        self.deposit_all_btn = wx.Button(panel, label=t("warehouse.deposit_all"))
+        self.withdraw_btn = wx.Button(panel, label=t("warehouse.withdraw"))
+        self.withdraw_all_btn = wx.Button(panel, label=t("warehouse.withdraw_all"))
+        for b in (self.deposit_btn, self.deposit_all_btn, self.withdraw_btn, self.withdraw_all_btn):
+            btn_row.Add(b, 0, wx.ALL, 4)
+        sizer.Add(btn_row, 0, wx.ALIGN_CENTER)
+
+        self.close_btn = wx.Button(panel, label=t("common.close"))
+        sizer.Add(self.close_btn, 0, wx.ALL | wx.CENTER, 10)
+
+        panel.SetSizer(sizer)
+
+    def _bind_events(self):
+        self.deposit_btn.Bind(wx.EVT_BUTTON, lambda e: self._move("deposit", False))
+        self.deposit_all_btn.Bind(wx.EVT_BUTTON, lambda e: self._move("deposit", True))
+        self.withdraw_btn.Bind(wx.EVT_BUTTON, lambda e: self._move("withdraw", False))
+        self.withdraw_all_btn.Bind(wx.EVT_BUTTON, lambda e: self._move("withdraw", True))
+        self.close_btn.Bind(wx.EVT_BUTTON, lambda e: self.EndModal(wx.ID_OK))
+        self.product_list.Bind(wx.EVT_LISTBOX, self.on_select)
+        self.Bind(wx.EVT_CLOSE, lambda e: self.EndModal(wx.ID_OK))
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_key)
+
+    def on_key(self, event):
+        if event.GetKeyCode() == wx.WXK_ESCAPE:
+            self.EndModal(wx.ID_OK)
+            return
+        event.Skip()
+
+    def _selected_name(self):
+        idx = self.product_list.GetSelection()
+        if idx == wx.NOT_FOUND or idx >= len(self._names):
+            return None
+        return self._names[idx]
+
+    def _line_for(self, name):
+        return t("warehouse.list_line", name=product_display_name(name),
+                 inv=self.state.inventory.get(name, 0),
+                 stored=self.state.warehouse.get(name, 0),
+                 price=format_tl(self.state.prices.get(name, 0.0)))
+
+    def _update_ui(self, keep_name=None):
+        """Ekranı günceller. Liste/durum kutusu gereksiz yere yeniden
+        oluşturulmaz (Clear/Append/SetValue NVDA'ya çok sayıda erişilebilirlik
+        olayı gönderip söylenen mesajı kesebilir); sadece değişen metinler
+        yerinde güncellenir, ürün kümesi değiştiyse liste yeniden kurulur."""
+        st = self.state
+        status = t(
+            "warehouse.status",
+            inv_used=format_tl(st.get_inventory_value()), inv_cap=format_tl(st.get_inventory_capacity()),
+            wh_used=format_tl(st.get_warehouse_value()), wh_cap=format_tl(st.get_warehouse_capacity()),
+        )
+        if status != self._last_status:
+            self.status_text.SetValue(status)
+            self._last_status = status
+
+        names = [n for n in st.prices
+                 if st.inventory.get(n, 0) > 0 or st.warehouse.get(n, 0) > 0]
+
+        if names and names == self._names:
+            selected = self.product_list.GetSelection()
+            for i, n in enumerate(names):
+                line = self._line_for(n)
+                if self.product_list.GetString(i) != line:
+                    self.product_list.SetString(i, line)
+            if selected != wx.NOT_FOUND and self.product_list.GetSelection() != selected:
+                self.product_list.SetSelection(selected)
+            return
+
+        self._names = names
+        self.product_list.Clear()
+        for n in self._names:
+            self.product_list.Append(self._line_for(n))
+
+        if self._names:
+            idx = self._names.index(keep_name) if keep_name in self._names else 0
+            self.product_list.SetSelection(idx)
+
+    def on_select(self, event):
+        name = self._selected_name()
+        if name:
+            speak(self._line_for(name))
+
+    def _move(self, direction, move_all):
+        name = self._selected_name()
+        if not name:
+            speak(t("warehouse.select_product"))
+            return
+
+        if direction == "deposit":
+            qty = self.state.max_deposit_quantity(name) if move_all else self.qty_spin.GetValue()
+            if move_all and qty <= 0:
+                # Tümünü koymak istendi ama hiç sığmıyor: nedenini
+                # deposit_to_warehouse'un mesajı söylesin.
+                qty = max(1, min(self.state.inventory.get(name, 0), 1))
+            success, msg = self.state.deposit_to_warehouse(name, qty)
+        else:
+            qty = self.state.warehouse.get(name, 0) if move_all else self.qty_spin.GetValue()
+            if move_all and qty <= 0:
+                qty = 1
+            success, msg = self.state.withdraw_from_warehouse(name, qty)
+
+        # Başarısızsa (depo dolu vb.) hiçbir şey değişmediği için ekran
+        # yeniden çizilmez. Mesaj, olası erişilebilirlik olaylarının
+        # ardından, kısa bir gecikmeyle söylenir ki NVDA tarafından
+        # kesilmesin.
+        if success:
+            self._update_ui(keep_name=name)
+        self._speak_soon(msg)
+
+    def _speak_soon(self, text, delay_ms=200):
+        self._pending_speech = wx.CallLater(delay_ms, speak, text)
 
 
 TERMS_VERSION = "1.0"
@@ -504,7 +673,7 @@ class SettingsDialog(wx.Dialog):
     "işaretli / işaretsiz" durumunu kendisi anons ediyor."""
 
     def __init__(self, parent=None):
-        super().__init__(parent, title=t("settings.title"), size=(420, 560))
+        super().__init__(parent, title=t("settings.title"), size=(420, 640))
         self.audio = AudioManager()
         self._last_vol_speak_time = 0.0
         self._build_ui()
@@ -545,6 +714,13 @@ class SettingsDialog(wx.Dialog):
         self.btn_check_update = wx.Button(panel, label=t("settings.check_update_btn"))
         outer.Add(self.btn_check_update, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
 
+        self.btn_portable = wx.Button(
+            panel,
+            label=t("settings.portable_disable_btn") if app_paths.is_portable()
+            else t("settings.portable_enable_btn"),
+        )
+        outer.Add(self.btn_portable, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
         outer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 15)
 
         self.music_volume_label = wx.StaticText(
@@ -582,6 +758,7 @@ class SettingsDialog(wx.Dialog):
         self.cb_typing_sound.Bind(wx.EVT_CHECKBOX, self.on_toggle_typing_sound)
         self.cb_auto_update.Bind(wx.EVT_CHECKBOX, self.on_toggle_auto_update)
         self.btn_check_update.Bind(wx.EVT_BUTTON, self.on_check_update_now)
+        self.btn_portable.Bind(wx.EVT_BUTTON, self.on_toggle_portable)
         self.music_slider.Bind(wx.EVT_SLIDER, self.on_music_slider)
         self.sfx_slider.Bind(wx.EVT_SLIDER, self.on_sfx_slider)
         self.btn_close.Bind(wx.EVT_BUTTON, self.on_close_dialog)
@@ -642,6 +819,44 @@ class SettingsDialog(wx.Dialog):
         updater.check_for_update_async(
             ask_user_callback=_ask_update_confirmation,
             on_no_update_callback=_on_no_update,
+        )
+
+    def on_toggle_portable(self, event):
+        """Normal <-> taşınabilir mod geçişi. Her iki yönde de önce
+        onay istenir; varsayılan (Enter/Esc) seçenek İPTALdir."""
+        going_portable = not app_paths.is_portable()
+        body_key = ("settings.portable_confirm_body" if going_portable
+                    else "settings.portable_disable_confirm_body")
+        dlg = wx.MessageDialog(
+            self, t(body_key), t("settings.portable_confirm_title"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
+        dlg.SetYesNoLabels(t("settings.portable_confirm_yes"), t("settings.portable_confirm_no"))
+        speak(t(body_key))
+        result = dlg.ShowModal()
+        dlg.Destroy()
+        if result != wx.ID_YES:
+            speak(t("settings.portable_cancelled_speak"))
+            return
+
+        if going_portable:
+            ok, err = app_paths.enable_portable()
+        else:
+            ok, err = app_paths.disable_portable()
+
+        if not ok:
+            wx.MessageBox(t("settings.portable_failed_body", error=err),
+                          t("menu.unexpected_error_title"), wx.OK | wx.ICON_ERROR)
+            speak(t("settings.portable_failed_speak"))
+            return
+
+        settings_manager.reload_paths()
+        i18n.refresh_paths()
+        done_key = "settings.portable_enabled_body" if going_portable else "settings.portable_disabled_body"
+        wx.MessageBox(t(done_key), t("settings.portable_confirm_title"), wx.OK | wx.ICON_INFORMATION)
+        speak(t(done_key))
+        self.btn_portable.SetLabel(
+            t("settings.portable_disable_btn") if going_portable else t("settings.portable_enable_btn")
         )
 
     def _throttled_speak(self, text):
@@ -2950,6 +3165,7 @@ class TicketsDialog(wx.Dialog):
         self.tickets = []
         self.selected_ticket = None
         self._busy = False
+        self._reply_locked_text = None
 
         self._build_ui()
         self._bind_events()
@@ -3015,8 +3231,25 @@ class TicketsDialog(wx.Dialog):
         event.Skip()
 
     def _set_detail_controls_enabled(self, enabled: bool):
+        # Açık bilet: yazılabilir alan + Yanıtla düğmesi. Yükleniyor /
+        # hata / bilet seçili değil: ikisi de kapalı.
+        self.reply_ctrl.SetEditable(True)
         self.reply_ctrl.Enable(enabled)
         self.reply_btn.Enable(enabled)
+        if self._reply_locked_text is not None and self.reply_ctrl.GetValue() == self._reply_locked_text:
+            self.reply_ctrl.SetValue("")
+        self._reply_locked_text = None
+
+    def _set_reply_closed(self):
+        """Kapalı bilet: yanıt alanı SALT OKUNUR ve içinde bilgi metni
+        var; alan etkin (odaklanabilir) kalır ki ekran okuyucu metni
+        okuyabilsin. Yanıtla düğmesi kapalıdır."""
+        notice = t("tickets.closed_reply_notice")
+        self._reply_locked_text = notice
+        self.reply_ctrl.Enable(True)
+        self.reply_ctrl.SetValue(notice)
+        self.reply_ctrl.SetEditable(False)
+        self.reply_btn.Disable()
 
     # -- Bilet listesi -----------------------------------------------
 
@@ -3031,11 +3264,45 @@ class TicketsDialog(wx.Dialog):
             return
 
         for tk in self.tickets:
-            state_label = t("tickets.state_closed") if tk.get("state") == "closed" else t("tickets.state_open")
-            self.ticket_list.Append(t("tickets.list_line", number=tk['number'], title=tk.get('title', ''), state=state_label))
+            self.ticket_list.Append(self._ticket_line(tk))
 
         wx.CallAfter(self.ticket_list.SetSelection, 0)
         wx.CallAfter(self.on_select_ticket, None)
+        self._refresh_states_in_background()
+
+    def _ticket_line(self, tk):
+        state_label = t("tickets.state_closed") if tk.get("state") == "closed" else t("tickets.state_open")
+        return t("tickets.list_line", number=tk['number'], title=tk.get('title', ''), state=state_label)
+
+    def _update_ticket_state(self, ticket_number, state):
+        """GitHub'dan gelen güncel durumu listeye yansıtır. Yerel kayıt
+        eski durumu ('open') tuttuğu için kapatılmış biletler listede
+        açık görünüyordu."""
+        if not self:  # pencere kapandıysa
+            return
+        for i, tk in enumerate(self.tickets):
+            if tk.get("number") == ticket_number and tk.get("state") != state:
+                tk["state"] = state
+                selected = self.ticket_list.GetSelection()
+                self.ticket_list.SetString(i, self._ticket_line(tk))
+                if selected != wx.NOT_FOUND:
+                    self.ticket_list.SetSelection(selected)
+                break
+
+    def _refresh_states_in_background(self):
+        to_check = [tk["number"] for tk in self.tickets if tk.get("state") != "closed"]
+        if not to_check:
+            return
+
+        def worker():
+            for number in to_check:
+                try:
+                    thread = ticket_manager.fetch_ticket_thread(number)
+                except Exception:
+                    continue
+                wx.CallAfter(self._update_ticket_state, number, thread.get("state"))
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def on_new_ticket(self, event):
         dlg = NewTicketDialog(self, self.username, self.audio, self.extra_info)
@@ -3092,9 +3359,12 @@ class TicketsDialog(wx.Dialog):
         self.thread_text.SetValue("\n".join(lines).strip())
 
         is_closed = thread.get("state") == "closed"
-        self._set_detail_controls_enabled(not is_closed)
+        self._update_ticket_state(ticket_number, thread.get("state"))
         if is_closed:
+            self._set_reply_closed()
             self.thread_text.AppendText(t("tickets.closed_notice"))
+        else:
+            self._set_detail_controls_enabled(True)
 
         comment_count = len(thread.get("comments", []))
         ticket_manager.mark_ticket_seen(self.username, ticket_number, comment_count)

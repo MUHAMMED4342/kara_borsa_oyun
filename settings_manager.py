@@ -2,11 +2,11 @@
 settings_manager.py
 --------------------
 Oyunun HESABA DEĞİL, bu CİHAZA özel ayarlarını appdata klasöründeki
-settings.json dosyasında saklar (ör. buluta yedeklemeyi bu cihazda
-kapatmak - hesap başka bir cihazda hâlâ yedeklenebilir).
+settings.json dosyasında saklar (ör. ses seviyesi, günün mesajı).
 
-save_manager, auth_manager ve ticket_manager ile AYNI appdirs
-klasörünü paylaşır. Bu yüzden buradaki dosya adı
+save_manager ve ticket_manager ile AYNI klasörü paylaşır (normal modda
+appdirs, taşınabilir modda oyunun yanındaki KaraborsaData - bkz.
+app_paths). Bu yüzden buradaki dosya adı
 save_manager._RESERVED_SAVE_FILENAMES listesine de eklenmiştir -
 yoksa save_manager.list_saves() bu dosyayı sahte bir oyun kaydıymış
 gibi listeye ekler.
@@ -14,26 +14,41 @@ gibi listeye ekler.
 
 import os
 import json
-import appdirs
+import app_paths
 
 
-APP_NAME = "KaraborsaSimulasyonu"
-APP_AUTHOR = "Karaborsa"
-SETTINGS_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
+APP_NAME = app_paths.APP_NAME
+APP_AUTHOR = app_paths.APP_AUTHOR
 SETTINGS_FILENAME = "settings.json"
-SETTINGS_PATH = os.path.join(SETTINGS_DIR, SETTINGS_FILENAME)
 
 _DEFAULTS = {
-    "cloud_backup_enabled": True,
     "daily_message_enabled": True,
     "music_volume": 0.5,
     "sfx_volume": 0.8,
     "typing_sound_enabled": True,
     "auto_update_check_enabled": True,
     "terms_accepted_version": "",
+    "language": "",
 }
 
 _cache = None
+
+
+def _settings_dir() -> str:
+    # Taşınabilir/normal mod değişince yol da değişir; bu yüzden
+    # modül yüklenirken değil, her kullanımda hesaplanır.
+    return app_paths.user_data_dir(APP_NAME, APP_AUTHOR)
+
+
+def _settings_path() -> str:
+    return os.path.join(_settings_dir(), SETTINGS_FILENAME)
+
+
+def reload_paths() -> None:
+    """Mod değiştikten sonra önbelleği atar; sonraki okuma/yazma yeni
+    konumu kullanır."""
+    global _cache
+    _cache = None
 
 
 def _load() -> dict:
@@ -43,8 +58,8 @@ def _load() -> dict:
 
     data = dict(_DEFAULTS)
     try:
-        if os.path.exists(SETTINGS_PATH):
-            with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+        if os.path.exists(_settings_path()):
+            with open(_settings_path(), "r", encoding="utf-8") as f:
                 on_disk = json.load(f)
             if isinstance(on_disk, dict):
                 data.update(on_disk)
@@ -57,25 +72,11 @@ def _load() -> dict:
 
 def _save() -> None:
     try:
-        os.makedirs(SETTINGS_DIR, exist_ok=True)
-        with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+        os.makedirs(_settings_dir(), exist_ok=True)
+        with open(_settings_path(), "w", encoding="utf-8") as f:
             json.dump(_cache, f, indent=2, ensure_ascii=False)
     except Exception as e:
         print(f"[Ayarlar] settings.json yazılamadı: {e}")
-
-
-def is_cloud_backup_enabled() -> bool:
-    """False ise, bu cihazda oyun kapatılırken/otomatik kayıtta
-    buluta (PocketBase) SON HALİ gönderme adımı tamamen atlanır.
-    Yerel diske kayıt (save_game) bundan ETKİLENMEZ - her zaman
-    yapılır, sadece ağ üzerinden gönderim kapanır."""
-    return bool(_load().get("cloud_backup_enabled", True))
-
-
-def set_cloud_backup_enabled(enabled: bool) -> None:
-    data = _load()
-    data["cloud_backup_enabled"] = bool(enabled)
-    _save()
 
 
 def is_daily_message_enabled() -> bool:
@@ -155,4 +156,17 @@ def is_terms_accepted(current_version: str) -> bool:
 def set_terms_accepted(version: str) -> None:
     data = _load()
     data["terms_accepted_version"] = version
+    _save()
+
+
+def get_language() -> str:
+    """Oyuncunun seçtiği arayüz dili ('' = henüz seçilmedi). i18n bunu
+    _language.json'a EK olarak burada da saklar; biri okunamazsa diğeri
+    devreye girer."""
+    return str(_load().get("language", "") or "")
+
+
+def set_language(code: str) -> None:
+    data = _load()
+    data["language"] = code
     _save()

@@ -33,7 +33,7 @@ import threading
 from typing import List, Dict, Optional, Tuple
 
 import requests
-import appdirs
+import app_paths
 
 
 GITHUB_OWNER = "MUHAMMED4342"
@@ -117,17 +117,24 @@ def _headers() -> Dict[str, str]:
 
 APP_NAME = "KaraborsaSimulasyonu"
 APP_AUTHOR = "Karaborsa"
-_TICKETS_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
 TICKETS_FILENAME = "tickets.json"
-_TICKETS_FILE = os.path.join(_TICKETS_DIR, TICKETS_FILENAME)
+
+
+def _tickets_dir() -> str:
+    # Normal/taşınabilir mod değişebildiği için her seferinde hesaplanır.
+    return app_paths.user_data_dir(APP_NAME, APP_AUTHOR)
+
+
+def _tickets_file() -> str:
+    return os.path.join(_tickets_dir(), TICKETS_FILENAME)
 
 _tickets_lock = threading.Lock()
 
 
 def _load_all_tickets() -> Dict[str, List[Dict]]:
     try:
-        if os.path.exists(_TICKETS_FILE):
-            with open(_TICKETS_FILE, "r", encoding="utf-8") as f:
+        if os.path.exists(_tickets_file()):
+            with open(_tickets_file(), "r", encoding="utf-8") as f:
                 return json.load(f)
     except Exception as e:
         print(f"[Bilet] Yerel bilet listesi okunamadı: {e}")
@@ -136,8 +143,8 @@ def _load_all_tickets() -> Dict[str, List[Dict]]:
 
 def _save_all_tickets(all_tickets: Dict[str, List[Dict]]) -> None:
     try:
-        os.makedirs(_TICKETS_DIR, exist_ok=True)
-        with open(_TICKETS_FILE, "w", encoding="utf-8") as f:
+        os.makedirs(_tickets_dir(), exist_ok=True)
+        with open(_tickets_file(), "w", encoding="utf-8") as f:
             json.dump(all_tickets, f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"[Bilet] Yerel bilet listesi kaydedilemedi: {e}")

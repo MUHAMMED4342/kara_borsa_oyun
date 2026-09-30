@@ -2,25 +2,30 @@
 """
 save_manager.py
 ---------------
-Oyun kayıtlarını appdata klasöründe Base64 ile kodlayarak yönetir.
+Oyun kayıtlarını (normal modda appdata, taşınabilir modda oyun klasörü) Base64 ile kodlayarak yönetir.
 """
 
 import os
 import json
 import base64
-import appdirs
 import re
 import hmac
 import hashlib
 
-import auth_manager
+import app_paths
 import ticket_manager
 import settings_manager
 
 
 APP_NAME = "KaraborsaSimulasyonu"
 APP_AUTHOR = "Karaborsa"
-SAVE_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
+
+
+def get_save_dir() -> str:
+    """Kayıt klasörü. Normal modda AppData, taşınabilir modda oyunun
+    exe'sinin yanındaki KaraborsaData klasörü (bkz. app_paths). Mod
+    değişince yol da değişeceği için her seferinde hesaplanır."""
+    return app_paths.user_data_dir(APP_NAME, APP_AUTHOR)
 
 
 
@@ -93,8 +98,9 @@ def clean_username(username: str) -> str:
 
 
 def get_save_path(username: str) -> str:
-    os.makedirs(SAVE_DIR, exist_ok=True)
-    return os.path.join(SAVE_DIR, f"{username}.json")
+    save_dir = get_save_dir()
+    os.makedirs(save_dir, exist_ok=True)
+    return os.path.join(save_dir, f"{username}.json")
 
 
 def build_save_data(username: str, game_state) -> dict:
@@ -142,6 +148,7 @@ def build_save_data(username: str, game_state) -> dict:
         "days_until_bank_interest": getattr(game_state, "days_until_bank_interest", 30),
         "last_sent_score": getattr(game_state, "last_sent_score", 0.0),
         "lands": getattr(game_state, "lands", []),
+        "warehouse": getattr(game_state, "warehouse", {}),
         "land_prices": getattr(game_state, "land_prices", {}),
         "employees": getattr(game_state, "employees", []),
         "country": getattr(game_state, "country", "tr"),
@@ -188,21 +195,6 @@ def load_game(username: str) -> dict:
         return None
 
 
-def import_cloud_save(save_data: dict) -> str:
-    """PocketBase'den (auth_manager.fetch_cloud_save) gelen bir kayıt
-    verisini bu cihazın yerel diskine yazar. Giriş yapıldığında
-    main.py tarafından çağrılır, böylece hesaba bağlı ilerleme hangi
-    cihazda oturum açılırsa açılsın otomatik olarak kullanılabilir
-    hale gelir - "asla kaybolmaz" kuralını sağlayan asıl adım budur.
-    Kaydedilen (temizlenmiş) kullanıcı adını döner."""
-    username = save_data.get("username") or "Anonim"
-    try:
-        _write_signed_save(get_save_path(username), save_data)
-    except Exception as e:
-        print(f"[Hata] Bulut kaydı içeri aktarılamadı: {e}")
-    return username
-
-
 def rename_save(old_username: str, new_username: str) -> tuple:
     """Var olan bir kaydın kullanıcı adını (ve kayıt dosyasının adını)
     değiştirir. Kayıt içindeki TÜM ilerleme (nakit, envanter, şirketler,
@@ -242,7 +234,6 @@ def rename_save(old_username: str, new_username: str) -> tuple:
 
     try:
         _write_signed_save(new_path, data)
-        auth_manager.push_active_save_async(data)
     except Exception as e:
         print(f"[Hata] Kullanıcı adı değiştirilemedi: {e}")
         return False, f"Yeni kayıt yazılamadı: {e}"
@@ -255,22 +246,26 @@ def rename_save(old_username: str, new_username: str) -> tuple:
     return True, new_clean
 
 
-# SAVE_DIR; auth_manager (session.json), ticket_manager (tickets.json)
-# ve settings_manager (settings.json) TARAFINDAN DA paylaşılıyor (dördü
-# de aynı appdirs klasörünü kullanıyor). Bu yüzden list_saves() bu
-# dosyaları gerçek bir oyun kaydıymış gibi listeye eklememeli. Klasöre
-# başka bir sistem dosyası (*.json) eklenirse buraya da eklenmeli.
+# Kayıt klasörü ticket_manager (tickets.json), settings_manager
+# (settings.json) ve (taşınabilir modda) leaderboard (skor_ayarlari.json)
+# TARAFINDAN DA paylaşılıyor. Bu yüzden list_saves() bu dosyaları gerçek
+# bir oyun kaydıymış gibi listeye eklememeli. "session.json", kaldırılan
+# hesap sisteminden eski kurulumlarda kalmış olabilir; yine de kayıt
+# sayılmaz. Klasöre başka bir sistem dosyası (*.json) eklenirse buraya
+# da eklenmeli.
 _RESERVED_SAVE_FILENAMES = {
-    auth_manager.SESSION_FILENAME,
+    "session.json",
     ticket_manager.TICKETS_FILENAME,
     settings_manager.SETTINGS_FILENAME,
+    "skor_ayarlari.json",
 }
 
 
 def list_saves() -> list:
-    os.makedirs(SAVE_DIR, exist_ok=True)
+    save_dir = get_save_dir()
+    os.makedirs(save_dir, exist_ok=True)
     saves = []
-    for file in os.listdir(SAVE_DIR):
+    for file in os.listdir(save_dir):
         if file in _RESERVED_SAVE_FILENAMES:
             continue
         if file.endswith('.json'):
@@ -305,14 +300,15 @@ def apply_one_time_heat_reset() -> None:
     durumda kalmıştı. Bu fonksiyon her oyuncunun kendi makinesinde,
     oyun ilk açıldığında (güncelleme sonrası) otomatik olarak bir kez
     çalışır: o makinedeki TÜM kayıtların police_heat'ini 0'a çeker ve
-    SAVE_DIR içine bir işaret dosyası bırakır. İşaret dosyası varsa
+    kayıt klasörüne bir işaret dosyası bırakır. İşaret dosyası varsa
     hiçbir şey yapmadan hemen çıkar - yani sonraki her açılışta
     (mevcut oyun akışını etkilemeden) sessizce atlanır.
 
     main.py içinde, App.OnInit çağrılmadan önce bir kez çağrılması
     yeterlidir."""
-    os.makedirs(SAVE_DIR, exist_ok=True)
-    flag_path = os.path.join(SAVE_DIR, _HEAT_RESET_FLAG_NAME)
+    save_dir = get_save_dir()
+    os.makedirs(save_dir, exist_ok=True)
+    flag_path = os.path.join(save_dir, _HEAT_RESET_FLAG_NAME)
 
     if os.path.exists(flag_path):
         return

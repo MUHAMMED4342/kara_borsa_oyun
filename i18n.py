@@ -92,9 +92,10 @@ def _bundled_locales_dir() -> str:
 
 def _user_locales_dir() -> str:
     """Where the game actually reads/writes locale files at
-    runtime - always writable, survives updates/reinstalls."""
-    appdata = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
-    return os.path.join(appdata, "Karaborsa", "locales")
+    runtime - always writable, survives updates/reinstalls. In
+    portable mode this is next to the game's exe (see app_paths)."""
+    import app_paths
+    return app_paths.locales_dir()
 
 
 _LOCALES_DIR = _user_locales_dir()
@@ -397,6 +398,21 @@ def get_locales_folder() -> str:
     return _LOCALES_DIR
 
 
+def refresh_paths():
+    """Normal <-> taşınabilir mod değiştiğinde (bkz. app_paths) dil
+    klasörü yolunu yeniden hesaplar ve mevcut dil seçimini yeni konuma da
+    yazar."""
+    global _LOCALES_DIR, _META_FILE, _LANG_SETTINGS_FILE, _bootstrapped
+    _LOCALES_DIR = _user_locales_dir()
+    _META_FILE = os.path.join(_LOCALES_DIR, "_meta.json")
+    _LANG_SETTINGS_FILE = os.path.join(_LOCALES_DIR, "_language.json")
+    with _lock:
+        _cache.clear()
+    _bootstrapped = False
+    _bootstrap()
+    set_language(_current_language, persist=True)
+
+
 def get_language() -> str:
     return _current_language
 
@@ -404,26 +420,57 @@ def get_language() -> str:
 def set_language(lang: str, persist: bool = True):
     global _current_language
     _current_language = lang
-    if persist:
+    if not persist:
+        return
+    # Seçim İKİ yere yazılır (biri başarısız olursa diğeri kalsın):
+    # locales/_language.json ve settings.json.
+    try:
+        os.makedirs(_LOCALES_DIR, exist_ok=True)
+        tmp = _LANG_SETTINGS_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"language": lang}, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, _LANG_SETTINGS_FILE)
+    except Exception as e:
+        print(f"[i18n] Could not persist language setting: {e}")
+    try:
+        import settings_manager
+        settings_manager.set_language(lang)
+    except Exception as e:
+        print(f"[i18n] Could not persist language in settings.json: {e}")
+
+
+def _read_saved_language() -> str:
+    """Kaydedilmiş dil kodu ('' = yok). Önce _language.json, olmazsa
+    settings.json'a bakar; sadece gerçekten mevcut bir dil dosyasına
+    işaret ediyorsa geçerli sayılır."""
+    saved = ""
+    try:
+        if os.path.exists(_LANG_SETTINGS_FILE):
+            with open(_LANG_SETTINGS_FILE, "r", encoding="utf-8") as f:
+                saved = (json.load(f).get("language") or "")
+    except Exception:
+        saved = ""
+    if not saved:
         try:
-            os.makedirs(_LOCALES_DIR, exist_ok=True)
-            with open(_LANG_SETTINGS_FILE, "w", encoding="utf-8") as f:
-                json.dump({"language": lang}, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"[i18n] Could not persist language setting: {e}")
+            import settings_manager
+            saved = settings_manager.get_language()
+        except Exception:
+            saved = ""
+    if saved and not os.path.exists(_locale_path(saved)) and saved != _SOURCE_LANGUAGE:
+        return ""
+    return saved
 
 
 def _restore_saved_language():
     global _current_language
     try:
         _bootstrap()
-        if os.path.exists(_LANG_SETTINGS_FILE):
-            with open(_LANG_SETTINGS_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                lang = data.get("language")
-                if lang:
-                    _current_language = lang
-                    return
+        lang = _read_saved_language()
+        if lang:
+            _current_language = lang
+            return
         # No saved preference yet -> this is the very first run.
         # Guess the player's language from their OS settings among
         # whatever languages are actually available (built-in ones

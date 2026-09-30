@@ -14,9 +14,10 @@ from accessibility_helper import speak as _tts_speak
 from history_log import log_history
 from formatting import format_tl
 from audio_manager import AudioManager
-from save_manager import save_game, load_game, apply_one_time_heat_reset, import_cloud_save, build_save_data
+from save_manager import save_game, load_game, apply_one_time_heat_reset
 
 import ticket_manager
+import app_paths
 import settings_manager
 from i18n import t, get_language
 import i18n
@@ -355,10 +356,7 @@ class MainFrame(wx.Frame):
             webbrowser.open("https://github.com/MUHAMMED4342/kara_borsa_oyun")
             speak(t("cheat.github_opened"))
         elif command == "/kayitlar":
-            save_dir = os.path.join(
-                os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
-                "Karaborsa", "KaraborsaSimulasyonu",
-            )
+            save_dir = app_paths.user_data_dir()
             os.makedirs(save_dir, exist_ok=True)
             try:
                 os.startfile(save_dir)
@@ -420,13 +418,21 @@ class MainFrame(wx.Frame):
         action = dlg.result
         dlg.Destroy()
 
+        # ÖNCE odağı ürün listesine geri ver, işlemi ve anonsunu SONRA yap.
+        # Eskiden işlem hemen yapılıp anons okutulduktan sonra SetFocus
+        # çağrılıyordu; NVDA odak değişince (listedeki seçili ürünü
+        # okumak için) konuşmayı iptal ettiğinden "envanter dolu" gibi
+        # uzun mesajlar yalnızca konuşma geçmişine düşüyor, duyulmuyordu.
+        self.product_list.SetFocus()
+        handler = None
         if result == wx.ID_OK:
             if action == "buy":
-                self.on_buy(None)
+                handler = self.on_buy
             elif action == "sell":
-                self.on_sell(None)
-
-        self.product_list.SetFocus()
+                handler = self.on_sell
+        if handler is not None:
+            # Referans tutulur ki zamanlayıcı çöp toplayıcıya gitmesin.
+            self._pending_action = wx.CallLater(300, handler, None)
 
     def on_buy(self, event):
         if self.state.in_jail:

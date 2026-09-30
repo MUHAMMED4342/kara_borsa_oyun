@@ -522,15 +522,76 @@ def auction_item_display_name(item_id: str) -> str:
     return item_id
 
 
-EMPLOYEE_HIRE_FEE = 5000
+# ---------------------------------------------------------------------
+# DENGE AYARLARI (ekonomi hızını buradan kısıp açabilirsiniz)
+# Çalışanlar eskiden ~%8-10/gün getiriyle oyunun açık farkla en hızlı
+# para kaynağıydı (şirketler ~%1.5-2/gün). Yeni değerlerle bir çalışan
+# yaklaşık %1.5-2.5/gün getirir, yani şirketlerle aynı seviyede.
+# ---------------------------------------------------------------------
+EMPLOYEE_HIRE_FEE = 8000
+
+# Elinizdeki HER çalışan için bir sonraki adamın işe alım ücreti bu
+# oranda artar (örn. 10 çalışanı olan oyuncuda ücret %40 daha yüksek).
+# Böylece 80 şehre adam dikmek doğrusal değil, giderek pahalılaşır.
+EMPLOYEE_HIRE_FEE_GROWTH = 0.04
+
+# Deneyim bonusunun tavanı (günlük kazancın en fazla bu oranda artması).
+EMPLOYEE_MAX_EXPERIENCE_BONUS = 0.30
+
+# Mal SATARKEN piyasa fiyatından kesilen komisyon (alışta kesinti yok;
+# listede görünen fiyat = alış fiyatı). Arsa satışındaki %5 ile aynı.
+SELL_COMMISSION = 0.05
+
+# Karanlık Maddeler fiyat olayları eskiden ortalama +%23 yukarı yönlüydü
+# (günde ~+%1.7 bedava artış). Yukarı olaylar küçültülür, aşağı olaylar
+# büyütülür; ortalama yaklaşık sıfıra iner.
+DARK_PRICE_EVENT_UP_SCALE = 0.45
+DARK_PRICE_EVENT_DOWN_SCALE = 1.6
+DARK_PRICE_EVENT_MAX_DROP = 0.60
+
+# ---------------------------------------------------------------------
+# ENVANTER KAPASİTESİ ve ARSA DEPOSU
+# Ana envanterde tutulabilecek malın toplam PİYASA DEĞERİ (TL) bu sınırı
+# aşamaz (aşınca yeni alım yapılamaz; eldeki mal ASLA silinmez, fiyat
+# artışıyla sınırın üstüne çıkılabilir). Sınırı artırmanın yolu arsa
+# almaktır: her arsa, ALIŞ FİYATININ LAND_STORAGE_RATIO'su kadar değerde
+# mal alan ortak bir depoya katkı yapar. Depodaki mal envanterde
+# görünmez; arsa yönetim ekranındaki "Depo" düğmesinden istenildiğinde
+# envantere geri alınır / envanterden konur.
+# ---------------------------------------------------------------------
+INVENTORY_BASE_CAPACITY = 100000
+LAND_STORAGE_RATIO = 0.5
+
+# Depodaki yasa dışı malın polis riskine katkısı (1.0 = envanterdekiyle
+# aynı, 0 = tamamen görünmez). Tam görünmezlik olsaydı polisten kaçmak
+# için her gün sonunda her şeyi depoya koymak yeterli olurdu.
+WAREHOUSE_POLICE_VISIBILITY = 0.5
+
+# "Bedava mal" (inventory_gain) olayları: eskiden kategorideki HER ürüne
+# en az 1 adet veriyordu; Bitcoin/Ethereum/Elmas gibi pahalı ürünlerde bu,
+# tek olayda on binlerce TL'lik bedava mal demekti. Artık:
+#  - Elinde stoğu olan ürünlere stoğunun (ölçeklenmiş) yüzdesi verilir,
+#    "en az 1" zorlaması yoktur (kayıp olaylarıyla simetrik).
+#  - Stoğu olmayan ürünlerden en fazla N tanesine, küçük bir değer
+#    aralığında mal verilir (pahalı ürün bu değere sığmıyorsa verilmez).
+INVENTORY_GAIN_PCT_SCALE = 0.5
+INVENTORY_GAIN_NEW_MAX_PRODUCTS = 2
+INVENTORY_GAIN_NEW_VALUE_MIN = 150
+INVENTORY_GAIN_NEW_VALUE_MAX = 600
+
+# Nadir "miras/piyango/yatırımcı" olayları servetin %20-100'ü kadar bedava
+# para veriyordu (günde ortalama +%0.5 servet). Şansı ve tutarı yarıya iner.
+RARE_GAIN_CHANCE_SCALE = 0.5
+RARE_GAIN_PCT_SCALE = 0.5
 
 
-EMPLOYEE_BASE_SALARY = 1500
+
+EMPLOYEE_BASE_SALARY = 3000
 
 
 
-EMPLOYEE_DAILY_MIN = 150
-EMPLOYEE_DAILY_MAX = 600
+EMPLOYEE_DAILY_MIN = 100
+EMPLOYEE_DAILY_MAX = 350
 
 
 
@@ -1597,6 +1658,29 @@ RARE_EVENTS = [
 # event_display_name() / event_message_text() / event_zero_message_text()
 # fonksiyonları kullanılmalı - ham "name"/"message_template" alanları
 # doğrudan speak()'e verilmemeli.
+def _rebalance_events() -> None:
+    """Ekonomiyi kısmak için olay verilerini açılışta bir kez ayarlar
+    (yukarıdaki DENGE AYARLARI sabitleriyle). Olay listeleri elle
+    değiştirilmek yerine burada ölçeklenir; sabitleri 1.0 yaparsanız
+    eski davranış geri gelir."""
+    for e in EVENTS:
+        if e.get("type") == "price" and e.get("category") == "Karanlık Maddeler":
+            if e["min_pct"] > 0:
+                e["min_pct"] = round(e["min_pct"] * DARK_PRICE_EVENT_UP_SCALE, 4)
+                e["max_pct"] = round(e["max_pct"] * DARK_PRICE_EVENT_UP_SCALE, 4)
+            else:
+                e["min_pct"] = round(max(e["min_pct"] * DARK_PRICE_EVENT_DOWN_SCALE, -DARK_PRICE_EVENT_MAX_DROP), 4)
+                e["max_pct"] = round(max(e["max_pct"] * DARK_PRICE_EVENT_DOWN_SCALE, -DARK_PRICE_EVENT_MAX_DROP), 4)
+    for e in RARE_EVENTS:
+        if e.get("type") == "inheritance":
+            e["chance"] = e.get("chance", 0.001) * RARE_GAIN_CHANCE_SCALE
+            e["min_pct_of_wealth"] = round(e["min_pct_of_wealth"] * RARE_GAIN_PCT_SCALE, 4)
+            e["max_pct_of_wealth"] = round(e["max_pct_of_wealth"] * RARE_GAIN_PCT_SCALE, 4)
+
+
+_rebalance_events()
+
+
 EVENT_TEXT_KEYS = {
     "Ekonomik Kriz": "event.econ_crisis",
     "Ekonomik Rahatlama": "event.econ_relief",

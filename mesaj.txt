@@ -1,0 +1,19 @@
+29.09.2026
+"en:
+New update! Here is what has changed.
+Land warehouse: every land you own now adds storage space worth half of its purchase price. Open Land Management and choose the Warehouse button to store goods or take them back. Goods in the warehouse do not show up in your inventory.
+Your inventory now has a limit. When it is full you cannot buy more goods, so sell some or move them into your warehouse.
+The economy is a little tighter: employees earn less and each new hire costs a bit more, selling goods now carries a five percent commission, and free goods events are smaller.
+Portable Mode is now in Settings. You can carry the game folder to another computer with your saves and settings.
+Your language choice is now remembered. Closed support tickets now show as closed and can no longer be replied to.
+The auction house now has a bigger and more varied crowd of bidders.
+Have fun!"
+"tr:
+Yeni güncelleme geldi! Değişenler şöyle.
+Arsa deposu: sahip olduğunuz her arsa, alış fiyatının yarısı kadar değerde depo alanı sağlıyor. Arsa Yönetimi ekranındaki Depo düğmesinden mal saklayabilir ya da geri alabilirsiniz. Depodaki mallar envanterinizde görünmez.
+Envanterinize artık bir sınır geldi. Envanter dolunca yeni mal alamazsınız, mal satın ya da depoya taşıyın.
+Ekonomi biraz sıkılaştırıldı: çalışanlar daha az kazandırıyor ve her yeni çalışan biraz daha pahalıya geliyor, mal satarken yüzde beş komisyon kesiliyor ve bedava mal olayları küçüldü.
+Ayarlar ekranına Taşınabilir Mod eklendi. Oyun klasörünü kayıtlarınız ve ayarlarınızla birlikte başka bir bilgisayara götürebilirsiniz.
+Dil seçiminiz artık hatırlanıyor. Kapatılan destek biletleri artık listede kapalı görünüyor ve yanıt yazılamıyor.
+Açık artırmada artık daha kalabalık ve daha çeşitli rakipler var.
+İyi oyunlar!"

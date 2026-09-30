@@ -63,7 +63,7 @@ import shutil
 import threading
 import subprocess
 
-import appdirs
+import app_paths
 import wx
 
 from i18n import t
@@ -153,7 +153,7 @@ def _get_update_dir() -> str:
     exe nerede kurulu olursa olsun (Program Files gibi korumalı bir
     klasörde bile) bu dosyalar için izin sorunu yaşanmaz.
     """
-    path = appdirs.user_data_dir(_APP_NAME, _APP_AUTHOR)
+    path = app_paths.user_data_dir(_APP_NAME, _APP_AUTHOR)
     path = os.path.join(path, "guncelleme")
     try:
         os.makedirs(path, exist_ok=True)

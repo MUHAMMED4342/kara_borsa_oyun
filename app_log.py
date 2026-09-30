@@ -1,7 +1,7 @@
 """
 app_log.py
 ----------
-Oyunun TÜM konsol çıktısını (auth_manager, save_manager, audio_manager,
+Oyunun TÜM konsol çıktısını (save_manager, ticket_manager, audio_manager,
 main.py vb. içindeki onlarca print("[Hata] ...") satırı DAHİL) tek bir
 log dosyasında toplar.
 
@@ -21,12 +21,14 @@ kolaylaştırır.
 import os
 import sys
 import time
-import appdirs
+import app_paths
 
 
 APP_NAME = "KaraborsaSimulasyonu"
 APP_AUTHOR = "Karaborsa"
-LOG_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
+# Log yolu açılışta bir kez belirlenir (dosya açık tutulduğu için mod
+# değişimi bir sonraki açılışta geçerli olur).
+LOG_DIR = app_paths.user_data_dir(APP_NAME, APP_AUTHOR)
 LOG_FILE_PATH = os.path.join(LOG_DIR, "karaborsa.log")
 
 # Dosya sonsuza kadar büyümesin diye bir üst sınır koyuyoruz; aşılırsa

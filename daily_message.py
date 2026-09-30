@@ -38,12 +38,20 @@ import threading
 import urllib.request
 from datetime import datetime
 
-import appdirs
+import app_paths
 
 APP_NAME = "KaraborsaSimulasyonu"
 APP_AUTHOR = "Karaborsa"
-DATA_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
-LAST_SEEN_PATH = os.path.join(DATA_DIR, "gunun_mesaji_son_tarih.txt")
+LAST_SEEN_FILENAME = "gunun_mesaji_son_tarih.txt"
+
+
+def _data_dir() -> str:
+    # Normal/taşınabilir mod değişebildiği için her seferinde hesaplanır.
+    return app_paths.user_data_dir(APP_NAME, APP_AUTHOR)
+
+
+def _last_seen_path() -> str:
+    return os.path.join(_data_dir(), LAST_SEEN_FILENAME)
 
 MESSAGE_URL = "https://raw.githubusercontent.com/MUHAMMED4342/gunun_mesaji/main/mesaj"
 REQUEST_TIMEOUT = 6  
@@ -63,7 +71,7 @@ def _parse_date(date_str: str):
 
 def _read_last_seen_date():
     try:
-        with open(LAST_SEEN_PATH, "r", encoding="utf-8") as f:
+        with open(_last_seen_path(), "r", encoding="utf-8") as f:
             return _parse_date(f.read())
     except OSError:
         return None
@@ -71,8 +79,8 @@ def _read_last_seen_date():
 
 def _write_last_seen_date(date_str: str) -> None:
     try:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        with open(LAST_SEEN_PATH, "w", encoding="utf-8") as f:
+        os.makedirs(_data_dir(), exist_ok=True)
+        with open(_last_seen_path(), "w", encoding="utf-8") as f:
             f.write(date_str.strip())
     except OSError:
         pass

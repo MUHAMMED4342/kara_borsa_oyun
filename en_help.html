@@ -88,16 +88,15 @@
 </style>
 </head>
 <body>
-
 <h1>Karaborsa Simülasyonu — Help</h1>
 <p class="intro">
     Welcome! Karaborsa Simülasyonu ("Black Market Simulation") is a fully
     fictional trading and business-management game. You buy and sell
-    goods on a fluctuating black market, open front companies to launder
-    your money, invest in real estate, hire employees, manage risk with
-    an informant, and try to avoid the police — all while building the
-    biggest fortune you can. This page is your quick reference for how
-    everything works.
+    goods on a fluctuating black market, open companies for steady
+    profit and credit, invest in real estate and warehouse space, hire
+    employees, manage risk with an informant, and try to avoid the
+    police — all while building the biggest fortune you can. This page
+    is your quick reference for how everything works.
 </p>
 
 <h2>Keyboard Shortcuts</h2>
@@ -110,12 +109,12 @@ reader or just prefer the keyboard, here's the full list.</p>
     <tr><td><span class="shortcut">F2</span></td><td>Read out your current status (cash, day, location, etc.)</td></tr>
     <tr><td><span class="shortcut">F3</span></td><td>Open your History log (everything that has been announced so far)</td></tr>
     <tr><td><span class="shortcut">F5</span></td><td>Advance to the next day</td></tr>
-    <tr><td><span class="shortcut">F6</span></td><td>Open Land Management (buy, sell, or take a loan against land)</td></tr>
+    <tr><td><span class="shortcut">F6</span></td><td>Open Land Management (buy or sell land, take a loan against land, and open your land warehouse)</td></tr>
     <tr><td><span class="shortcut">F7</span></td><td>Open Employee Management</td></tr>
     <tr><td><span class="shortcut">F8</span></td><td>Open the Auction House</td></tr>
     <tr><td><span class="shortcut">C</span></td><td>Announce your current cash balance</td></tr>
     <tr><td><span class="shortcut">D</span></td><td>Announce the category of the currently selected product</td></tr>
-    <tr><td><span class="shortcut">E</span></td><td>Announce a summary of your inventory</td></tr>
+    <tr><td><span class="shortcut">E</span></td><td>Announce a summary of your inventory, including how full it is</td></tr>
     <tr><td><span class="shortcut">I</span></td><td>List every item currently in your inventory</td></tr>
     <tr><td><span class="shortcut">Enter</span></td><td>With a product selected, open the buy/sell action menu for it</td></tr>
     <tr><td><span class="shortcut">Page Up</span> / <span class="shortcut">Page Down</span></td><td>Volume up / down</td></tr>
@@ -132,47 +131,110 @@ reader or just prefer the keyboard, here's the full list.</p>
     to hear it) — some categories carry more risk (and more police
     attention) than others.
 </p>
+<p>
+    The price shown in the list is the price you pay when buying. When
+    you <em>sell</em>, a 5% commission is deducted from the market
+    price, so a quick buy-and-sell on the same day always costs you a
+    little — you need a real price move to come out ahead.
+</p>
+<div class="note">
+    <strong>Inventory limit:</strong> the goods in your main inventory
+    can be worth at most 100,000 in total (at current market prices).
+    When you reach the limit you cannot buy more until you sell some
+    goods or move them into a land warehouse (see below). Goods you
+    already own are never taken away, even if a price jump pushes you
+    above the limit.
+</div>
+
+<h2>Daily Events</h2>
+<p>
+    Each time a new day starts, a few random events may happen: price
+    shocks for a whole category, cash windfalls or losses, goods found
+    or lost, and land price changes. Most events affect a small
+    percentage of your wealth, and bad news is as common as good news,
+    so don't count on luck to make you rich.
+</p>
 
 <h2>Companies</h2>
 <p>
-    A company is a legitimate front business you can open in a city of
-    your choice. Companies cost money to found and have a daily upkeep,
-    but they generate their own monthly profit and — most importantly —
-    let you launder money, turning risky cash into clean, reportable
-    income. Miss too many upkeep payments and a company can go under.
+    A company is a business you can open in a city of your choice.
+    Companies cost money to found and have a daily upkeep, but they earn
+    a profit every day and build up a credit score. A better credit
+    score and steady income unlock bank loans on better terms. Miss the
+    upkeep payment and the company goes under. You can own several
+    companies at once.
 </p>
 
 <h2>Land</h2>
 <p>
     Real estate is a slower, steadier way to grow your wealth. Land
-    prices drift over time depending on the district, and you can also
-    take out a loan using land you own as collateral. Open
+    prices drift over time and can jump after certain events, and you
+    can also take out a loan using land you own as collateral (land
+    with an unpaid loan cannot be sold). Open
     <span class="shortcut">F6</span> for the full land management
     screen.
 </p>
 
+<h2>Land Warehouse</h2>
+<p>
+    Every piece of land you own adds to a shared warehouse. Its capacity
+    is half of the price you paid for each land, added together, and it
+    is measured in the market value of the stored goods. So a plot you
+    bought for 50,000 lets you store goods worth up to 25,000.
+</p>
+<ul>
+    <li>Open <span class="shortcut">F6</span> and choose the
+        <strong>Warehouse</strong> button. Pick a product, enter a
+        quantity, and choose <em>Store in Warehouse</em> or
+        <em>Take from Warehouse</em>. There are also buttons to store
+        as much as fits and to take everything back.</li>
+    <li>Goods in the warehouse do <strong>not</strong> appear in your
+        inventory and do not count toward the inventory limit. They
+        stay there until you take them out.</li>
+    <li>Taking goods out is always allowed, even if your inventory is
+        full, so your goods are never stuck.</li>
+    <li>The police still notice stored illegal goods, but only at half
+        the weight of goods in your inventory. Hiding everything in the
+        warehouse will not make you invisible.</li>
+    <li>You cannot sell a land if the remaining warehouse capacity
+        would be too small for the goods stored in it. Take some goods
+        out first. If the bank takes a land because of a missed loan
+        payment, the capacity drops in the same way; you can still take
+        your goods out, but you can't store more until you are under
+        the new capacity.</li>
+    <li>You need at least one land before you can use the warehouse.</li>
+</ul>
+
 <h2>Bank Loans</h2>
 <p>
-    Short on cash? The bank will lend you money at a set interest rate,
-    repaid over a number of daily installments. Missing installments has
-    consequences, so only borrow what you can realistically pay back.
+    Short on cash? If you own a company, the bank will lend you money
+    based on your companies' income and credit score. The better your
+    score, the more you can borrow and the lower the interest. Loans are
+    repaid in installments, one every 30 days. If you cannot pay an
+    installment, the loan defaults, so only borrow what you can
+    realistically pay back.
 </p>
 
 <h2>Employees</h2>
 <p>
-    Hire staff to help run your operation. Employees are paid regularly
-    and can be managed from the Employee screen
-    (<span class="shortcut">F7</span>).
+    Hire people and send them to a city (one employee per city). Each
+    employee earns cash for you every day, and earns a little more as
+    they gain experience. You pay a one-time hiring fee, and it rises
+    slightly with every employee you already have, so a huge network
+    gets expensive. Every 30 days each employee is paid a salary; if you
+    can't pay, they leave. Employees are managed from the Employee
+    screen (<span class="shortcut">F7</span>).
 </p>
 
 <h2>Informants &amp; the Police</h2>
 <p>
     The riskier your activity, the more "police heat" you build up.
-    Hiring an informant costs money but gives you advance warning before
-    trouble arrives, letting you cut your losses or lay low. If your heat
-    gets too high and you're caught, you'll end up in jail for a number
-    of days — during which your businesses and loans keep running
-    without you, so it pays to stay prepared.
+    Hiring an informant costs money and warns you when the police might
+    be coming the next day, so you can dump your stock or lay low. The
+    warning is a prediction, not a guarantee: sometimes the informant is
+    wrong. If your heat gets too high and you're caught, you'll end up
+    in jail for a number of days — during which your businesses and
+    loans keep running without you, so it pays to stay prepared.
 </p>
 
 <h2>Auction House</h2>
@@ -182,10 +244,12 @@ reader or just prefer the keyboard, here's the full list.</p>
     item (an antique, a piece of jewelry, a classic car, and more) goes
     up with an opening announcement — "X is being sold for Y, what are
     the bids?" From there you can simply watch: a countdown begins
-    (60 seconds by default), and real, named competitors — each with
-    their own personal spending limit — may jump in with their own bids
-    at any moment, with the current price and time left announced
-    periodically as it plays out.
+    (60 seconds by default), and a crowd of four to eight real, named
+    competitors — each described by how they look or who they represent,
+    like "a lady with a pearl necklace" or "a lawyer bidding for a
+    client", and each with their own personal spending limit — may jump
+    in with their own bids at any moment, with the current price and
+    time left announced periodically as it plays out.
 </p>
 <p>
     If you'd like to join in, place a bid at any time before the clock
@@ -214,8 +278,17 @@ reader or just prefer the keyboard, here's the full list.</p>
 <p>
     From the Settings screen you can opt in to the public leaderboard.
     Once you do, your username, cash balance, and current game day are
-    shown on a shared "Top Scores" list that every player can see. You
-    can turn this off again at any time.
+    shown on a shared "Top Scores" list that every player can see. Only
+    your cash counts, so goods in your inventory or warehouse don't
+    change your score. You can turn this off again at any time.
+</p>
+
+<h2>Message of the Day</h2>
+<p>
+    When the game starts, it can show and read out a short message from
+    the developer, such as news about an update. Each message is shown
+    only once. You can read the latest message again from the main menu,
+    or turn the automatic reading off in Settings.
 </p>
 
 <h2>Support</h2>
@@ -225,6 +298,12 @@ reader or just prefer the keyboard, here's the full list.</p>
     separate account or website needed. You can optionally attach your
     recent in-game history to a ticket to help us understand what
     happened.
+</p>
+<p>
+    Your tickets are listed with their status. When a ticket has been
+    closed, the list shows it as closed and, once you open it, the reply
+    box becomes read-only with a note that you can no longer reply. If
+    you still need help, just open a new ticket.
 </p>
 <div class="note">
     <strong>We'd love to support more languages.</strong> If you'd like
@@ -236,18 +315,53 @@ reader or just prefer the keyboard, here's the full list.</p>
 
 <h2>Settings</h2>
 <p>
-    From the Settings screen you can adjust sound and music volume,
-    change the game's language, choose whether your country is Turkey,
-    the United States, the United Kingdom, or Australia for a new game,
-    turn cloud backup on or off, and manage your leaderboard
-    participation.
+    From the Settings screen you can change the game's language (the
+    game remembers your choice), adjust music and sound-effect volume,
+    turn the typing sound on or off, turn the reading of the message of
+    the day on or off, turn the automatic update check at startup on or
+    off (you can always check manually with the
+    <em>Check for Updates</em> button), manage your leaderboard
+    participation, and switch between Normal and Portable mode. The
+    country for a new game (Turkey, the United States, the United
+    Kingdom, or Australia) is chosen when you start that new game.
 </p>
 
-<h2>Account &amp; Saving</h2>
+<h2>Portable Mode</h2>
 <p>
-    Your progress is tied to your account and saved automatically as
-    you play. If your cloud backup is turned on, you can pick up where
-    you left off on another device by logging in with the same account.
+    Portable mode lets you carry the game, with all your saves and
+    settings, on a USB drive or move it to another computer.
+</p>
+<ol>
+    <li>Make sure the game's main .exe file is in its own empty folder.</li>
+    <li>Open Settings and choose <strong>Switch to Portable Mode</strong>,
+        then confirm.</li>
+    <li>Your saves, settings and language choice are copied into a
+        <strong>KaraborsaData</strong> folder next to the .exe, and a
+        small file named <strong>portable.flag</strong> is created.</li>
+    <li>Copy or move the whole game folder (the .exe together with
+        KaraborsaData and portable.flag) to any computer and play from
+        there.</li>
+</ol>
+<p>
+    To go back, open Settings and choose <strong>Switch to Normal
+    Mode</strong>. Your data is copied back to this computer's normal
+    game data folder. After switching, please close and reopen the game
+    so everything uses the new location.
+</p>
+<div class="warn">
+    <strong>Good to know:</strong> don't delete portable.flag while you
+    want to stay in portable mode — without it the game goes back to
+    looking for your data in the normal location. Portable mode also
+    can't be turned on if the game folder is write-protected (for
+    example inside Program Files); move the game to a normal folder
+    first.
+</div>
+
+<h2>Saving Your Progress</h2>
+<p>
+    There is no online account: your progress is saved automatically on
+    this device as you play, in a save file for each username. To play
+    on another computer, use Portable Mode and copy the game folder.
 </p>
 
 <div class="warn">
