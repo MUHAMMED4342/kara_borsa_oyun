@@ -1,0 +1,10 @@
+15.10.2026
+"tr:
+Merhaba! Güzel bir haberim var: Endonezce dil desteği artık oyunda! Oyunu Endonezce oynayabilirsiniz. Bu dili eklememi öneren oyuncumuz Casper'a gönülden teşekkür ederim. Destek biletlerinizi Endonezce göndermekten çekinmeyin, size de Endonezce yanıt vereceğim. Çeviriler henüz mükemmel olmayabilir; fark ettiğiniz hataları en kısa sürede düzelteceğim. Bir sonraki güncellemede de sizler için güzel bir sürprizim var. Görüşmek üzere!
+"
+"en:
+Hello! I have some good news: Indonesian language support is now in the game! You can play it in Indonesian. Heartfelt thanks to our player Casper, who suggested adding this language. Feel free to send your support tickets in Indonesian, and I will reply to you in Indonesian too. The translations may not be perfect yet; I will fix any mistakes you notice as soon as possible. I also have a nice surprise for you in the next update. See you then!
+"
+"id:
+Halo! Ada kabar baik: dukungan bahasa Indonesia kini hadir di dalam game! Anda bisa memainkannya dalam bahasa Indonesia. Terima kasih sebesar-besarnya kepada pemain kami, Casper, yang telah mengusulkan penambahan bahasa ini. Jangan ragu mengirim tiket dukungan dalam bahasa Indonesia, saya juga akan membalasnya dalam bahasa Indonesia. Terjemahannya mungkin belum sempurna; kesalahan yang Anda temukan akan segera saya perbaiki. Saya juga menyiapkan kejutan menarik untuk Anda di pembaruan berikutnya. Sampai jumpa!
+"

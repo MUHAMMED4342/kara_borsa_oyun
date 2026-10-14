@@ -1,0 +1,1875 @@
+
+
+"""
+game_data.py
+------------
+Karaborsa Ticaret Simülasyonu için sabit oyun verilerini içerir:
+- Ürün kategorileri ve ürün isimleri
+- Her ürünün başlangıç / minimum / maksimum fiyat aralığı
+- Rastgele küresel olaylar
+- Şirket ve kredi sistemi (şirketler sadece kâr getirir ve kredi imkanı sağlar)
+- ARSA SİSTEMİ
+- MUHBİR SİSTEMİ (polis baskınlarını önceden haber verir)
+"""
+
+
+
+
+PRODUCT_CATEGORIES = {
+    "Karanlık Maddeler": [
+        "Esrar", "Eroin", "Kokain", "Amfetamin", "Metamfetamin", "Captagon", "LSD",
+        "Ekstazi", "Fentanil", "Ketamin",
+    ],
+    "Mühimmat & Silahlar": [
+        "Tabanca", "Tüfek", "Mermi", "El Bombası", "Susturucu", "Zırh Yeleği", "Av Tüfeği",
+        "Pompalı Tüfek", "Gece Görüş Dürbünü", "Bıçak",
+    ],
+    "Döviz & Değerli Metaller": [
+        "Dolar", "Euro", "Sterlin", "Altın", "Gümüş", "Platin",
+        "İsviçre Frangı", "Paladyum", "Elmas",
+    ],
+    "Kripto & Dijital Varlıklar": [
+        "Bitcoin", "Ethereum", "Monero",
+        "Solana", "Ripple", "Litecoin",
+    ],
+    "Kaçak Eşya & Elektronik": [
+        "Sahte Pasaport", "Çalıntı Telefon", "Kaçak Sigara", "Kaçak İçki", "Çalıntı Araç Parçası",
+        "Kaçak İlaç", "Sahte Marka Ürün", "Çalıntı Laptop",
+    ],
+}
+
+
+# PRODUCT_CATEGORIES'in anahtarları (kategori adları) KASITLI olarak
+# Türkçe bırakıldı - PRODUCT_CATEGORIES[category] şeklindeki tüm
+# lookup'lar (fiyat olayları, envanter özetleri, vb.) bu anahtarlara
+# bağımlı ve kayıt dosyalarında da bu isimler kullanılıyor olabilir.
+# Oyuncuya GÖSTERİLECEK kategori adı için her zaman
+# category_display_name() kullanılmalı, ham anahtar asla doğrudan
+# speak()'e verilmemeli.
+PRODUCT_CATEGORY_KEYS = {
+    "Karanlık Maddeler": "category.dark_substances",
+    "Mühimmat & Silahlar": "category.ammo_weapons",
+    "Döviz & Değerli Metaller": "category.forex_metals",
+    "Kripto & Dijital Varlıklar": "category.crypto",
+    "Kaçak Eşya & Elektronik": "category.contraband_electronics",
+}
+
+
+def category_display_name(category: str) -> str:
+    """PRODUCT_CATEGORIES'teki (Türkçe, kararlı) bir kategori anahtarını
+    o anki dilde oyuncuya gösterilecek metne çevirir. Çevirisi
+    tanımlanmamış bir kategori gelirse (olmamalı ama olursa) ham
+    anahtara güvenle geri döner."""
+    from i18n import t
+    key = PRODUCT_CATEGORY_KEYS.get(category)
+    return t(key) if key else category
+
+
+PRODUCTS = {
+    
+    "Esrar":          {"base_price": 150,   "min_price": 50,    "max_price": 500},
+    "Eroin":          {"base_price": 900,   "min_price": 300,   "max_price": 3000},
+    "Kokain":         {"base_price": 1200,  "min_price": 400,   "max_price": 4000},
+    "Amfetamin":      {"base_price": 400,   "min_price": 150,   "max_price": 1200},
+    "Metamfetamin":   {"base_price": 1100,  "min_price": 400,   "max_price": 3500},
+    "Captagon":       {"base_price": 600,   "min_price": 200,   "max_price": 2000},
+    "LSD":            {"base_price": 750,   "min_price": 250,   "max_price": 2500},
+
+    
+    "Tabanca":        {"base_price": 2500,  "min_price": 1000,  "max_price": 6000},
+    "Tüfek":          {"base_price": 5000,  "min_price": 2000,  "max_price": 12000},
+    "Mermi":          {"base_price": 25,    "min_price": 10,    "max_price": 80},
+    "El Bombası":     {"base_price": 1800,  "min_price": 700,   "max_price": 4500},
+    "Susturucu":      {"base_price": 1200,  "min_price": 500,   "max_price": 3000},
+    "Zırh Yeleği":    {"base_price": 3000,  "min_price": 1200,  "max_price": 7000},
+    "Av Tüfeği":      {"base_price": 4000,  "min_price": 1500,  "max_price": 9000},
+
+    
+    "Dolar":          {"base_price": 33,    "min_price": 20,    "max_price": 60},
+    "Euro":           {"base_price": 36,    "min_price": 22,    "max_price": 65},
+    "Sterlin":        {"base_price": 42,    "min_price": 25,    "max_price": 75},
+    "Altın":          {"base_price": 2400,  "min_price": 1500,  "max_price": 4000},
+    "Gümüş":          {"base_price": 35,    "min_price": 20,    "max_price": 70},
+    "Platin":         {"base_price": 1100,  "min_price": 700,   "max_price": 2200},
+
+    
+    "Bitcoin":        {"base_price": 50000, "min_price": 10000, "max_price": 200000},
+    "Ethereum":       {"base_price": 15000, "min_price": 3000,  "max_price": 60000},
+    "Monero":         {"base_price": 8000,  "min_price": 1500,  "max_price": 30000},
+
+    
+    "Sahte Pasaport":          {"base_price": 5000, "min_price": 2000, "max_price": 12000},
+    "Çalıntı Telefon":         {"base_price": 800,  "min_price": 300,  "max_price": 2500},
+    "Kaçak Sigara":            {"base_price": 60,   "min_price": 20,   "max_price": 150},
+    "Kaçak İçki":              {"base_price": 90,   "min_price": 30,   "max_price": 250},
+    "Çalıntı Araç Parçası":    {"base_price": 1500, "min_price": 500,  "max_price": 4000},
+
+    "Ekstazi":        {"base_price": 500,   "min_price": 180,   "max_price": 1500},
+    "Fentanil":       {"base_price": 1400,  "min_price": 500,   "max_price": 4500},
+    "Ketamin":        {"base_price": 550,   "min_price": 200,   "max_price": 1700},
+
+    "Pompalı Tüfek":          {"base_price": 3200, "min_price": 1400, "max_price": 7000},
+    "Gece Görüş Dürbünü":     {"base_price": 2200,  "min_price": 900,   "max_price": 5000},
+    "Bıçak":                  {"base_price": 300,   "min_price": 100,   "max_price": 800},
+
+    "İsviçre Frangı": {"base_price": 38,    "min_price": 24,    "max_price": 68},
+    "Paladyum":       {"base_price": 1300,  "min_price": 800,   "max_price": 2600},
+    "Elmas":          {"base_price": 5000,  "min_price": 2500,  "max_price": 12000},
+
+    "Solana":         {"base_price": 2500,  "min_price": 400,   "max_price": 12000},
+    "Ripple":         {"base_price": 15,    "min_price": 3,     "max_price": 60},
+    "Litecoin":       {"base_price": 900,   "min_price": 200,   "max_price": 4000},
+
+    "Kaçak İlaç":             {"base_price": 700,  "min_price": 250,  "max_price": 2200},
+    "Sahte Marka Ürün":       {"base_price": 400,  "min_price": 150,  "max_price": 1200},
+    "Çalıntı Laptop":         {"base_price": 3500, "min_price": 1200, "max_price": 8000},
+}
+
+
+# PRODUCTS'un anahtarları (ürün adları) KASITLI olarak Türkçe
+# bırakıldı - self.inventory / self.prices sözlükleri ve KAYIT
+# DOSYALARI bu isimleri anahtar olarak kullanıyor. İsimleri
+# değiştirmek mevcut oyuncuların kayıtlarını bozar. Oyuncuya
+# GÖSTERİLECEK ürün adı için her zaman product_display_name()
+# kullanılmalı, ham anahtar asla doğrudan speak()'e verilmemeli.
+PRODUCT_NAME_KEYS = {
+    "Esrar": "product.cannabis",
+    "Eroin": "product.heroin",
+    "Kokain": "product.cocaine",
+    "Amfetamin": "product.amphetamine",
+    "Metamfetamin": "product.methamphetamine",
+    "Captagon": "product.captagon",
+    "LSD": "product.lsd",
+    "Ekstazi": "product.ecstasy",
+    "Fentanil": "product.fentanyl",
+    "Ketamin": "product.ketamine",
+    "Tabanca": "product.pistol",
+    "Tüfek": "product.rifle",
+    "Mermi": "product.ammo",
+    "El Bombası": "product.grenade",
+    "Susturucu": "product.silencer",
+    "Zırh Yeleği": "product.body_armor",
+    "Av Tüfeği": "product.shotgun",
+    "Pompalı Tüfek": "product.pump_shotgun",
+    "Gece Görüş Dürbünü": "product.night_vision",
+    "Bıçak": "product.knife",
+    "Dolar": "product.usd",
+    "Euro": "product.eur",
+    "Sterlin": "product.gbp",
+    "Altın": "product.gold",
+    "Gümüş": "product.silver",
+    "Platin": "product.platinum",
+    "İsviçre Frangı": "product.chf",
+    "Paladyum": "product.palladium",
+    "Elmas": "product.diamond",
+    "Bitcoin": "product.bitcoin",
+    "Ethereum": "product.ethereum",
+    "Monero": "product.monero",
+    "Solana": "product.solana",
+    "Ripple": "product.ripple",
+    "Litecoin": "product.litecoin",
+    "Sahte Pasaport": "product.fake_passport",
+    "Çalıntı Telefon": "product.stolen_phone",
+    "Kaçak Sigara": "product.smuggled_cigarettes",
+    "Kaçak İçki": "product.smuggled_alcohol",
+    "Çalıntı Araç Parçası": "product.stolen_car_parts",
+    "Kaçak İlaç": "product.smuggled_medicine",
+    "Sahte Marka Ürün": "product.counterfeit_goods",
+    "Çalıntı Laptop": "product.stolen_laptop",
+}
+
+
+def product_display_name(name: str) -> str:
+    """PRODUCTS'taki (Türkçe, kararlı) bir ürün anahtarını o anki
+    dilde oyuncuya gösterilecek metne çevirir. Çevirisi tanımlanmamış
+    bir ürün gelirse ham anahtara güvenle geri döner."""
+    from i18n import t
+    key = PRODUCT_NAME_KEYS.get(name)
+    return t(key) if key else name
+
+
+COMPANY_TYPES = {
+    "Oto Galeri": {
+        "setup_cost": 15000,
+        "description": "İkinci el araç alım-satımı yapan bir galeri",
+        "daily_upkeep": 100,
+        "daily_profit_min": 150,
+        "daily_profit_max": 400,
+        "credit_multiplier": 1.0,
+    },
+    "Gece Kulübü": {
+        "setup_cost": 25000,
+        "description": "Yüksek cirolu bir eğlence mekanı",
+        "daily_upkeep": 250,
+        "daily_profit_min": 400,
+        "daily_profit_max": 900,
+        "credit_multiplier": 1.5,
+    },
+    "Restoran": {
+        "setup_cost": 10000,
+        "description": "Nakit ağırlıklı çalışan bir yemek işletmesi",
+        "daily_upkeep": 150,
+        "daily_profit_min": 200,
+        "daily_profit_max": 500,
+        "credit_multiplier": 1.2,
+    },
+    "Tekstil Atölyesi": {
+        "setup_cost": 8000,
+        "description": "Küçük ölçekli tekstil üretimi",
+        "daily_upkeep": 80,
+        "daily_profit_min": 100,
+        "daily_profit_max": 300,
+        "credit_multiplier": 0.8,
+    },
+    "Kripto Madenciliği": {
+        "setup_cost": 30000,
+        "description": "Yasal görünümlü kripto madencilik operasyonu",
+        "daily_upkeep": 500,
+        "daily_profit_min": 600,
+        "daily_profit_max": 1400,
+        "credit_multiplier": 2.0,
+    },
+    "Oto Yıkama": {
+        "setup_cost": 5000,
+        "description": "Düşük maliyetli, hızlı kurulan küçük bir işletme",
+        "daily_upkeep": 60,
+        "daily_profit_min": 80,
+        "daily_profit_max": 220,
+        "credit_multiplier": 0.7,
+    },
+    "İnternet Kafe": {
+        "setup_cost": 6000,
+        "description": "Gençlerin uğrak noktası, düzenli ama mütevazı ciro",
+        "daily_upkeep": 70,
+        "daily_profit_min": 90,
+        "daily_profit_max": 250,
+        "credit_multiplier": 0.75,
+    },
+    "Emlak Ofisi": {
+        "setup_cost": 18000,
+        "description": "Konut ve arsa alım-satımına aracılık eden ofis",
+        "daily_upkeep": 180,
+        "daily_profit_min": 260,
+        "daily_profit_max": 650,
+        "credit_multiplier": 1.3,
+    },
+    "Nakliyat Şirketi": {
+        "setup_cost": 20000,
+        "description": "Şehirler arası kamyon filosuyla yük taşımacılığı",
+        "daily_upkeep": 220,
+        "daily_profit_min": 300,
+        "daily_profit_max": 750,
+        "credit_multiplier": 1.4,
+    },
+    "Market Zinciri": {
+        "setup_cost": 22000,
+        "description": "Yoğun nakit akışı olan bir süpermarket zinciri",
+        "daily_upkeep": 240,
+        "daily_profit_min": 330,
+        "daily_profit_max": 800,
+        "credit_multiplier": 1.3,
+    },
+    "İnşaat Firması": {
+        "setup_cost": 35000,
+        "description": "Konut projeleri yürüten büyük ölçekli bir müteahhitlik firması",
+        "daily_upkeep": 450,
+        "daily_profit_min": 550,
+        "daily_profit_max": 1300,
+        "credit_multiplier": 1.8,
+    },
+    "Otel": {
+        "setup_cost": 40000,
+        "description": "Turistik bölgede lüks, yüksek cirolu bir otel işletmesi",
+        "daily_upkeep": 550,
+        "daily_profit_min": 700,
+        "daily_profit_max": 1600,
+        "credit_multiplier": 2.2,
+    },
+}
+
+
+# COMPANY_TYPES'ın anahtarları KASITLI olarak Türkçe bırakıldı -
+# company["type"] bu anahtarları kullanıyor ve kayıt dosyalarına
+# yazılıyor. Oyuncuya GÖSTERİLECEK ad/açıklama için her zaman
+# company_type_display_name() / company_type_description()
+# kullanılmalı.
+COMPANY_TYPE_KEYS = {
+    "Oto Galeri": "company_type.car_dealership",
+    "Gece Kulübü": "company_type.night_club",
+    "Restoran": "company_type.restaurant",
+    "Tekstil Atölyesi": "company_type.textile_workshop",
+    "Kripto Madenciliği": "company_type.crypto_mining",
+    "Oto Yıkama": "company_type.car_wash",
+    "İnternet Kafe": "company_type.internet_cafe",
+    "Emlak Ofisi": "company_type.real_estate_office",
+    "Nakliyat Şirketi": "company_type.shipping_company",
+    "Market Zinciri": "company_type.supermarket_chain",
+    "İnşaat Firması": "company_type.construction_company",
+    "Otel": "company_type.hotel",
+}
+
+
+def company_type_display_name(company_type: str) -> str:
+    from i18n import t
+    key = COMPANY_TYPE_KEYS.get(company_type)
+    return t(key) if key else company_type
+
+
+def company_type_description(company_type: str) -> str:
+    from i18n import t
+    key = COMPANY_TYPE_KEYS.get(company_type)
+    if key:
+        return t(f"{key}.desc")
+    return COMPANY_TYPES.get(company_type, {}).get("description", "")
+
+
+
+
+
+
+
+
+CREDIT_TIERS = [
+    {
+        "min_score": 0,
+        "name": "Sicil Bozuk",
+        "description": "Henüz kredi geçmişi oluşmamış",
+        "loan_limit_multiplier": 0,
+        "interest_rate": 0,
+        "can_loan": False,
+    },
+    {
+        "min_score": 50,
+        "name": "Başlangıç",
+        "description": "Yeni kurulmuş şirket",
+        "loan_limit_multiplier": 1.5,
+        "interest_rate": 0.35,
+        "can_loan": True,
+    },
+    {
+        "min_score": 150,
+        "name": "Güvenilir İşletme",
+        "description": "Düzenli ciro oluşmaya başlamış",
+        "loan_limit_multiplier": 3.0,
+        "interest_rate": 0.25,
+        "can_loan": True,
+    },
+    {
+        "min_score": 300,
+        "name": "Kurumsal",
+        "description": "Sektörde saygın konumda",
+        "loan_limit_multiplier": 5.0,
+        "interest_rate": 0.15,
+        "can_loan": True,
+    },
+    {
+        "min_score": 500,
+        "name": "Premium",
+        "description": "Bankanın en prestijli müşterisi",
+        "loan_limit_multiplier": 8.0,
+        "interest_rate": 0.08,
+        "can_loan": True,
+    },
+]
+
+
+
+
+
+LAND_TYPES = {
+    "Arsa": {
+        "base_price": 50000,
+        "min_price": 25000,
+        "max_price": 150000,
+        "description": "Standart inşaat arsası",
+        "credit_multiplier": 0.70,
+    },
+    "Tarla": {
+        "base_price": 30000,
+        "min_price": 15000,
+        "max_price": 100000,
+        "description": "Tarım arazisi",
+        "credit_multiplier": 0.50,
+    },
+    "İmarlı Arsa": {
+        "base_price": 100000,
+        "min_price": 50000,
+        "max_price": 300000,
+        "description": "İmar izni olan değerli arsa",
+        "credit_multiplier": 0.75,
+    },
+    "Sahil Arsa": {
+        "base_price": 200000,
+        "min_price": 100000,
+        "max_price": 500000,
+        "description": "Sahil şeridinde lüks arsa",
+        "credit_multiplier": 0.60,
+    },
+    "Sanayi Arsa": {
+        "base_price": 80000,
+        "min_price": 40000,
+        "max_price": 200000,
+        "description": "Sanayi bölgesinde arsa",
+        "credit_multiplier": 0.65,
+    },
+}
+
+
+# LAND_TYPES'ın anahtarları KASITLI olarak Türkçe bırakıldı -
+# land["type"] ve land_prices sözlüğü bu anahtarları kullanıyor ve
+# kayıt dosyalarına yazılıyor. Oyuncuya GÖSTERİLECEK ad/açıklama için
+# her zaman land_type_display_name() / land_type_description()
+# kullanılmalı.
+LAND_TYPE_KEYS = {
+    "Arsa": "land_type.plot",
+    "Tarla": "land_type.field",
+    "İmarlı Arsa": "land_type.zoned_plot",
+    "Sahil Arsa": "land_type.coastal_plot",
+    "Sanayi Arsa": "land_type.industrial_plot",
+}
+
+
+def land_type_display_name(land_type: str) -> str:
+    from i18n import t
+    key = LAND_TYPE_KEYS.get(land_type)
+    return t(key) if key else land_type
+
+
+def land_type_description(land_type: str) -> str:
+    from i18n import t
+    key = LAND_TYPE_KEYS.get(land_type)
+    if key:
+        return t(f"{key}.desc")
+    return LAND_TYPES.get(land_type, {}).get("description", "")
+
+def calculate_police_risk(illegal_inventory_value: float) -> float:
+    """Elinizde bulunan yasa dışı ürünlerin (Karanlık Maddeler, Mühimmat &
+    Silahlar) toplam piyasa değerine göre polis yakalama riskini hesaplar.
+    Karekök ölçekleme kullanılır: büyük tek seferlik alımlarda risk hâlâ
+    artar ama doğrusal artıştaki gibi anında tavana sıçramaz."""
+    if illegal_inventory_value <= 0:
+        return 0.0
+    risk = min(0.22, 0.018 * ((illegal_inventory_value / 10000) ** 0.5))
+    return risk
+
+
+
+
+
+
+
+
+
+INFORMANT_CONFIG = {
+    "hire_cost": 8000,
+    "daily_upkeep": 300,
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# AÇIK ARTIRMA - eşya kataloğu. Her giriş: benzersiz "id", görünen ad
+# çeviri anahtarı ("name_key" - i18n.py'de "auction_item.<id>" biçiminde
+# olmalı), açılış fiyatı aralığı (min_value/max_value) ve yeniden
+# satışta kullanılacak kabaca oynaklık payı. Bunlar normal PRODUCTS'tan
+# TAMAMEN AYRI, çok pahalı ve envanterde ayrı bir bölümde ("auction_inventory")
+# tutulan eşyalardır - bkz. GameState.generate_daily_auction_listing /
+# place_auction_bid / sell_auction_item.
+AUCTION_ITEMS = [
+    {"id": "antika_vazo", "name_key": "auction_item.antika_vazo", "min_value": 40000, "max_value": 120000},
+    {"id": "osmanli_kilici", "name_key": "auction_item.osmanli_kilici", "min_value": 80000, "max_value": 250000},
+    {"id": "eski_tablo", "name_key": "auction_item.eski_tablo", "min_value": 60000, "max_value": 300000},
+    {"id": "antika_saat", "name_key": "auction_item.antika_saat", "min_value": 25000, "max_value": 90000},
+    {"id": "elmas_kolye", "name_key": "auction_item.elmas_kolye", "min_value": 150000, "max_value": 600000},
+    {"id": "nadir_pul_koleksiyonu", "name_key": "auction_item.nadir_pul_koleksiyonu", "min_value": 15000, "max_value": 70000},
+    {"id": "eski_el_yazmasi", "name_key": "auction_item.eski_el_yazmasi", "min_value": 50000, "max_value": 400000},
+    {"id": "gumus_takim", "name_key": "auction_item.gumus_takim", "min_value": 20000, "max_value": 65000},
+    {"id": "klasik_otomobil", "name_key": "auction_item.klasik_otomobil", "min_value": 500000, "max_value": 2000000},
+    {"id": "antika_hali", "name_key": "auction_item.antika_hali", "min_value": 30000, "max_value": 110000},
+]
+
+# NPC rakip yazıcı - "şapkalı yaşlı adam" tarzı kısa, tırnaksız betimlemeler.
+# Gerçek bir isimle birleştirilir (ör. "şapkalı yaşlı adam" + rastgele
+# insanlar.txt ismi), bkz. GameState.place_auction_bid.
+AUCTION_NPC_DESCRIPTOR_KEYS = [
+    "auction.npc_hat_old_man",
+    "auction.npc_fur_coat_lady",
+    "auction.npc_suited_man",
+    "auction.npc_mysterious_caller",
+    "auction.npc_glasses_collector",
+    "auction.npc_foreign_buyer",
+]
+
+
+def auction_item_display_name(item_id: str) -> str:
+    from i18n import t
+    for item in AUCTION_ITEMS:
+        if item["id"] == item_id:
+            return t(item["name_key"])
+    return item_id
+
+
+# ---------------------------------------------------------------------
+# DENGE AYARLARI (ekonomi hızını buradan kısıp açabilirsiniz)
+# Çalışanlar eskiden ~%8-10/gün getiriyle oyunun açık farkla en hızlı
+# para kaynağıydı (şirketler ~%1.5-2/gün). Yeni değerlerle bir çalışan
+# yaklaşık %1.5-2.5/gün getirir, yani şirketlerle aynı seviyede.
+# ---------------------------------------------------------------------
+EMPLOYEE_HIRE_FEE = 8000
+
+# Elinizdeki HER çalışan için bir sonraki adamın işe alım ücreti bu
+# oranda artar (örn. 10 çalışanı olan oyuncuda ücret %40 daha yüksek).
+# Böylece 80 şehre adam dikmek doğrusal değil, giderek pahalılaşır.
+EMPLOYEE_HIRE_FEE_GROWTH = 0.04
+
+# Deneyim bonusunun tavanı (günlük kazancın en fazla bu oranda artması).
+EMPLOYEE_MAX_EXPERIENCE_BONUS = 0.30
+
+# Mal SATARKEN piyasa fiyatından kesilen komisyon (alışta kesinti yok;
+# listede görünen fiyat = alış fiyatı). Arsa satışındaki %5 ile aynı.
+SELL_COMMISSION = 0.05
+
+# Karanlık Maddeler fiyat olayları eskiden ortalama +%23 yukarı yönlüydü
+# (günde ~+%1.7 bedava artış). Yukarı olaylar küçültülür, aşağı olaylar
+# büyütülür; ortalama yaklaşık sıfıra iner.
+DARK_PRICE_EVENT_UP_SCALE = 0.45
+DARK_PRICE_EVENT_DOWN_SCALE = 1.6
+DARK_PRICE_EVENT_MAX_DROP = 0.60
+
+# ---------------------------------------------------------------------
+# ENVANTER KAPASİTESİ ve ARSA DEPOSU
+# Ana envanterde tutulabilecek malın toplam PİYASA DEĞERİ (TL) bu sınırı
+# aşamaz (aşınca yeni alım yapılamaz; eldeki mal ASLA silinmez, fiyat
+# artışıyla sınırın üstüne çıkılabilir). Sınırı artırmanın yolu arsa
+# almaktır: her arsa, ALIŞ FİYATININ LAND_STORAGE_RATIO'su kadar değerde
+# mal alan ortak bir depoya katkı yapar. Depodaki mal envanterde
+# görünmez; arsa yönetim ekranındaki "Depo" düğmesinden istenildiğinde
+# envantere geri alınır / envanterden konur.
+# ---------------------------------------------------------------------
+INVENTORY_BASE_CAPACITY = 100000
+LAND_STORAGE_RATIO = 0.5
+
+# Depodaki yasa dışı malın polis riskine katkısı (1.0 = envanterdekiyle
+# aynı, 0 = tamamen görünmez). Tam görünmezlik olsaydı polisten kaçmak
+# için her gün sonunda her şeyi depoya koymak yeterli olurdu.
+WAREHOUSE_POLICE_VISIBILITY = 0.5
+
+# "Bedava mal" (inventory_gain) olayları: eskiden kategorideki HER ürüne
+# en az 1 adet veriyordu; Bitcoin/Ethereum/Elmas gibi pahalı ürünlerde bu,
+# tek olayda on binlerce TL'lik bedava mal demekti. Artık:
+#  - Elinde stoğu olan ürünlere stoğunun (ölçeklenmiş) yüzdesi verilir,
+#    "en az 1" zorlaması yoktur (kayıp olaylarıyla simetrik).
+#  - Stoğu olmayan ürünlerden en fazla N tanesine, küçük bir değer
+#    aralığında mal verilir (pahalı ürün bu değere sığmıyorsa verilmez).
+INVENTORY_GAIN_PCT_SCALE = 0.5
+INVENTORY_GAIN_NEW_MAX_PRODUCTS = 2
+INVENTORY_GAIN_NEW_VALUE_MIN = 150
+INVENTORY_GAIN_NEW_VALUE_MAX = 600
+
+# Nadir "miras/piyango/yatırımcı" olayları servetin %20-100'ü kadar bedava
+# para veriyordu (günde ortalama +%0.5 servet). Şansı ve tutarı yarıya iner.
+RARE_GAIN_CHANCE_SCALE = 0.5
+RARE_GAIN_PCT_SCALE = 0.5
+
+
+
+EMPLOYEE_BASE_SALARY = 3000
+
+
+
+EMPLOYEE_DAILY_MIN = 100
+EMPLOYEE_DAILY_MAX = 350
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+_TR_CASEFOLD_MAP = str.maketrans({
+    "İ": "i",
+    "I": "ı",
+    "Ç": "ç",
+    "Ğ": "ğ",
+    "Ö": "ö",
+    "Ş": "ş",
+    "Ü": "ü",
+})
+
+
+def tr_casefold(text: str) -> str:
+    """Türkçe İ/I harflerini doğru şekilde küçük harfe çeviren casefold.
+    İl/ilçe adı karşılaştırmalarında str.casefold() yerine HER ZAMAN bu
+    fonksiyon kullanılmalıdır (bkz. yukarıdaki açıklama)."""
+    if text is None:
+        return ""
+    return text.translate(_TR_CASEFOLD_MAP).casefold()
+
+
+def load_names_from_file(path: str) -> list:
+    """insanlar.txt gibi bir dosyadan, 'insanlar:' başlığı altındaki
+    satırları isim listesi olarak okur. Dosya yoksa/bozuksa/boşsa boş
+    liste döner (yedek/kopya bir isim listesi ARTIK YOK; insanlar.txt
+    tek kaynaktır)."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = [ln.strip() for ln in f.readlines()]
+        names = []
+        started = False
+        for ln in lines:
+            if not ln:
+                continue
+            if ln.lower().startswith("insanlar"):
+                started = True
+                continue
+            if started:
+                names.append(ln)
+        return names
+    except OSError:
+        return []
+
+
+def load_districts_from_file(path: str) -> dict:
+    """ilceler.txt gibi bir dosyadan il -> ilçe listesi sözlüğü okur.
+
+    Beklenen format, her satırda (tırnaklı ya da tırnaksız):
+        "(il_adı) İlçe1, İlçe2, İlçe3, ..."
+
+    Örnek:
+        "(yozgat) Merkez, Akdağmadeni, Boğazlıyan, ..."
+
+    Dönen sözlüğün anahtarları il adının sadeleştirilmiş (casefold)
+    halidir; böylece iller.txt'teki farklı büyük/küçük harf yazımıyla
+    güvenle eşleştirilebilir. Değerler ise o ile ait, sırası korunmuş
+    ve yinelenenlerden arındırılmış ilçe adları listesidir.
+
+    Dosya yoksa/bozuksa/boşsa ya da bir satır beklenen formatta değilse
+    o satır sessizce atlanır; hiçbir durumda oyun çökmez, ilgili il
+    için ilçe listesi olmadan devam edilir (boş sözlük dönebilir)."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        return {}
+
+    districts_by_city = {}
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+        
+        if len(line) >= 2 and line[0] == '"' and line[-1] == '"':
+            line = line[1:-1].strip()
+        if not line.startswith("("):
+            continue
+        close_idx = line.find(")")
+        if close_idx == -1:
+            continue
+        city_name = line[1:close_idx].strip()
+        rest = line[close_idx + 1:].strip()
+        if not city_name or not rest:
+            continue
+
+        districts = []
+        seen = set()
+        for part in rest.split(","):
+            name = part.strip().rstrip(".").strip()
+            if not name:
+                continue
+            key = tr_casefold(name)
+            if key not in seen:
+                seen.add(key)
+                districts.append(name)
+
+        if districts:
+            districts_by_city[tr_casefold(city_name)] = districts
+
+    return districts_by_city
+
+
+def load_cities_from_file(path: str) -> list:
+    """iller.txt gibi bir dosyadan düz bir şehir listesi okur. Dosyada
+    şehirler virgülle ayrılmış tek/çok satır halinde durabilir, örn:
+
+        istanbul, ankara, gazi antep, izmir
+
+    ya da her satırda bir şehir olabilir. Başlıktaki "iller:" satırı
+    varsa (opsiyonel) atlanır. Dosya yoksa/bozuksa/boşsa boş liste
+    döner (yedek/kopya bir şehir listesi ARTIK YOK; iller.txt tek
+    kaynaktır)."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            raw = f.read()
+        cities = []
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if line.lower().startswith("iller"):
+                
+                
+                line = line.split(":", 1)[1] if ":" in line else ""
+                if not line.strip():
+                    continue
+            for part in line.split(","):
+                name = part.strip().rstrip(".").strip()
+                if name:
+                    cities.append(name)
+        
+        seen = set()
+        unique_cities = []
+        for c in cities:
+            key = tr_casefold(c)
+            if key not in seen:
+                seen.add(key)
+                unique_cities.append(c)
+        return unique_cities
+    except OSError:
+        return []
+
+
+
+
+
+GAME_GOALS = [
+    {"name": "Çırak Tüccar", "days": 30, "target_cash": 25000, "description": "30 günde 25.000 TL kazan"},
+    {"name": "Usta Tüccar", "days": 45, "target_cash": 75000, "description": "45 günde 75.000 TL kazan"},
+    {"name": "Efsane Tüccar", "days": 60, "target_cash": 200000, "description": "60 günde 200.000 TL kazan"},
+    {"name": "Karaborsa Kralı", "days": 90, "target_cash": 500000, "description": "90 günde 500.000 TL kazan"},
+]
+
+
+
+
+
+
+
+
+
+
+
+EVENTS = [
+    
+    {
+        "name": "Ekonomik Kriz",
+        "type": "price",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct": 0.15, "max_pct": 0.40,
+        "message_template": "Ekonomik kriz patlak verdi! {category} fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Ekonomik Rahatlama",
+        "type": "price",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct": -0.30, "max_pct": -0.10,
+        "message_template": "Piyasalar rahatladı. {category} fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Merkez Bankası Müdahalesi",
+        "type": "price",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct": -0.20, "max_pct": -0.05,
+        "message_template": "Merkez bankası piyasaya müdahale etti. {category} fiyatları yüzde {pct} geriledi.",
+    },
+    {
+        "name": "Altın Rezervi Keşfi",
+        "type": "price",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct": -0.25, "max_pct": -0.10,
+        "message_template": "Yeni bir altın rezervi keşfedildi! {category} fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Dolar Baskısı",
+        "type": "price",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct": 0.10, "max_pct": 0.25,
+        "message_template": "Merkez bankası dolara müdahale etti! {category} fiyatları yüzde {pct} arttı.",
+    },
+
+    
+    {
+        "name": "Polis Baskını (Piyasa Etkisi)",
+        "type": "price",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.20, "max_pct": 0.45,
+        "message_template": "Bölgede baskınlar arttığı için arz daraldı! {category} fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Yeni Tedarik Hattı",
+        "type": "price",
+        "category": "Karanlık Maddeler",
+        "min_pct": -0.35, "max_pct": -0.15,
+        "message_template": "Yeni bir tedarik hattı açıldı. {category} fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Uluslararası Kartel Savaşı",
+        "type": "price",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.50, "max_pct": 0.90,
+        "message_template": "Büyük karteller birbirine girdi, tedarik zinciri felç oldu! {category} fiyatları yüzde {pct} fırladı."
+    },
+    {
+        "name": "Laboratuvar Patlaması",
+        "type": "price",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.25, "max_pct": 0.50,
+        "message_template": "Şehirdeki ana üretim laboratuvarında patlama oldu! {category} fiyatları yüzde {pct} arttı."
+    },
+    {
+        "name": "Afganistan'dan Büyük Sevkiyat",
+        "type": "price",
+        "category": "Karanlık Maddeler",
+        "min_pct": -0.30, "max_pct": -0.15,
+        "message_template": "Doğudan büyük bir sevkiyat geldi! {category} fiyatları yüzde {pct} düştü."
+    },
+
+    
+    {
+        "name": "Sınır Kapılarının Kapanması",
+        "type": "price",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": 0.15, "max_pct": 0.35,
+        "message_template": "Sınır kapıları kapatıldı, tedarik zorlaştı. {category} fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Silah Fabrikası Anlaşması",
+        "type": "price",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": -0.30, "max_pct": -0.10,
+        "message_template": "Gizli bir tedarik anlaşması yapıldı. {category} fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Yerel Çete Savaşları",
+        "type": "price",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": 0.30, "max_pct": 0.60,
+        "message_template": "Sokaklarda çatışmalar başladı, silaha talep tavan yaptı! {category} fiyatları yüzde {pct} yükseldi."
+    },
+    {
+        "name": "Askeri Depodan Sızıntı",
+        "type": "price",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": -0.40, "max_pct": -0.20,
+        "message_template": "Ordu depolarından piyasaya çok sayıda kaçak silah sızdı! {category} fiyatları yüzde {pct} düştü."
+    },
+    {
+        "name": "Barış Anlaşması",
+        "type": "price",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": -0.50, "max_pct": -0.25,
+        "message_template": "Bölgede barış anlaşması imzalandı! {category} talebi düştü, fiyatlar yüzde {pct} geriledi."
+    },
+    {
+        "name": "Uluslararası Ambargo",
+        "type": "price",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": 0.20, "max_pct": 0.45,
+        "message_template": "Ülkeye silah ambargosu kondu, kaçak tedarik neredeyse imkansız hale geldi! {category} fiyatları yüzde {pct} fırladı."
+    },
+
+    
+    {
+        "name": "Kripto Balinası Alım Yaptı",
+        "type": "price",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": 0.30, "max_pct": 0.80,
+        "message_template": "Büyük bir yatırımcı (balina) ani alım yaptı! {category} fiyatları yüzde {pct} fırladı.",
+    },
+    {
+        "name": "Kripto Piyasası Çöktü",
+        "type": "price",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": -0.60, "max_pct": -0.30,
+        "message_template": "Ani bir satış dalgasıyla piyasa çöktü! {category} fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Ünlü Milyarderin Tweeti",
+        "type": "price",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": 0.40, "max_pct": 1.00,
+        "message_template": "Eksantrik bir milyarder manipülatif bir tweet attı! {category} fiyatları yüzde {pct} uçuşa geçti."
+    },
+    {
+        "name": "Büyük Kripto Borsası Hacklendi",
+        "type": "price",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": -0.50, "max_pct": -0.25,
+        "message_template": "Dünyanın en büyük dijital borsası siber saldırıya uğradı. {category} fiyatları yüzde {pct} eridi."
+    },
+    {
+        "name": "Kripto Piyasası Düzeldi",
+        "type": "price",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": 0.10, "max_pct": 0.30,
+        "message_template": "Kripto piyasası toparlanıyor! {category} fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Yeni Kripto Düzenlemesi",
+        "type": "price",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": -0.25, "max_pct": -0.10,
+        "message_template": "Hükümet kripto düzenlemesi açıkladı! {category} fiyatları yüzde {pct} düştü.",
+    },
+
+    
+    {
+        "name": "Elektronik Kaçakçılığı Talebi Arttı",
+        "type": "price",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": 0.15, "max_pct": 0.35,
+        "message_template": "Talep arttı! {category} fiyatları yüzde {pct} yükseldi.",
+    },
+    {
+        "name": "Gümrük Denetimi Gevşetildi",
+        "type": "price",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": -0.25, "max_pct": -0.10,
+        "message_template": "Gümrük denetimleri gevşetildi. {category} fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Sınırda Yeni X-Ray Cihazları",
+        "type": "price",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": 0.20, "max_pct": 0.40,
+        "message_template": "Gümrük kapılarına son teknoloji tarayıcılar kuruldu. {category} getirmek zorlaştı, fiyatlar yüzde {pct} arttı."
+    },
+    {
+        "name": "Büyük Depo Tasfiyesi",
+        "type": "price",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": -0.30, "max_pct": -0.15,
+        "message_template": "Kaçakçılar ellerindeki malları nakde çevirmek için ucuza bırakıyor. {category} fiyatları yüzde {pct} düştü."
+    },
+    {
+        "name": "Kaçak Telefon Fabrikası Açıldı",
+        "type": "price",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": -0.20, "max_pct": -0.05,
+        "message_template": "Bölgede yeni bir kaçak telefon montaj hattı kuruldu. {category} fiyatları yüzde {pct} düştü."
+    },
+    {
+        "name": "Liman Grevi",
+        "type": "price",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": 0.15, "max_pct": 0.30,
+        "message_template": "Liman işçileri greve gitti, ithalat durma noktasına geldi! {category} fiyatları yüzde {pct} arttı."
+    },
+
+    
+    {
+        "name": "Rakip Kartelin Çökmesi",
+        "type": "price",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.30, "max_pct": 0.65,
+        "message_template": "Rakip bir kartel çökertildi, piyasadaki arz daraldı! {category} fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Silah Amnestisi Kampanyası",
+        "type": "price",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": -0.35, "max_pct": -0.15,
+        "message_template": "Devlet silah teslim kampanyası başlattı, piyasaya ikinci el silah aktı! {category} fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Merkez Bankası Faiz Kararı",
+        "type": "price",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct": 0.08, "max_pct": 0.20,
+        "message_template": "Beklenmedik faiz kararı piyasaları salladı! {category} fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Büyük Borsa Şirketi İflas Etti",
+        "type": "price",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": -0.55, "max_pct": -0.20,
+        "message_template": "Sektörün önde gelen bir borsası iflasını açıkladı! {category} fiyatları yüzde {pct} çöktü.",
+    },
+    {
+        "name": "Yeni Kaçakçılık Rotası Açıldı",
+        "type": "price",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": -0.30, "max_pct": -0.12,
+        "message_template": "Denetimlerin zayıf olduğu yeni bir sınır rotası keşfedildi! {category} fiyatları yüzde {pct} düştü.",
+    },
+
+    
+    {
+        "name": "Beklenmedik Bahşiş",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.03,
+        "message_template": "Şanslı bir gündesiniz! Cüzdanınıza {amount} TL eklendi.",
+    },
+    {
+        "name": "Eski Bir Borç Geri Ödendi",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.05,
+        "message_template": "Size borçlu olan biri parayı geri ödedi: {amount} TL kazandınız.",
+    },
+    {
+        "name": "Tefecilik Tahsilatı",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.04,
+        "message_template": "Borç verdiğiniz bir müşteriden adamlarınız aracılığıyla tahsilat yaptınız: {amount} TL kazandınız."
+    },
+    {
+        "name": "Yasa Dışı Kumar Kazancı",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.03, "max_pct_of_wealth": 0.08,
+        "message_template": "Dün gece girdiğiniz gizli bir poker masasında şansınız yaver gitti: {amount} TL kazandınız."
+    },
+    {
+        "name": "Kaçakçılıktan Komisyon",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.06,
+        "message_template": "Aracılık yaptığınız kaçakçılık işinden komisyon aldınız: {amount} TL."
+    },
+    {
+        "name": "Eski Müşteriden Sipariş",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.03,
+        "message_template": "Eski bir müşteriniz sizi arayıp acil bir sipariş verdi: {amount} TL kazandınız."
+    },
+    {
+        "name": "Nakit Sayım Fazlası",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.005, "max_pct_of_wealth": 0.02,
+        "message_template": "Kasanızı sayarken unuttuğunuz bir tomar para çıktı: {amount} TL."
+    },
+    {
+        "name": "Sahte Evrak Komisyonu",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.015, "max_pct_of_wealth": 0.04,
+        "message_template": "Sahte kimlik/ehliyet işine aracılık ettiniz ve komisyonunuzu aldınız: {amount} TL."
+    },
+    {
+        "name": "Eski Ortaktan Pay",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.05,
+        "message_template": "Yıllar önce ortak olduğunuz bir işten unuttuğunuz payınızı gönderdiler: {amount} TL kazandınız."
+    },
+    {
+        "name": "Sigorta Ödemesi",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.06,
+        "message_template": "Geçmişteki küçük bir hasar için sigorta şirketi tazminat yatırdı: {amount} TL."
+    },
+    {
+        "name": "Nakit Taşıma İşinden Pay",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.05,
+        "message_template": "Kara parayı bir yerden bir yere taşıma işinde kurye olarak kullanıldınız, payınızı aldınız: {amount} TL."
+    },
+    {
+        "name": "Gizli Turnuva Kazancı",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.07,
+        "message_template": "Katıldığınız gizli bir bahis turnuvasını kazandınız: {amount} TL."
+    },
+    {
+        "name": "Tedarikçiden İndirim İadesi",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.035,
+        "message_template": "Sadık müşteri olduğunuz için tedarikçiniz size nakit iade yaptı: {amount} TL."
+    },
+    {
+        "name": "Rakipten Ele Geçirilen Kasa",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.015, "max_pct_of_wealth": 0.045,
+        "message_template": "Rakip bir ekibin terk edilmiş kasasını bulup el koydunuz: {amount} TL kazandınız."
+    },
+    {
+        "name": "Yüklü Bahşiş Verildi",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.005, "max_pct_of_wealth": 0.025,
+        "message_template": "Memnun bir müşteri beklediğinizden çok daha fazla ödeme yaptı: {amount} TL."
+    },
+    {
+        "name": "Sokak Vergisi Tahsilatı",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.005, "max_pct_of_wealth": 0.02,
+        "message_template": "Bölgenizdeki küçük satıcılardan koruma/sokak vergisi topladınız: {amount} TL.",
+    },
+    {
+        "name": "Ortak İşin Payı",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.06,
+        "message_template": "Uzun zamandır bekleyen ortak bir işten payınıza düşen kısım geldi: {amount} TL.",
+    },
+    {
+        "name": "Sahte Fatura Dolandırıcılığı",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.015, "max_pct_of_wealth": 0.04,
+        "message_template": "Bir işletmeye kestiğiniz sahte fatura sorunsuz ödendi: {amount} TL kazandınız.",
+    },
+    {
+        "name": "Terk Edilmiş Aracın Bagajı",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.035,
+        "message_template": "Terk edilmiş bir aracın bagajında nakit dolu bir paket buldunuz: {amount} TL.",
+    },
+    {
+        "name": "Kripto Airdrop Kazancı",
+        "type": "cash_gain",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.03,
+        "message_template": "Eskiden kullandığınız bir cüzdana beklenmedik bir airdrop yağdı: {amount} TL değerinde kazanç.",
+    },
+
+    
+    
+    {
+        "name": "Bedava Numune Kutusu",
+        "type": "inventory_gain",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.04, "max_pct": 0.10,
+        "message_template": "Tedarikçiniz size bedava numune gönderdi! {category} stoğunuza {count} adet ürün eklendi.",
+        "zero_message": "Tedarikçi bedava numune göndermek istedi ama elinizde ilgili kategoriden ürün olmadığı için teklifi değerlendiremediniz.",
+    },
+    {
+        "name": "Yanlış Adrese Gelen Sevkiyat",
+        "type": "inventory_gain",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": 0.05, "max_pct": 0.12,
+        "message_template": "Başka birine ait bir kaçak sevkiyat yanlışlıkla size teslim edildi! {category} stoğunuza {count} adet ürün eklendi.",
+        "zero_message": "Yanlış adrese bir sevkiyat geldi ama elinizde bu kategoriden mal olmadığı için değerlendiremediniz.",
+    },
+    {
+        "name": "Tedarikçiden Konsinye Mal",
+        "type": "inventory_gain",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": 0.04, "max_pct": 0.10,
+        "message_template": "Güven kazanmak isteyen bir tedarikçi size peşin ödemesiz konsinye mal bıraktı! {category} stoğunuza {count} adet ürün eklendi.",
+        "zero_message": "Bir tedarikçi konsinye mal bırakmak istedi ama elinizde bu kategoriden mal olmadığı için değerlendiremediniz.",
+    },
+    {
+        "name": "Rakip Kuryeden Gasp",
+        "type": "inventory_gain",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct": 0.03, "max_pct": 0.08,
+        "message_template": "Adamlarınız rakip bir ekibin döviz/değerli metal taşıyan kuryesini gasp etti! {category} stoğunuza {count} adet ürün eklendi.",
+        "zero_message": "Rakip bir kuryeye pusu kuruldu ama üzerinde döviz/değerli metal çıkmadığı için elinize bir şey geçmedi.",
+    },
+    {
+        "name": "Unutulmuş Soğuk Cüzdan",
+        "type": "inventory_gain",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": 0.03, "max_pct": 0.09,
+        "message_template": "Eski bir ortağınızın unuttuğu soğuk cüzdanı ele geçirdiniz! {category} stoğunuza {count} adet ürün eklendi.",
+        "zero_message": "Bir soğuk cüzdan bulundu ama elinizde zaten hiç dijital varlık olmadığından aktarabileceğiniz bir şey yoktu.",
+    },
+    {
+        "name": "Silah Kaçakçısı İflas Etti",
+        "type": "inventory_gain",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": 0.03, "max_pct": 0.08,
+        "message_template": "İflas eden bir kaçakçı stoğunu ucuza sizin üstünüze yıktı! {category} stoğunuza {count} adet ürün eklendi.",
+        "zero_message": "Kaçakçı stok devretmek istedi ama elinizde bu kategoriden ürün olmadığından teklifi değerlendiremediniz.",
+    },
+    {
+        "name": "Laboratuvardan Sızan Parti",
+        "type": "inventory_gain",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.03, "max_pct": 0.09,
+        "message_template": "Tanıdığınız bir üreticiden fazla üretilen bir parti elinize geçti! {category} stoğunuza {count} adet ürün eklendi.",
+        "zero_message": "Fazladan bir parti teklif edildi ama elinizde bu kategoriden ürün olmadığından işleyemediniz.",
+    },
+
+    
+    
+    
+    {
+        "name": "Soygun",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.05,
+        "message_template": "Soyuldunuz! Cüzdanınızdan {amount} TL çalındı.",
+    },
+    {
+        "name": "Rüşvet Talebi",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.035,
+        "message_template": "Yerel bir yetkili rüşvet istedi, {amount} TL ödemek zorunda kaldınız.",
+    },
+    {
+        "name": "Siber Dolandırıcılık",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.015, "max_pct_of_wealth": 0.04,
+        "message_template": "Kripto cüzdanınızın şifresini bir oltalama sitesine kaptırdınız! {amount} TL kaybettiniz.",
+    },
+    {
+        "name": "Haraç Kesilmesi",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.05,
+        "message_template": "Bölgenin ağır abileri mekanınızı bastı ve koruma parası adı altında {amount} TL haraç aldı.",
+    },
+    {
+        "name": "Sahte Ürün Tazminatı",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.03,
+        "message_template": "Sattığınız malın bozuk/sahte çıktığını öğrenen öfkeli bir müşteriye tazminat ödediniz: {amount} TL.",
+    },
+    {
+        "name": "Zula Baskını",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.015, "max_pct_of_wealth": 0.045,
+        "message_template": "Gizli para saklama noktanızı bulan biri nakdinizin bir kısmını alıp kaçtı: {amount} TL kaybettiniz.",
+    },
+    {
+        "name": "Ceza Kesildi",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.005, "max_pct_of_wealth": 0.02,
+        "message_template": "Trafik cezası, izinsiz çalışma ve benzeri nedenlerle {amount} TL ceza ödediniz.",
+    },
+    {
+        "name": "Sahte Para ile Dolandırılma",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.03,
+        "message_template": "Bir alışverişte size sahte para ile ödeme yapıldı: {amount} TL zarar ettiniz.",
+    },
+    {
+        "name": "Avukat Masrafı",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.05,
+        "message_template": "Küçük bir hukuki sorunu çözmek için avukata {amount} TL ödediniz.",
+    },
+    {
+        "name": "Kumar Borcu",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.02, "max_pct_of_wealth": 0.06,
+        "message_template": "Gizli bir bahis masasında şansınız yaver gitmedi: {amount} TL kaybettiniz.",
+    },
+    {
+        "name": "Sahte Yatırım Vaadi",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.015, "max_pct_of_wealth": 0.045,
+        "message_template": "Kazançlı görünen sahte bir yatırım fırsatına kapıldınız: {amount} TL kaybettiniz.",
+    },
+    {
+        "name": "Araç Arızası",
+        "type": "cash_loss",
+        "min_pct_of_wealth": 0.005, "max_pct_of_wealth": 0.02,
+        "message_template": "Nakliyede kullandığınız araç bozuldu, tamire {amount} TL verdiniz.",
+    },
+
+    
+    
+    
+    
+    
+    {
+        "name": "Polis Baskını - Mal Müsadere",
+        "type": "inventory_loss",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.05, "max_pct": 0.12,
+        "message_template": "Polis baskınında {category} stoğunuzdan {count} adet ürüne el konuldu!",
+        "zero_message": "Polis baskını oldu ama elinizde karanlık madde bulunmadığı için zarar görmediniz.",
+    },
+    {
+        "name": "Silah Deposu Basıldı",
+        "type": "inventory_loss",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": 0.05, "max_pct": 0.12,
+        "message_template": "Silah deponuz basıldı! {category} stoğunuzdan {count} adet ürün kayboldu.",
+        "zero_message": "Bir baskın haberi geldi ama elinizde silah/mühimmat olmadığı için zarar görmediniz.",
+    },
+    {
+        "name": "Bozuk Parti İmhası",
+        "type": "inventory_loss",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.03, "max_pct": 0.08,
+        "message_template": "Kalite kontrolde bozuk çıkan bir parti kullanılamaz hale geldi! {category} stoğunuzdan {count} adet ürünü imha etmek zorunda kaldınız.",
+        "zero_message": "Bir parti kontrolden geçirildi ama elinizde karanlık madde olmadığı için kayıp yaşamadınız."
+    },
+    {
+        "name": "Köstebek İhaneti",
+        "type": "inventory_loss",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": 0.04, "max_pct": 0.10,
+        "message_template": "Güvendiğiniz bir elemanınız {category} stoğunuzdan {count} adet ürünü çalıp sırra kadem bastı!",
+        "zero_message": "Yanınızdaki eleman sizi dolandırmaya çalıştı ama depoda mal olmadığı için amacına ulaşamadı."
+    },
+    {
+        "name": "Gümrükte Mallara El Konuldu",
+        "type": "inventory_loss",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct": 0.04, "max_pct": 0.10,
+        "message_template": "Gümrükteki kaçak eşyanıza el konuldu! {category} stoğunuzdan {count} adet ürün gitti.",
+        "zero_message": "Gümrük kontrolünü atlattınız, kayıp yok."
+    },
+    {
+        "name": "Kasa Soygunu",
+        "type": "inventory_loss",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct": 0.03, "max_pct": 0.08,
+        "message_template": "Kasanıza göz koyan biri bir kısım döviz/değerli metalinizi çaldı! {category} stoğunuzdan {count} adet ürün eksildi.",
+        "zero_message": "Kasanıza yönelik bir soygun girişimi oldu ama içeride döviz/değerli metal olmadığı için kayıp yaşamadınız."
+    },
+    {
+        "name": "Cüzdan Hacklendi",
+        "type": "inventory_loss",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct": 0.04, "max_pct": 0.10,
+        "message_template": "Dijital cüzdanınız hacklendi! {category} stoğunuzdan {count} adet ürün çalındı.",
+        "zero_message": "Bir hackleme girişimi oldu ama cüzdanınızda dijital varlık olmadığından kayıp yaşamadınız.",
+    },
+    {
+        "name": "Nemden Bozulma",
+        "type": "inventory_loss",
+        "category": "Karanlık Maddeler",
+        "min_pct": 0.02, "max_pct": 0.06,
+        "message_template": "Depo nem aldı, bir kısım stoğunuz kullanılamaz hale geldi! {category} stoğunuzdan {count} adet ürün zayi oldu.",
+        "zero_message": "Depoda nem sorunu oldu ama içeride bu kategoriden ürün olmadığından zarar görmediniz.",
+    },
+    {
+        "name": "Nakliye Kazası",
+        "type": "inventory_loss",
+        "category": "Mühimmat & Silahlar",
+        "min_pct": 0.03, "max_pct": 0.08,
+        "message_template": "Malı taşıyan araç kaza yaptı! {category} stoğunuzdan {count} adet ürün kullanılamaz hale geldi.",
+        "zero_message": "Bir nakliye kazası oldu ama araçta bu kategoriden ürün yoktu, kayıp yaşamadınız.",
+    },
+
+    
+    
+    
+    {
+        "name": "Rakip Çete Baskını",
+        "type": "raid_combo",
+        "category": "Mühimmat & Silahlar",
+        "min_pct_of_wealth": 0.015, "max_pct_of_wealth": 0.05,
+        "inventory_min_pct": 0.05, "inventory_max_pct": 0.12,
+        "message_template": "Rakip bir çete güvenli evinize baskın yaptı! Çatışmada {amount} TL ve {category} stoğunuzdan {count} adet ürün kaybettiniz.",
+        "zero_message": "Rakip çete baskın yapacaktı ancak istihbaratı erken alıp mekanı boşalttınız. Kayıp yok!"
+    },
+    {
+        "name": "Büyük Çete Operasyonu",
+        "type": "raid_combo",
+        "category": "Karanlık Maddeler",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.045,
+        "inventory_min_pct": 0.05, "inventory_max_pct": 0.14,
+        "message_template": "Büyük bir çete operasyonuna yakalandınız! {amount} TL ve {category} stoğunuzdan {count} adet ürün kaybettiniz.",
+        "zero_message": "Çete operasyonu haberleri geldi ama ne paranız ne de stoğunuz olduğu için etkilenmediniz.",
+    },
+    {
+        "name": "Sınır Ötesi Yakalanma",
+        "type": "raid_combo",
+        "category": "Mühimmat & Silahlar",
+        "min_pct_of_wealth": 0.008, "max_pct_of_wealth": 0.03,
+        "inventory_min_pct": 0.04, "inventory_max_pct": 0.10,
+        "message_template": "Sınırda yakalandınız! Ceza olarak {amount} TL ödediniz ve {category} stoğunuzdan {count} adet ürün kaybettiniz.",
+        "zero_message": "Sınırda bir kontrol yapıldı ama üzerinizde para ya da mühimmat olmadığı için serbest bırakıldınız.",
+    },
+    {
+        "name": "Muhbir İhbarı",
+        "type": "raid_combo",
+        "category": "Kaçak Eşya & Elektronik",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.035,
+        "inventory_min_pct": 0.04, "inventory_max_pct": 0.11,
+        "message_template": "Yakınınızdaki biri sizi polise ihbar etti! Baskında {amount} TL ve {category} stoğunuzdan {count} adet ürün kaybettiniz.",
+        "zero_message": "Bir ihbar geldi ama üzerinizde ne nakit ne de kaçak mal bulunduğundan zarar görmeden kurtuldunuz.",
+    },
+    {
+        "name": "Kara Para Aklama Operasyonu",
+        "type": "raid_combo",
+        "category": "Döviz & Değerli Metaller",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.04,
+        "inventory_min_pct": 0.03, "inventory_max_pct": 0.09,
+        "message_template": "Mali suçlar birimi kara para aklama şüphesiyle üzerinize geldi! {amount} TL ve {category} stoğunuzdan {count} adet ürün el konuldu.",
+        "zero_message": "Bir mali soruşturma başladı ama üzerinizde nakit ya da döviz/metal bulunmadığından zarar görmediniz.",
+    },
+    {
+        "name": "Siber Suçlar Birimi Baskını",
+        "type": "raid_combo",
+        "category": "Kripto & Dijital Varlıklar",
+        "min_pct_of_wealth": 0.01, "max_pct_of_wealth": 0.035,
+        "inventory_min_pct": 0.03, "inventory_max_pct": 0.08,
+        "message_template": "Siber suçlar birimi sunucularınıza el koydu! {amount} TL ve {category} stoğunuzdan {count} adet ürün donduruldu.",
+        "zero_message": "Bir siber soruşturma başladı ama nakit ya da dijital varlığınız olmadığından etkilenmediniz.",
+    },
+    {
+        "name": "Ortak Baskını",
+        "type": "raid_combo",
+        "category": "Karanlık Maddeler",
+        "min_pct_of_wealth": 0.012, "max_pct_of_wealth": 0.04,
+        "inventory_min_pct": 0.04, "inventory_max_pct": 0.10,
+        "message_template": "Ortaklık kurduğunuz bir ekip sizi satıp mekanınızı bastırdı! {amount} TL ve {category} stoğunuzdan {count} adet ürün kaybettiniz.",
+        "zero_message": "İhanete uğradınız ama üzerinizde nakit ya da mal olmadığından zarar görmediniz.",
+    },
+
+    
+    {
+        "name": "Yılın Girişimcisi Ödülü",
+        "type": "company_reputation",
+        "message_template": "Yerel bir iş insanları derneği sizi 'Yılın Girişimcisi' seçti! Kredi notunuz yükseldi.",
+        "credit_boost": 20,
+    },
+    {
+        "name": "Sosyal Medyada Skandal İddiası",
+        "type": "company_reputation",
+        "message_template": "Şirketinizle ilgili asılsız bir skandal iddiası sosyal medyada yayıldı! Kredi notunuz düştü.",
+        "credit_penalty": -18,
+    },
+    {
+        "name": "Şirket İtibarı Arttı",
+        "type": "company_reputation",
+        "message_template": "Şirketiniz yerel ticaret odasından ödül aldı! Kredi notunuz yükseldi.",
+        "credit_boost": 25,
+    },
+    {
+        "name": "Rakip Şirket İftirası",
+        "type": "company_reputation",
+        "message_template": "Rakip bir şirket dedikodu yaydı! Kredi notunuz düştü.",
+        "credit_penalty": -20,
+    },
+    {
+        "name": "Devlet Teşviği",
+        "type": "company_reputation",
+        "message_template": "Şirketinize devlet teşviki verildi! Kredi notunuz yükseldi.",
+        "credit_boost": 15,
+    },
+    {
+        "name": "Ticari Casusluk",
+        "type": "company_reputation",
+        "message_template": "Rakibiniz ticari sırlarınızı çaldı! Kredi notunuz düştü.",
+        "credit_penalty": -15,
+    },
+    {
+        "name": "Bankayla İyi İlişkiler",
+        "type": "company_reputation",
+        "message_template": "Bankanızla olan geçmiş ödemeleriniz düzenli bulundu! Kredi notunuz yükseldi.",
+        "credit_boost": 12,
+    },
+    {
+        "name": "Vergi İncelemesi",
+        "type": "company_reputation",
+        "message_template": "Şirketiniz vergi incelemesine alındı, bazı usulsüzlükler tespit edildi! Kredi notunuz düştü.",
+        "credit_penalty": -22,
+    },
+    {
+        "name": "Yerel Basında Olumlu Haber",
+        "type": "company_reputation",
+        "message_template": "Yerel bir gazete şirketinizle ilgili olumlu bir haber yayınladı! Kredi notunuz yükseldi.",
+        "credit_boost": 10,
+    },
+    {
+        "name": "Ödeme Gecikmesi Kaydı",
+        "type": "company_reputation",
+        "message_template": "Bir tedarikçiye yaptığınız ödeme gecikince kayıtlara işlendi! Kredi notunuz düştü.",
+        "credit_penalty": -12,
+    },
+    {
+        "name": "Sektör Ödülü",
+        "type": "company_reputation",
+        "message_template": "Sektör derneği tarafından güvenilirlik ödülüne layık görüldünüz! Kredi notunuz yükseldi.",
+        "credit_boost": 18,
+    },
+
+    
+    {
+        "name": "Arsa Değerinde Patlama",
+        "type": "land_price",
+        "min_pct": 0.15, "max_pct": 0.40,
+        "message_template": "Bölgede imar düzenlemesi yapıldı! Tüm arsa fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Arsa Değerinde Düşüş",
+        "type": "land_price",
+        "min_pct": -0.20, "max_pct": -0.10,
+        "message_template": "Ekonomik durgunluk nedeniyle tüm arsa fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Deprem Riski Uyarısı",
+        "type": "land_price",
+        "land_type": ["Arsa", "İmarlı Arsa"],
+        "min_pct": -0.15, "max_pct": -0.05,
+        "message_template": "Bölgede deprem riski uyarısı yapıldı! Arsa fiyatları yüzde {pct} geriledi.",
+    },
+    {
+        "name": "Yeni Metro Hattı",
+        "type": "land_price",
+        "land_type": ["Arsa", "İmarlı Arsa"],
+        "min_pct": 0.20, "max_pct": 0.50,
+        "message_template": "Bölgeye yeni metro hattı müjdesi geldi! Arsa fiyatları yüzde {pct} fırladı!",
+    },
+    {
+        "name": "Tarım Desteklemesi",
+        "type": "land_price",
+        "land_type": "Tarla",
+        "min_pct": 0.10, "max_pct": 0.25,
+        "message_template": "Devlet tarım desteklemesi açıkladı! Tarla fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Sahil Kirliliği",
+        "type": "land_price",
+        "land_type": "Sahil Arsa",
+        "min_pct": -0.25, "max_pct": -0.10,
+        "message_template": "Sahil şeridinde kirlilik tespit edildi! Sahil arsa fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Turizm Bölgesi İlanı",
+        "type": "land_price",
+        "land_type": "Sahil Arsa",
+        "min_pct": 0.20, "max_pct": 0.45,
+        "message_template": "Bölge resmi olarak turizm bölgesi ilan edildi! Sahil arsa fiyatları yüzde {pct} fırladı.",
+    },
+    {
+        "name": "Yeni Organize Sanayi Bölgesi",
+        "type": "land_price",
+        "land_type": "Sanayi Arsa",
+        "min_pct": 0.15, "max_pct": 0.35,
+        "message_template": "Bölgeye yeni bir organize sanayi bölgesi kuruluyor! Sanayi arsa fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Fabrika Kapanmaları",
+        "type": "land_price",
+        "land_type": "Sanayi Arsa",
+        "min_pct": -0.20, "max_pct": -0.08,
+        "message_template": "Bölgedeki fabrikaların art arda kapanması talebi düşürdü. Sanayi arsa fiyatları yüzde {pct} geriledi.",
+    },
+    {
+        "name": "Otoyol Bağlantısı Müjdesi",
+        "type": "land_price",
+        "min_pct": 0.12, "max_pct": 0.30,
+        "message_template": "Bölgeye yeni bir otoyol bağlantısı yapılacağı açıklandı! Tüm arsa fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Çevre Kirliliği Davası",
+        "type": "land_price",
+        "min_pct": -0.18, "max_pct": -0.06,
+        "message_template": "Bölgede açılan bir çevre kirliliği davası gündeme oturdu! Tüm arsa fiyatları yüzde {pct} düştü.",
+    },
+    {
+        "name": "Serbest Bölge İlanı",
+        "type": "land_price",
+        "land_type": "Sanayi Arsa",
+        "min_pct": 0.25, "max_pct": 0.55,
+        "message_template": "Bölge serbest ticaret bölgesi ilan edildi! Sanayi arsa fiyatları yüzde {pct} fırladı.",
+    },
+    {
+        "name": "İmar Affı",
+        "type": "land_price",
+        "land_type": ["Arsa", "İmarlı Arsa"],
+        "min_pct": 0.15, "max_pct": 0.35,
+        "message_template": "Bölgeye imar affı geldi! Arsa fiyatları yüzde {pct} arttı.",
+    },
+    {
+        "name": "Erozyon Tehlikesi",
+        "type": "land_price",
+        "land_type": "Tarla",
+        "min_pct": -0.22, "max_pct": -0.08,
+        "message_template": "Bölgede toprak erozyonu tehlikesi tespit edildi! Tarla fiyatları yüzde {pct} düştü.",
+    },
+]
+
+
+
+
+
+
+
+
+RARE_EVENTS = [
+    {
+        "name": "Miras Kaldı",
+        "type": "inheritance",
+        "chance": 0.004,  
+        "min_pct_of_wealth": 0.20,
+        "max_pct_of_wealth": 0.50,
+        "message_template": "Hiç tanımadığınız uzak bir akrabanızdan dev bir miras kaldı! Hesabınıza {amount} TL yatırıldı.",
+    },
+    {
+        "name": "Büyük İkramiye",
+        "type": "inheritance",
+        "chance": 0.002,  
+        "min_pct_of_wealth": 0.50,
+        "max_pct_of_wealth": 1.00,
+        "message_template": "Bir piyango biletinde büyük ikramiye kazandınız! {amount} TL hesabınıza yatırıldı!",
+    },
+    {
+        "name": "Büyük Felaket",
+        "type": "disaster",
+        "chance": 0.003,  
+        "min_pct_of_wealth": 0.10,
+        "max_pct_of_wealth": 0.30,
+        "message_template": "Depolama alanınızda yangın çıktı! Tüm mal varlığınız zarar gördü, {amount} TL kaybettiniz!",
+    },
+    {
+        "name": "Gizli Yatırımcı Ortaklığı",
+        "type": "inheritance",
+        "chance": 0.0025,
+        "min_pct_of_wealth": 0.30,
+        "max_pct_of_wealth": 0.70,
+        "message_template": "Kimliğini açıklamayan gizemli bir yatırımcı işinize ortak oldu ve sermaye enjekte etti! {amount} TL hesabınıza yatırıldı.",
+    },
+    {
+        "name": "Kripto Çılgınlığı",
+        "type": "inheritance",
+        "chance": 0.0015,
+        "min_pct_of_wealth": 0.40,
+        "max_pct_of_wealth": 0.90,
+        "message_template": "Elinizdeki eski bir dijital varlık beklenmedik şekilde değer kazandı! {amount} TL değerinde kazanç elde ettiniz.",
+    },
+    {
+        "name": "Sel Felaketi",
+        "type": "disaster",
+        "chance": 0.0025,
+        "min_pct_of_wealth": 0.08,
+        "max_pct_of_wealth": 0.25,
+        "message_template": "Ani sel baskını depolarınızı su bastı! {amount} TL değerinde kayıp yaşadınız!",
+    },
+    {
+        "name": "Ortağın İhaneti",
+        "type": "disaster",
+        "chance": 0.002,
+        "min_pct_of_wealth": 0.15,
+        "max_pct_of_wealth": 0.40,
+        "message_template": "Güvendiğiniz bir ortağınız kasayı boşaltıp ortadan kayboldu! {amount} TL kaybettiniz!",
+    },
+]
+
+
+# Her rastgele olayın Türkçe "name" alanını, o olayın çevrilebilir
+# metinlerine (name/message/zero) ait i18n anahtar önekine eşler.
+# EVENTS/RARE_EVENTS listelerindeki "name" alanları KASITLI olarak
+# Türkçe bırakıldı - bunlar hâlâ olayın kararlı iç kimliğidir (kayıt
+# dosyalarına yazılmaz ama kod içinde referans olarak kullanılabilir).
+# Görüntülenen isim/mesaj için HER ZAMAN game_state.py'deki
+# event_display_name() / event_message_text() / event_zero_message_text()
+# fonksiyonları kullanılmalı - ham "name"/"message_template" alanları
+# doğrudan speak()'e verilmemeli.
+def _rebalance_events() -> None:
+    """Ekonomiyi kısmak için olay verilerini açılışta bir kez ayarlar
+    (yukarıdaki DENGE AYARLARI sabitleriyle). Olay listeleri elle
+    değiştirilmek yerine burada ölçeklenir; sabitleri 1.0 yaparsanız
+    eski davranış geri gelir."""
+    for e in EVENTS:
+        if e.get("type") == "price" and e.get("category") == "Karanlık Maddeler":
+            if e["min_pct"] > 0:
+                e["min_pct"] = round(e["min_pct"] * DARK_PRICE_EVENT_UP_SCALE, 4)
+                e["max_pct"] = round(e["max_pct"] * DARK_PRICE_EVENT_UP_SCALE, 4)
+            else:
+                e["min_pct"] = round(max(e["min_pct"] * DARK_PRICE_EVENT_DOWN_SCALE, -DARK_PRICE_EVENT_MAX_DROP), 4)
+                e["max_pct"] = round(max(e["max_pct"] * DARK_PRICE_EVENT_DOWN_SCALE, -DARK_PRICE_EVENT_MAX_DROP), 4)
+    for e in RARE_EVENTS:
+        if e.get("type") == "inheritance":
+            e["chance"] = e.get("chance", 0.001) * RARE_GAIN_CHANCE_SCALE
+            e["min_pct_of_wealth"] = round(e["min_pct_of_wealth"] * RARE_GAIN_PCT_SCALE, 4)
+            e["max_pct_of_wealth"] = round(e["max_pct_of_wealth"] * RARE_GAIN_PCT_SCALE, 4)
+
+
+_rebalance_events()
+
+
+EVENT_TEXT_KEYS = {
+    "Ekonomik Kriz": "event.econ_crisis",
+    "Ekonomik Rahatlama": "event.econ_relief",
+    "Merkez Bankası Müdahalesi": "event.central_bank_intervention",
+    "Altın Rezervi Keşfi": "event.gold_reserve_discovery",
+    "Dolar Baskısı": "event.dollar_pressure",
+    "Polis Baskını (Piyasa Etkisi)": "event.police_raid_market_effect",
+    "Yeni Tedarik Hattı": "event.new_supply_line",
+    "Uluslararası Kartel Savaşı": "event.international_cartel_war",
+    "Laboratuvar Patlaması": "event.lab_explosion",
+    "Afganistan'dan Büyük Sevkiyat": "event.big_shipment_from_afghanistan",
+    "Sınır Kapılarının Kapanması": "event.border_gates_closed",
+    "Silah Fabrikası Anlaşması": "event.weapons_factory_deal",
+    "Yerel Çete Savaşları": "event.local_gang_wars",
+    "Askeri Depodan Sızıntı": "event.military_depot_leak",
+    "Barış Anlaşması": "event.peace_agreement",
+    "Uluslararası Ambargo": "event.international_embargo",
+    "Kripto Balinası Alım Yaptı": "event.crypto_whale_buy",
+    "Kripto Piyasası Çöktü": "event.crypto_market_crash",
+    "Ünlü Milyarderin Tweeti": "event.celebrity_billionaire_tweet",
+    "Büyük Kripto Borsası Hacklendi": "event.major_crypto_exchange_hacked",
+    "Kripto Piyasası Düzeldi": "event.crypto_market_recovered",
+    "Yeni Kripto Düzenlemesi": "event.new_crypto_regulation",
+    "Elektronik Kaçakçılığı Talebi Arttı": "event.smuggled_electronics_demand_up",
+    "Gümrük Denetimi Gevşetildi": "event.customs_checks_loosened",
+    "Sınırda Yeni X-Ray Cihazları": "event.new_border_xray_machines",
+    "Büyük Depo Tasfiyesi": "event.major_warehouse_liquidation",
+    "Kaçak Telefon Fabrikası Açıldı": "event.smuggled_phone_factory_opened",
+    "Liman Grevi": "event.port_strike",
+    "Rakip Kartelin Çökmesi": "event.rival_cartel_collapse",
+    "Silah Amnestisi Kampanyası": "event.weapons_amnesty_campaign",
+    "Merkez Bankası Faiz Kararı": "event.central_bank_rate_decision",
+    "Büyük Borsa Şirketi İflas Etti": "event.major_exchange_company_bankrupt",
+    "Yeni Kaçakçılık Rotası Açıldı": "event.new_smuggling_route_opened",
+    "Beklenmedik Bahşiş": "event.unexpected_tip",
+    "Eski Bir Borç Geri Ödendi": "event.old_debt_repaid",
+    "Tefecilik Tahsilatı": "event.loan_shark_collection",
+    "Yasa Dışı Kumar Kazancı": "event.illegal_gambling_win",
+    "Kaçakçılıktan Komisyon": "event.smuggling_commission",
+    "Eski Müşteriden Sipariş": "event.order_from_old_customer",
+    "Nakit Sayım Fazlası": "event.cash_count_surplus",
+    "Sahte Evrak Komisyonu": "event.fake_documents_commission",
+    "Eski Ortaktan Pay": "event.share_from_old_partner",
+    "Sigorta Ödemesi": "event.insurance_payout",
+    "Nakit Taşıma İşinden Pay": "event.cash_courier_share",
+    "Gizli Turnuva Kazancı": "event.secret_tournament_win",
+    "Tedarikçiden İndirim İadesi": "event.supplier_discount_refund",
+    "Rakipten Ele Geçirilen Kasa": "event.seized_rival_stash",
+    "Yüklü Bahşiş Verildi": "event.generous_tip",
+    "Sokak Vergisi Tahsilatı": "event.street_tax_collection",
+    "Ortak İşin Payı": "event.joint_venture_share",
+    "Sahte Fatura Dolandırıcılığı": "event.fake_invoice_fraud",
+    "Terk Edilmiş Aracın Bagajı": "event.abandoned_car_trunk",
+    "Kripto Airdrop Kazancı": "event.crypto_airdrop_gain",
+    "Bedava Numune Kutusu": "event.free_sample_box",
+    "Yanlış Adrese Gelen Sevkiyat": "event.misdelivered_shipment",
+    "Tedarikçiden Konsinye Mal": "event.consignment_goods",
+    "Rakip Kuryeden Gasp": "event.robbed_rival_courier",
+    "Unutulmuş Soğuk Cüzdan": "event.forgotten_cold_wallet",
+    "Silah Kaçakçısı İflas Etti": "event.arms_dealer_bankrupt",
+    "Laboratuvardan Sızan Parti": "event.leaked_batch_from_lab",
+    "Soygun": "event.mugging",
+    "Rüşvet Talebi": "event.bribe_demand",
+    "Siber Dolandırıcılık": "event.cyber_fraud",
+    "Haraç Kesilmesi": "event.extortion",
+    "Sahte Ürün Tazminatı": "event.fake_product_compensation",
+    "Zula Baskını": "event.stash_raid",
+    "Ceza Kesildi": "event.fined",
+    "Sahte Para ile Dolandırılma": "event.counterfeit_money_scam",
+    "Avukat Masrafı": "event.lawyer_fee",
+    "Kumar Borcu": "event.gambling_debt",
+    "Sahte Yatırım Vaadi": "event.fake_investment_promise",
+    "Araç Arızası": "event.vehicle_breakdown",
+    "Polis Baskını - Mal Müsadere": "event.police_raid_seizure",
+    "Silah Deposu Basıldı": "event.weapons_depot_raided",
+    "Bozuk Parti İmhası": "event.spoiled_batch_disposal",
+    "Köstebek İhaneti": "event.mole_betrayal",
+    "Gümrükte Mallara El Konuldu": "event.customs_seizure",
+    "Kasa Soygunu": "event.safe_robbery",
+    "Cüzdan Hacklendi": "event.wallet_hacked",
+    "Nemden Bozulma": "event.humidity_damage",
+    "Nakliye Kazası": "event.transport_accident",
+    "Rakip Çete Baskını": "event.rival_gang_raid",
+    "Büyük Çete Operasyonu": "event.major_gang_operation",
+    "Sınır Ötesi Yakalanma": "event.cross_border_capture",
+    "Muhbir İhbarı": "event.informant_tip_off",
+    "Kara Para Aklama Operasyonu": "event.money_laundering_operation",
+    "Siber Suçlar Birimi Baskını": "event.cybercrime_unit_raid",
+    "Ortak Baskını": "event.partner_betrayal_raid",
+    "Yılın Girişimcisi Ödülü": "event.entrepreneur_of_the_year",
+    "Sosyal Medyada Skandal İddiası": "event.social_media_scandal_claim",
+    "Şirket İtibarı Arttı": "event.company_reputation_boost",
+    "Rakip Şirket İftirası": "event.rival_company_slander",
+    "Devlet Teşviği": "event.government_incentive",
+    "Ticari Casusluk": "event.corporate_espionage",
+    "Bankayla İyi İlişkiler": "event.good_bank_relations",
+    "Vergi İncelemesi": "event.tax_audit",
+    "Yerel Basında Olumlu Haber": "event.positive_local_press",
+    "Ödeme Gecikmesi Kaydı": "event.late_payment_record",
+    "Sektör Ödülü": "event.industry_award",
+    "Arsa Değerinde Patlama": "event.land_value_boom",
+    "Arsa Değerinde Düşüş": "event.land_value_drop",
+    "Deprem Riski Uyarısı": "event.earthquake_risk_warning",
+    "Yeni Metro Hattı": "event.new_metro_line",
+    "Tarım Desteklemesi": "event.agricultural_subsidy",
+    "Sahil Kirliliği": "event.coastal_pollution",
+    "Turizm Bölgesi İlanı": "event.tourism_zone_declared",
+    "Yeni Organize Sanayi Bölgesi": "event.new_industrial_zone",
+    "Fabrika Kapanmaları": "event.factory_closures",
+    "Otoyol Bağlantısı Müjdesi": "event.highway_connection_news",
+    "Çevre Kirliliği Davası": "event.environmental_pollution_lawsuit",
+    "Serbest Bölge İlanı": "event.free_trade_zone_declared",
+    "İmar Affı": "event.zoning_amnesty",
+    "Erozyon Tehlikesi": "event.erosion_hazard",
+    "Miras Kaldı": "event.inheritance_received",
+    "Büyük İkramiye": "event.jackpot_won",
+    "Büyük Felaket": "event.major_disaster",
+    "Gizli Yatırımcı Ortaklığı": "event.secret_investor_partnership",
+    "Kripto Çılgınlığı": "event.crypto_frenzy",
+    "Sel Felaketi": "event.flood_disaster",
+    "Ortağın İhaneti": "event.partner_betrayal",
+}
+
+
+
+def get_flat_product_order():
+    flat = []
+    for names in PRODUCT_CATEGORIES.values():
+        flat.extend(names)
+    return flat
+
+
+def clean_username(username: str) -> str:
+    import re
+    from i18n import t
+    
+    if not username:
+        return t("common.anonymous")
+    
+    turkish_map = {
+        'ğ': 'g', 'ü': 'u', 'ş': 's', 'ı': 'i', 'ö': 'o', 'ç': 'c',
+        'Ğ': 'G', 'Ü': 'U', 'Ş': 'S', 'İ': 'I', 'Ö': 'O', 'Ç': 'C'
+    }
+    for tr_char, en_char in turkish_map.items():
+        username = username.replace(tr_char, en_char)
+    
+    username = re.sub(r'[^a-zA-Z0-9_]', '_', username)
+    
+    if len(username) > 20:
+        username = username[:20]
+    
+    return username or t("common.anonymous")
+
+
+
+
+
+def calculate_total_wealth(player_data: dict) -> float:
+    """
+    Oyuncunun toplam servetini hesaplar.
+    player_data: Oyuncunun tüm verilerini içeren sözlük
+    Döner: Toplam servet (float)
+    """
+    total = 0.0
+    
+    
+    total += player_data.get("cash", 0.0)
+    
+    
+    inventory = player_data.get("inventory", {})
+    current_prices = player_data.get("current_prices", {})
+    for product, quantity in inventory.items():
+        price_info = current_prices.get(product, {})
+        price = price_info.get("price", 0) if isinstance(price_info, dict) else 0
+        total += quantity * price
+    
+    
+    companies = player_data.get("companies", {})
+    for company_data in companies.values():
+        
+        if isinstance(company_data, dict):
+            setup_cost = company_data.get("setup_cost", 0)
+            daily_profit = company_data.get("daily_profit", 0)
+            total += setup_cost + (daily_profit * 30)
+    
+    
+    lands = player_data.get("lands", {})
+    for land_data in lands.values():
+        if isinstance(land_data, dict):
+            total += land_data.get("current_price", land_data.get("purchase_price", 0))
+    
+    return total

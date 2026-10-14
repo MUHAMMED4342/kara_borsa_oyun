@@ -1,0 +1,6 @@
+HİLE KONSOLU (Ctrl+Alt+F)
+
+/para       -> 20.000.000 TL ekler
+/admin123   -> 5.000.000.000.000 TL ekler
+/admin      -> GitHub deposunu tarayıcıda açar
+/kayitlar   -> kayıt klasörünü dosya gezgininde açar

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karaborsa Simülasyonu — Bantuan</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px 60px;
+        line-height: 1.6;
+        color: #222;
+    }
+    h1 {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+    }
+    h2 {
+        color: #34495e;
+        margin-top: 34px;
+        border-bottom: 1px solid #dfe6e9;
+        padding-bottom: 6px;
+    }
+    h3 {
+        color: #2c3e50;
+        margin-top: 20px;
+    }
+    p.intro {
+        font-size: 1.05em;
+        color: #444;
+    }
+    .shortcut {
+        background: #2c3e50;
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: "Consolas", monospace;
+        font-size: 0.95em;
+        white-space: nowrap;
+    }
+    ul, ol {
+        padding-left: 22px;
+    }
+    li {
+        margin: 8px 0;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0 20px;
+    }
+    th, td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+        background: #f4f6f7;
+        color: #2c3e50;
+    }
+    .note {
+        background: #eef7ff;
+        border-left: 4px solid #3498db;
+        padding: 10px 16px;
+        margin: 16px 0;
+        border-radius: 0 4px 4px 0;
+    }
+    .warn {
+        background: #fff7ec;
+        border-left: 4px solid #e67e22;
+        padding: 10px 16px;
+        margin: 16px 0;
+        border-radius: 0 4px 4px 0;
+    }
+    footer {
+        margin-top: 50px;
+        padding-top: 16px;
+        border-top: 1px solid #e0e0e0;
+        color: #777;
+        font-size: 0.9em;
+    }
+    a {
+        color: #2980b9;
+    }
+</style>
+</head>
+<body>
+<h1>Karaborsa Simülasyonu — Bantuan</h1>
+<p class="intro">
+    Selamat datang! Karaborsa Simülasyonu ("Simulasi Pasar Gelap") adalah
+    game perdagangan dan manajemen bisnis yang sepenuhnya fiktif. Anda
+    membeli dan menjual barang di pasar gelap yang harganya naik turun,
+    membuka perusahaan untuk keuntungan tetap dan kredit, berinvestasi
+    pada properti dan ruang gudang, merekrut karyawan, mengelola risiko
+    dengan seorang informan, dan berusaha menghindari polisi — sambil
+    membangun kekayaan sebesar mungkin. Halaman ini adalah panduan cepat
+    tentang cara kerja semuanya.
+</p>
+
+<h2>Pintasan Keyboard</h2>
+<p>Setiap tindakan dalam game juga tersedia sebagai tombol di layar,
+jadi Anda tidak perlu menghafal pintasan ini untuk bermain — tetapi jika
+Anda menggunakan pembaca layar atau lebih suka keyboard, berikut daftar
+lengkapnya.</p>
+<table>
+    <tr><th>Tombol</th><th>Fungsi</th></tr>
+    <tr><td><span class="shortcut">F1</span></td><td>Membuka halaman Bantuan ini</td></tr>
+    <tr><td><span class="shortcut">F2</span></td><td>Membacakan status Anda saat ini (uang tunai, hari, lokasi, dll.)</td></tr>
+    <tr><td><span class="shortcut">F3</span></td><td>Membuka log Riwayat Anda (semua yang telah diumumkan sejauh ini)</td></tr>
+    <tr><td><span class="shortcut">F5</span></td><td>Maju ke hari berikutnya</td></tr>
+    <tr><td><span class="shortcut">F6</span></td><td>Membuka Manajemen Tanah (membeli atau menjual tanah, mengambil pinjaman dengan jaminan tanah, dan membuka gudang tanah Anda)</td></tr>
+    <tr><td><span class="shortcut">F7</span></td><td>Membuka Manajemen Karyawan</td></tr>
+    <tr><td><span class="shortcut">F8</span></td><td>Membuka Balai Lelang</td></tr>
+    <tr><td><span class="shortcut">C</span></td><td>Mengumumkan saldo uang tunai Anda</td></tr>
+    <tr><td><span class="shortcut">D</span></td><td>Mengumumkan kategori produk yang sedang dipilih</td></tr>
+    <tr><td><span class="shortcut">E</span></td><td>Mengumumkan ringkasan inventaris Anda, termasuk seberapa penuh inventaris</td></tr>
+    <tr><td><span class="shortcut">I</span></td><td>Mencantumkan semua barang yang saat ini ada di inventaris Anda</td></tr>
+    <tr><td><span class="shortcut">Enter</span></td><td>Dengan produk terpilih, membuka menu aksi beli/jual untuk produk tersebut</td></tr>
+    <tr><td><span class="shortcut">Page Up</span> / <span class="shortcut">Page Down</span></td><td>Volume naik / turun</td></tr>
+    <tr><td><span class="shortcut">Home</span> / <span class="shortcut">End</span></td><td>Lagu sebelumnya / berikutnya</td></tr>
+    <tr><td><span class="shortcut">↑</span> / <span class="shortcut">↓</span></td><td>Bergerak di daftar produk</td></tr>
+</table>
+
+<h2>Membeli &amp; Menjual</h2>
+<p>
+    Inti game ini adalah daftar produk: setiap barang memiliki harga yang
+    berubah dari hari ke hari, kadang pelan, kadang tajam setelah peristiwa
+    acak. Beli saat murah, simpan stok, dan jual saat mahal. Perhatikan
+    kategori setiap produk (tekan <span class="shortcut">D</span> untuk
+    mendengarnya) — beberapa kategori membawa risiko lebih besar (dan
+    perhatian polisi lebih banyak) daripada yang lain.
+</p>
+<p>
+    Harga yang ditampilkan di daftar adalah harga yang Anda bayar saat
+    membeli. Saat Anda <em>menjual</em>, komisi 5% dipotong dari harga
+    pasar, sehingga membeli lalu menjual di hari yang sama selalu
+    merugikan Anda sedikit — Anda memerlukan pergerakan harga yang nyata
+    agar untung.
+</p>
+<div class="note">
+    <strong>Batas inventaris:</strong> barang di inventaris utama Anda
+    paling banyak bernilai total 100.000 (menurut harga pasar saat ini).
+    Saat mencapai batas, Anda tidak bisa membeli lagi sampai Anda menjual
+    sebagian barang atau memindahkannya ke gudang tanah (lihat di bawah).
+    Barang yang sudah Anda miliki tidak pernah diambil, bahkan jika
+    lonjakan harga membuat nilainya melewati batas.
+</div>
+
+<h2>Peristiwa Harian</h2>
+<p>
+    Setiap kali hari baru dimulai, beberapa peristiwa acak dapat terjadi:
+    guncangan harga untuk seluruh kategori, keuntungan atau kerugian uang
+    tunai tak terduga, barang ditemukan atau hilang, dan perubahan harga
+    tanah. Sebagian besar peristiwa memengaruhi persentase kecil dari
+    kekayaan Anda, dan kabar buruk sama seringnya dengan kabar baik, jadi
+    jangan mengandalkan keberuntungan untuk menjadi kaya.
+</p>
+
+<h2>Perusahaan</h2>
+<p>
+    Perusahaan adalah bisnis yang dapat Anda buka di kota pilihan Anda.
+    Mendirikan perusahaan memerlukan biaya dan ada biaya pemeliharaan
+    harian, tetapi perusahaan menghasilkan keuntungan setiap hari dan
+    membangun skor kredit. Skor kredit yang lebih baik dan pendapatan yang
+    stabil membuka pinjaman bank dengan syarat yang lebih baik. Jika Anda
+    melewatkan pembayaran pemeliharaan, perusahaan akan bangkrut. Anda
+    dapat memiliki beberapa perusahaan sekaligus.
+</p>
+
+<h2>Tanah</h2>
+<p>
+    Properti adalah cara yang lebih lambat tetapi lebih stabil untuk
+    mengembangkan kekayaan. Harga tanah bergerak seiring waktu dan dapat
+    melonjak setelah peristiwa tertentu, dan Anda juga dapat mengambil
+    pinjaman dengan tanah milik Anda sebagai jaminan (tanah dengan pinjaman
+    yang belum lunas tidak dapat dijual). Buka
+    <span class="shortcut">F6</span> untuk layar manajemen tanah lengkap.
+</p>
+
+<h2>Gudang Tanah</h2>
+<p>
+    Setiap tanah yang Anda miliki menambah gudang bersama. Kapasitasnya
+    adalah setengah dari harga yang Anda bayar untuk setiap tanah,
+    dijumlahkan, dan diukur dalam nilai pasar barang yang disimpan. Jadi
+    sebidang tanah yang Anda beli seharga 50.000 memungkinkan Anda
+    menyimpan barang senilai hingga 25.000.
+</p>
+<ul>
+    <li>Buka <span class="shortcut">F6</span> dan pilih tombol
+        <strong>Gudang</strong>. Pilih produk, masukkan jumlah, lalu pilih
+        <em>Simpan ke Gudang</em> atau <em>Ambil dari Gudang</em>. Ada juga
+        tombol untuk menyimpan sebanyak yang muat dan untuk mengambil
+        semuanya kembali.</li>
+    <li>Barang di gudang <strong>tidak</strong> muncul di inventaris Anda
+        dan tidak dihitung dalam batas inventaris. Barang tetap di sana
+        sampai Anda mengambilnya.</li>
+    <li>Mengambil barang selalu diperbolehkan, bahkan jika inventaris Anda
+        penuh, sehingga barang Anda tidak pernah terjebak.</li>
+    <li>Polisi tetap memperhatikan barang ilegal yang disimpan, tetapi
+        hanya dengan bobot setengah dari barang di inventaris Anda.
+        Menyembunyikan semuanya di gudang tidak akan membuat Anda tak
+        terlihat.</li>
+    <li>Anda tidak dapat menjual tanah jika sisa kapasitas gudang akan
+        terlalu kecil untuk barang yang tersimpan di dalamnya. Ambil
+        sebagian barang terlebih dahulu. Jika bank menyita tanah karena
+        angsuran pinjaman yang terlewat, kapasitas berkurang dengan cara
+        yang sama; Anda masih bisa mengambil barang Anda, tetapi tidak bisa
+        menyimpan lebih banyak sampai berada di bawah kapasitas yang
+        baru.</li>
+    <li>Anda memerlukan setidaknya satu tanah sebelum dapat menggunakan
+        gudang.</li>
+</ul>
+
+<h2>Pinjaman Bank</h2>
+<p>
+    Kekurangan uang tunai? Jika Anda memiliki perusahaan, bank akan
+    meminjamkan uang berdasarkan pendapatan dan skor kredit perusahaan
+    Anda. Semakin baik skor Anda, semakin banyak yang dapat Anda pinjam dan
+    semakin rendah bunganya. Pinjaman dilunasi dengan angsuran, satu kali
+    setiap 30 hari. Jika Anda tidak dapat membayar angsuran, pinjaman
+    dianggap gagal bayar, jadi pinjamlah hanya jumlah yang realistis dapat
+    Anda kembalikan.
+</p>
+
+<h2>Karyawan</h2>
+<p>
+    Rekrut orang dan kirim mereka ke sebuah kota (satu karyawan per kota).
+    Setiap karyawan menghasilkan uang tunai untuk Anda setiap hari, dan
+    menghasilkan sedikit lebih banyak seiring bertambahnya pengalaman. Anda
+    membayar biaya perekrutan satu kali, dan biayanya naik sedikit dengan
+    setiap karyawan yang sudah Anda miliki, sehingga jaringan yang sangat
+    besar menjadi mahal. Setiap 30 hari setiap karyawan dibayar gaji; jika
+    Anda tidak dapat membayar, mereka pergi. Karyawan dikelola dari layar
+    Karyawan (<span class="shortcut">F7</span>).
+</p>
+
+<h2>Informan &amp; Polisi</h2>
+<p>
+    Semakin berisiko aktivitas Anda, semakin banyak "panas polisi" yang
+    menumpuk. Mempekerjakan informan memerlukan biaya dan memperingatkan
+    Anda saat polisi mungkin datang keesokan harinya, sehingga Anda dapat
+    membuang stok atau bersembunyi. Peringatan itu adalah prediksi, bukan
+    jaminan: terkadang informan salah. Jika panas Anda terlalu tinggi dan
+    Anda tertangkap, Anda akan masuk penjara selama beberapa hari — selama
+    itu bisnis dan pinjaman Anda tetap berjalan tanpa Anda, jadi
+    bersiap-siap itu penting.
+</p>
+
+<h2>Balai Lelang</h2>
+<p>
+    Tekan <span class="shortcut">F8</span> untuk membuka Balai Lelang. Ini
+    adalah lelang langsung secara real-time: begitu Anda membukanya, sebuah
+    barang acak (barang antik, perhiasan, mobil klasik, dan lainnya)
+    ditawarkan dengan pengumuman pembukaan — "X dijual seharga Y, berapa
+    penawarannya?" Dari sana Anda bisa sekadar menonton: hitung mundur
+    dimulai (secara default 60 detik), dan sekelompok empat hingga delapan
+    pesaing bernama yang nyata — masing-masing digambarkan dari penampilan
+    atau siapa yang mereka wakili, seperti "seorang wanita dengan kalung
+    mutiara" atau "seorang pengacara yang menawar untuk kliennya", dan
+    masing-masing dengan batas pengeluaran pribadinya — dapat ikut menawar
+    kapan saja, dengan harga saat ini dan sisa waktu diumumkan secara
+    berkala selama lelang berlangsung.
+</p>
+<p>
+    Jika ingin ikut serta, ajukan penawaran kapan saja sebelum waktu habis.
+    Siapa pun yang memimpin saat waktu berakhir memenangkan barang
+    tersebut — Anda tidak perlu mengklik apa pun agar ronde berjalan
+    dengan sendirinya. Setelah ronde berakhir, ada jeda singkat lalu barang
+    baru otomatis dilelang, sehingga Balai Lelang terus berjalan selama
+    Anda membiarkan layarnya terbuka.
+</p>
+<p>
+    Durasi ronde dapat diubah langsung dari layar Balai Lelang (5–120
+    detik) — ini berlaku untuk ronde berikutnya, bukan yang sedang
+    berlangsung. Apa pun yang Anda menangkan masuk ke koleksi Anda sendiri
+    di layar yang sama, dan dapat dijual kembali nanti dengan harga yang
+    dinegosiasikan ulang setiap kali.
+</p>
+
+<h2>Perjudian</h2>
+<p>
+    Merasa beruntung? Kasino dalam game memungkinkan Anda mempertaruhkan
+    uang tunai demi peluang mendapat hadiah lebih besar. Seperti biasa,
+    bandar punya keunggulan — bermainlah untuk bersenang-senang, bukan
+    sebagai strategi keuangan.
+</p>
+
+<h2>Papan Peringkat</h2>
+<p>
+    Dari layar Pengaturan Anda dapat memilih ikut serta dalam papan
+    peringkat publik. Setelah itu, nama pengguna, saldo uang tunai, dan
+    hari game Anda saat ini ditampilkan di daftar "Skor Terbaik" bersama
+    yang dapat dilihat semua pemain. Hanya uang tunai Anda yang dihitung,
+    jadi barang di inventaris atau gudang tidak mengubah skor Anda. Anda
+    dapat mematikannya kembali kapan saja.
+</p>
+
+<h2>Pesan Hari Ini</h2>
+<p>
+    Saat game dimulai, game dapat menampilkan dan membacakan pesan singkat
+    dari pengembang, misalnya kabar tentang pembaruan. Setiap pesan hanya
+    ditampilkan satu kali. Anda dapat membaca pesan terbaru lagi dari menu
+    utama, atau mematikan pembacaan otomatis di Pengaturan.
+</p>
+
+<h2>Dukungan</h2>
+<p>
+    Menemukan bug, punya pertanyaan, atau hanya ingin menyampaikan sesuatu?
+    Buka layar Dukungan / Tiket dari menu utama kapan saja — tidak perlu
+    akun atau situs web terpisah. Anda dapat secara opsional melampirkan
+    riwayat game terbaru Anda ke tiket untuk membantu kami memahami apa
+    yang terjadi.
+</p>
+<p>
+    Tiket Anda dicantumkan beserta statusnya. Ketika tiket telah ditutup,
+    daftar menampilkannya sebagai tertutup dan, setelah Anda membukanya,
+    kotak balasan menjadi hanya-baca dengan catatan bahwa Anda tidak dapat
+    membalas lagi. Jika Anda masih memerlukan bantuan, cukup buka tiket
+    baru.
+</p>
+<div class="note">
+    <strong>Kami ingin mendukung lebih banyak bahasa.</strong> Jika Anda
+    ingin melihat game ini dalam bahasa Anda sendiri, atau bersedia
+    membantu menerjemahkan, beri tahu kami melalui layar Dukungan / Tiket
+    — kami sangat terbuka untuk menambahkan bahasa baru dengan bantuan
+    komunitas.
+</div>
+
+<h2>Pengaturan</h2>
+<p>
+    Dari layar Pengaturan Anda dapat mengubah bahasa game (game mengingat
+    pilihan Anda), mengatur volume musik dan efek suara, menyalakan atau
+    mematikan suara pengetikan, menyalakan atau mematikan pembacaan pesan
+    hari ini, menyalakan atau mematikan pemeriksaan pembaruan otomatis saat
+    startup (Anda selalu dapat memeriksa secara manual dengan tombol
+    <em>Periksa Pembaruan</em>), mengelola partisipasi papan peringkat, dan
+    beralih antara mode Normal dan Portabel. Negara untuk game baru (Turki,
+    Amerika Serikat, Inggris, Australia, atau Indonesia) dipilih saat Anda
+    memulai game baru tersebut.
+</p>
+
+<h2>Mode Portabel</h2>
+<p>
+    Mode portabel memungkinkan Anda membawa game, beserta semua simpanan
+    dan pengaturannya, di flash drive USB atau memindahkannya ke komputer
+    lain.
+</p>
+<ol>
+    <li>Pastikan file .exe utama game berada di foldernya sendiri yang
+        kosong.</li>
+    <li>Buka Pengaturan dan pilih <strong>Beralih ke Mode Portabel</strong>,
+        lalu konfirmasi.</li>
+    <li>Simpanan, pengaturan, dan pilihan bahasa Anda disalin ke folder
+        <strong>KaraborsaData</strong> di samping file .exe, dan sebuah
+        file kecil bernama <strong>portable.flag</strong> dibuat.</li>
+    <li>Salin atau pindahkan seluruh folder game (file .exe bersama
+        KaraborsaData dan portable.flag) ke komputer mana pun dan bermainlah
+        dari sana.</li>
+</ol>
+<p>
+    Untuk kembali, buka Pengaturan dan pilih <strong>Beralih ke Mode
+    Normal</strong>. Data Anda disalin kembali ke folder data game normal
+    di komputer ini. Setelah beralih, harap tutup dan buka kembali game
+    agar semuanya menggunakan lokasi yang baru.
+</p>
+<div class="warn">
+    <strong>Perlu diketahui:</strong> jangan hapus portable.flag selama
+    Anda ingin tetap dalam mode portabel — tanpanya game kembali mencari
+    data Anda di lokasi normal. Mode portabel juga tidak dapat diaktifkan
+    jika folder game dilindungi dari penulisan (misalnya di dalam Program
+    Files); pindahkan game ke folder biasa terlebih dahulu.
+</div>
+
+<h2>Menyimpan Kemajuan Anda</h2>
+<p>
+    Tidak ada akun online: kemajuan Anda disimpan otomatis di perangkat ini
+    saat Anda bermain, dalam file simpanan untuk setiap nama pengguna.
+    Untuk bermain di komputer lain, gunakan Mode Portabel dan salin folder
+    game.
+</p>
+
+<div class="warn">
+    <strong>Pengingat singkat:</strong> semua yang ada dalam game ini —
+    pasar gelap, senjata, narkoba, pencucian uang, dan kejahatan —
+    sepenuhnya fiktif dan ada murni untuk hiburan. Tidak ada di sini yang
+    mencerminkan atau membenarkan kegiatan ilegal di dunia nyata.
+</div>
+
+<footer>
+    Untuk Ketentuan Layanan dan Kebijakan Privasi lengkap kami, lihat
+    layar yang sesuai di menu utama.
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,552 @@
+
+"""
+leaderboard.py
+--------------
+GitHub Gist ile skor tablosu entegrasyonu.
+"""
+
+import os
+import app_paths
+import sys
+import json
+import time
+import random
+import threading
+import requests
+from typing import List, Dict, Optional, Tuple
+
+from formatting import format_tl
+from i18n import t
+
+
+GIST_ID = "5cde0d504dec8aac37cdfc211d91a891"
+GIST_URL = f"https://api.github.com/gists/{GIST_ID}"
+
+
+def _get_base_dir() -> str:
+    """
+    token.txt / ayar / log dosyalarının aranacağı klasörü döndürür.
+
+    ÖNEMLİ: PyInstaller ile --onefile olarak derlenmiş bir .exe'de,
+    programın "çalışma dizini" (os.getcwd()) HER ZAMAN exe'nin
+    bulunduğu klasör OLMAYABİLİR (kısayolun "Başlangıç konumu"na,
+    nereden çalıştırıldığına vb. göre değişir). Relative "token.txt"
+    yolu bu yüzden exe halinde bazen bulunamıyordu. Bunun yerine her
+    zaman exe'nin (frozen ise sys.executable, değilse bu .py
+    dosyasının) bulunduğu klasörü kullanıyoruz.
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+BASE_DIR = _get_base_dir()
+TOKEN_FILE = os.path.join(BASE_DIR, "token.txt")
+SCORE_FILE = "skorlar.json"  
+
+
+def _get_appdata_dir() -> str:
+    """
+    Ayar (skor_ayarlari.json) ve log (skor_log.txt) dosyalarının
+    saklanacağı klasörü döndürür. Normal modda Windows'un standart
+    uygulama verisi klasörü (%LOCALAPPDATA%\\KaraborsaSimulasyonu, eski
+    davranış); taşınabilir modda oyunun kayıt klasörü (bkz. app_paths).
+    token.txt buna dahil DEĞİL: o hâlâ kullanıcının kendi elle koyduğu
+    exe'nin yanındaki klasörde aranıyor.
+    """
+    if app_paths.is_portable():
+        base = app_paths.user_data_dir()
+    else:
+        appdata = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+        if appdata:
+            base = os.path.join(appdata, "KaraborsaSimulasyonu")
+        else:
+            base = os.path.join(os.path.expanduser("~"), ".karaborsa_simulasyonu")
+    try:
+        os.makedirs(base, exist_ok=True)
+        return base
+    except Exception:
+        return BASE_DIR
+
+
+def _settings_file() -> str:
+    return os.path.join(_get_appdata_dir(), "skor_ayarlari.json")
+
+
+def _log_file() -> str:
+    return os.path.join(_get_appdata_dir(), "skor_log.txt")
+
+
+_score_lock = threading.Lock()
+_log_lock = threading.Lock()
+
+
+def _log(msg: str) -> None:
+    """
+    print() ile aynı mesajı hem konsola (varsa) hem de exe'nin yanındaki
+    skor_log.txt dosyasına yazar. Uygulama console=False (pencereli)
+    olarak derlendiği için print() çıktısı hiçbir yerde görünmüyordu;
+    bu dosya sayesinde sorun olduğunda skor_log.txt açılarak gerçek
+    hata görülebilir.
+    """
+    print(msg)
+    try:
+        with _log_lock:
+            with open(_log_file(), "a", encoding="utf-8") as f:
+                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}  {msg}\n")
+    except Exception:
+        
+        pass
+
+
+def _load_settings() -> Dict:
+    try:
+        if os.path.exists(_settings_file()):
+            with open(_settings_file(), "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        _log(f"[Hata] Ayarlar okunamadı: {e}")
+    return {}
+
+
+def _save_settings(settings: Dict) -> None:
+    try:
+        with open(_settings_file(), "w", encoding="utf-8") as f:
+            json.dump(settings, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        _log(f"[Hata] Ayarlar kaydedilemedi: {e}")
+
+
+
+
+skor_gonderimi_aktif = _load_settings().get("skor_gonderimi_aktif", True)
+
+
+def set_score_submission_enabled(enabled: bool) -> None:
+    """
+    Skor gönderimini açar/kapatır ve bu tercihi diske kaydeder.
+    ÖNEMLİ: skor_gonderimi_aktif değişkenini değiştirmek isteyen her
+    modül (main.py, dialogs.py vb.) mutlaka bu fonksiyonu çağırmalı;
+    `from leaderboard import skor_gonderimi_aktif` ile alınan kopyayı
+    doğrudan değiştirmek SADECE o modülün kendi kopyasını değiştirir,
+    buradaki gerçek durumu etkilemez.
+    """
+    global skor_gonderimi_aktif
+    skor_gonderimi_aktif = enabled
+    settings = _load_settings()
+    settings["skor_gonderimi_aktif"] = enabled
+    _save_settings(settings)
+
+
+def is_score_submission_enabled() -> bool:
+    """Güncel skor gönderimi durumunu döndürür (her zaman gerçek değeri okur)."""
+    return skor_gonderimi_aktif
+
+
+def get_token() -> Optional[str]:
+    """
+    Token'ı şu sırayla arar:
+      1) embedded_token.py içine gömülü (obfuscated) token (doldurulduysa)
+      2) build.spec ile exe'nin İÇİNE veri olarak gömülen token.txt
+         (PyInstaller onefile'da bu dosyalar çalışma anında sys._MEIPASS
+         klasörüne çıkarılır, exe'nin yanındaki klasöre değil)
+      3) exe'nin/script'in yanındaki token.txt (elle koyduysanız, ör.
+         gömülü olanı değiştirmeden hızlıca farklı bir token denemek için)
+    """
+    try:
+        from embedded_token import get_embedded_token
+        embedded = get_embedded_token()
+        if embedded:
+            _log("[Bilgi] Gömülü (embedded_token.py) token kullanılıyor.")
+            return embedded
+    except Exception as e:
+        _log(f"[Hata] Gömülü token okunamadı: {e}")
+
+    # assets.dat paketinden token.txt'yi dene
+    try:
+        import asset_loader
+        pack = asset_loader.get_asset_pack()
+        if pack is not None and pack.contains("token.txt"):
+            token = pack.read_text("token.txt").strip()
+            if token:
+                _log("[Bilgi] assets.dat içinden token.txt kullanılıyor.")
+                return token
+    except Exception as e:
+        _log(f"[Hata] assets.dat'tan token.txt okunamadı: {e}")
+
+    
+    
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        bundled_path = os.path.join(sys._MEIPASS, "token.txt")
+        try:
+            if os.path.exists(bundled_path):
+                with open(bundled_path, "r", encoding="utf-8") as f:
+                    token = f.read().strip()
+                    if token:
+                        _log("[Bilgi] exe içine gömülü (bundled) token.txt kullanılıyor.")
+                        return token
+        except Exception as e:
+            _log(f"[Hata] Gömülü token.txt okunamadı: {e}")
+
+    try:
+        if os.path.exists(TOKEN_FILE):
+            with open(TOKEN_FILE, "r", encoding="utf-8") as f:
+                token = f.read().strip()
+                if token:
+                    _log(f"[Bilgi] Token okundu (yanındaki token.txt): {token[:15]}... (uzunluk: {len(token)})")
+                    return token
+        else:
+            _log(f"[Hata] Hiçbir yerde token bulunamadı (gömülü token, bundled token.txt, {TOKEN_FILE})!")
+    except Exception as e:
+        _log(f"[Hata] Token okunamadı: {e}")
+    return None
+
+
+def get_gist_content() -> Optional[Dict]:
+    """
+    GitHub Gist'ten skorlar.json içeriğini çeker.
+    Dönen format: {"score_data": [...]} veya hata durumunda None
+    """
+    token = get_token()
+    if not token:
+        _log("[Hata] GitHub token bulunamadı. token.txt dosyasını kontrol edin.")
+        return None
+
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    try:
+        _log(f"[Bilgi] Gist'ten veri çekiliyor: {GIST_URL}")
+        response = requests.get(GIST_URL, headers=headers, timeout=10)
+        _log(f"[Bilgi] HTTP Durum Kodu: {response.status_code}")
+
+        if response.status_code == 200:
+            gist_data = response.json()
+            files = gist_data.get("files", {})
+
+            if SCORE_FILE in files:
+                content = files[SCORE_FILE].get("content", "{}")
+                _log(f"[Bilgi] skorlar.json içeriği alındı.")
+                try:
+                    return json.loads(content)
+                except json.JSONDecodeError as e:
+                    _log(f"[Hata] skorlar.json içeriği geçersiz JSON formatında: {e}")
+                    return {"score_data": []}
+            else:
+                _log("[Bilgi] skorlar.json dosyası Gist'te bulunamadı. Yeni dosya oluşturulacak.")
+                return {"score_data": []}
+        elif response.status_code == 404:
+            _log("[Hata] Gist bulunamadı. Gist ID'yi kontrol edin.")
+            _log(f"Gist ID: {GIST_ID}")
+            return None
+        elif response.status_code == 401:
+            _log("[Hata] Yetkisiz erişim (401). Token geçersiz veya süresi dolmuş.")
+            _log(f"Token başlangıcı: {token[:15]}...")
+            _log("Çözüm: Yeni bir GitHub Personal Access Token oluşturun ve 'gist' yetkisi verin.")
+            _log("https://github.com/settings/tokens/new")
+            return None
+        else:
+            _log(f"[Hata] Gist okunamadı. HTTP {response.status_code}")
+            _log(f"Response: {response.text[:200]}")
+            return None
+    except requests.exceptions.RequestException as e:
+        _log(f"[Hata] Ağ bağlantı hatası: {e}")
+        return None
+
+
+def update_gist_content(data: Dict) -> bool:
+    """
+    GitHub Gist'teki skorlar.json dosyasını günceller.
+    """
+    token = get_token()
+    if not token:
+        _log("[Hata] GitHub token bulunamadı. token.txt dosyasını kontrol edin.")
+        return False
+
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    try:
+        _log("[Bilgi] Gist güncelleniyor...")
+
+        
+        response = requests.get(GIST_URL, headers=headers, timeout=10)
+        if response.status_code != 200:
+            _log(f"[Hata] Gist bilgileri alınamadı. HTTP {response.status_code}")
+            return False
+
+        gist_data = response.json()
+        existing_files = gist_data.get("files", {})
+
+        
+        files_to_update = {}
+        for filename, file_info in existing_files.items():
+            if filename == SCORE_FILE:
+                files_to_update[SCORE_FILE] = {
+                    "content": json.dumps(data, ensure_ascii=False, indent=2)
+                }
+            else:
+                
+                files_to_update[filename] = {
+                    "content": file_info.get("content", "")
+                }
+
+        
+        if SCORE_FILE not in files_to_update:
+            files_to_update[SCORE_FILE] = {
+                "content": json.dumps(data, ensure_ascii=False, indent=2)
+            }
+
+        
+        payload = {"files": files_to_update}
+        update_response = requests.patch(GIST_URL, headers=headers, json=payload, timeout=10)
+
+        if update_response.status_code == 200:
+            _log("[Bilgi] Skor tablosu başarıyla güncellendi.")
+            return True
+        else:
+            _log(f"[Hata] Gist güncellenemedi. HTTP {update_response.status_code}")
+            _log(f"Response: {update_response.text[:200]}")
+            return False
+
+    except requests.exceptions.RequestException as e:
+        _log(f"[Hata] Ağ bağlantı hatası: {e}")
+        return False
+
+
+def get_leaderboard() -> Optional[List[Dict]]:
+    """
+    Skor tablosunu en çok nakitten en aza doğru sıralı olarak döndürür.
+    Sıralama ölçütü: nakit (cash) — cash zaten kirli para + temiz para +
+    etiketsiz parayı içeren toplam bakiye olduğu için ayrıca "total"
+    hesaplamaya gerek yok; iki kez saymayı da önler.
+    Her kayıt: {"username": str, "cash": float, "day": int, "clean_money": float}
+
+    Dönüş:
+      - Liste (boş olabilir): veri başarıyla çekildi.
+      - None: veri çekilemedi (ör. internet yok, token hatalı vb.) —
+        bu durum "henüz kayıt yok" ile KARIŞTIRILMAMALI.
+    """
+    _log("[Bilgi] Skor tablosu çekiliyor...")
+    data = get_gist_content()
+    if data is None:
+        
+        
+        _log("[Bilgi] Skor tablosu çekilemedi (bağlantı/erişim hatası).")
+        return None
+    if "score_data" in data:
+        entries = data["score_data"]
+
+        def _cash_of(entry: Dict) -> float:
+            
+            
+            if "cash" in entry:
+                return entry.get("cash", 0)
+            if "total" in entry:
+                return entry.get("total", 0)
+            return entry.get("score", 0)
+
+        sorted_entries = sorted(entries, key=_cash_of, reverse=True)
+        _log(f"[Bilgi] {len(sorted_entries)} kayıt bulundu.")
+        return sorted_entries
+    _log("[Bilgi] Kayıt bulunamadı veya veri boş.")
+    return []
+
+
+def _merge_entry(score_data: List[Dict], username: str,
+                  cash: float, day: int, clean_money: float) -> Tuple[List[Dict], bool, str]:
+    """
+    Verilen listeye (username, cash) girdisini ekler/günceller.
+    Dönüş: (yeni_liste, değişiklik_yapıldı_mı, mesaj)
+
+    ÖNEMLİ: Skor tablosu bir "en yüksek skor" tablosu DEĞİL, oyuncunun
+    GÜNCEL/GERÇEK durumunu gösteren bir tablo olmalı. Bu yüzden yeni
+    nakit eskisinden düşük olsa bile (ör. oyuncu 50.000 TL'den 2.000
+    TL'ye düşmüşse) kayıt her zaman güncellenir; oyuncunun para durumu
+    ne ise tabloda o görünür.
+    """
+    for entry in score_data:
+        if entry.get("username") == username:
+            entry.update({
+                "cash": cash,
+                "day": day,
+                "clean_money": clean_money,
+                "last_updated": __import__("datetime").datetime.now().isoformat()
+            })
+            
+            
+            
+            entry.pop("total", None)
+            entry.pop("score", None)
+            _log(f"[Bilgi] Kullanıcı güncellendi: {username} -> Yeni nakit: {format_tl(cash)} TL")
+            return score_data, True, t("leaderboard.balance_sent", amount=format_tl(cash))
+
+    score_data.append({
+        "username": username,
+        "cash": cash,
+        "day": day,
+        "clean_money": clean_money,
+        "last_updated": __import__("datetime").datetime.now().isoformat()
+    })
+    _log(f"[Bilgi] Yeni kullanıcı eklendi: {username}, Nakit: {format_tl(cash)} TL")
+    return score_data, True, t("leaderboard.balance_sent", amount=format_tl(cash))
+
+
+def _entry_matches(score_data: List[Dict], username: str, cash: float) -> bool:
+    """Gist'teki güncel veride bizim yazdığımız (username, cash) çiftinin
+    gerçekten orada olup olmadığını kontrol eder. Yoksa, aramızda başka bir
+    bilgisayarın yazması PATCH'imizi ezmiş demektir."""
+    for entry in score_data:
+        if entry.get("username") == username:
+            current = entry.get("cash", entry.get("total", entry.get("score", 0)))
+            
+            return abs(current - cash) < 0.01
+    return False
+
+
+
+
+
+
+
+
+
+_MAX_RETRIES = 4
+
+
+def rename_leaderboard_entry(old_username: str, new_username: str) -> Tuple[bool, str]:
+    """Skor tablosundaki bir kayda ait kullanıcı adını değiştirir. Oyuncu
+    ana menüden kullanıcı adını değiştirdiğinde çağrılır; böylece skor
+    tablosunda ESKİ ad kalıp oyuncu başka biriyle karıştırılmaz. Nakit,
+    gün, clean_money gibi diğer TÜM bilgiler korunur, sadece "username"
+    alanı güncellenir.
+
+    ÖNEMLİ: Bu, ayrı ve isteğe bağlı bir adımdır. Başarısız olması
+    (ör. internet yok, token yok, ya da yeni isim skor tablosunda zaten
+    BAŞKA bir oyuncu tarafından kullanılıyorsa) yerel kullanıcı adı
+    değişikliğini GERİ ALMAMALI/engellememelidir - çağıran kod bu ikisini
+    ayrı ele almalıdır (bkz. dialogs.py: change_username).
+
+    Dönüş: (başarılı_mı, mesaj)
+    """
+    if not old_username or not new_username:
+        return False, t("leaderboard.invalid_username")
+
+    if old_username == new_username:
+        return True, t("leaderboard.no_change")
+
+    if not skor_gonderimi_aktif:
+        return False, t("leaderboard.submission_disabled_no_update")
+
+    with _score_lock:
+        last_error = t("leaderboard.update_failed_connection")
+
+        for attempt in range(1, _MAX_RETRIES + 1):
+            data = get_gist_content()
+            if data is None:
+                return False, t("leaderboard.data_fetch_failed")
+
+            score_data = data.get("score_data", [])
+
+            old_entry = None
+            for entry in score_data:
+                if entry.get("username") == old_username:
+                    old_entry = entry
+                    break
+
+            if old_entry is None:
+                
+                
+                
+                return True, t("leaderboard.name_not_found")
+
+            if any(e is not old_entry and e.get("username") == new_username
+                   for e in score_data):
+                return False, t("leaderboard.name_taken", name=new_username)
+
+            old_entry["username"] = new_username
+            old_entry["last_updated"] = __import__("datetime").datetime.now().isoformat()
+            data["score_data"] = score_data
+
+            if not update_gist_content(data):
+                last_error = t("leaderboard.update_failed_connection")
+                time.sleep(0.5 + random.random())
+                continue
+
+            verify_data = get_gist_content()
+            if verify_data and any(
+                e.get("username") == new_username
+                for e in verify_data.get("score_data", [])
+            ):
+                return True, t("leaderboard.name_updated", name=new_username)
+
+            _log("[Bilgi] İsim değişikliği doğrulanamadı (muhtemelen başka "
+                 "bir gönderimle çakıştı), tekrar deneniyor... "
+                 f"({attempt}/{_MAX_RETRIES})")
+            last_error = t("leaderboard.update_conflict_unverified")
+            time.sleep(0.5 + random.random())
+
+        return False, last_error
+
+
+def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> Tuple[bool, str]:
+    """
+    Oyun sonunda oyuncunun NAKDİNİ GitHub Gist'teki skor tablosuna
+    gönderir. Tablo sadece nakde (cash) göre sıralanıyor - cash zaten
+    kirli para + temiz para + etiketsiz parayı içeren toplam bakiye
+    olduğu için ayrıca bir "toplam" hesaplamaya gerek yok. Kullanıcı
+    zaten listede varsa kaydı HER ZAMAN günceller (yeni nakit daha düşük
+    olsa bile) — bkz. _merge_entry(). Bu tablo "en yüksek skor" değil,
+    oyuncunun güncel/gerçek durumunu gösterir.
+    clean_money parametresi geriye dönük uyumluluk ve bilgi amaçlı hâlâ
+    kaydediliyor, ama sıralamaya/karşılaştırmaya dahil edilmiyor.
+    """
+    _log(f"[Bilgi] Gönderim başlatıldı. Kullanıcı: {username}, Gün: {day}, Nakit: {cash}")
+
+    if not skor_gonderimi_aktif:
+        return False, t("leaderboard.submission_disabled")
+
+    if not username:
+        return False, t("leaderboard.empty_username")
+
+    with _score_lock:
+        last_error = t("leaderboard.send_failed_connection")
+
+        for attempt in range(1, _MAX_RETRIES + 1):
+            
+            data = get_gist_content()
+            if data is None:
+                return False, t("leaderboard.gist_data_failed")
+
+            score_data = data.get("score_data", [])
+
+            
+            score_data, changed, msg = _merge_entry(score_data, username, cash, day, clean_money)
+            if not changed:
+                
+                return True, msg
+
+            data["score_data"] = score_data
+
+            
+            if not update_gist_content(data):
+                last_error = t("leaderboard.send_failed_connection")
+                time.sleep(0.5 + random.random())
+                continue
+
+            
+            
+            verify_data = get_gist_content()
+            if verify_data and _entry_matches(verify_data.get("score_data", []), username, cash):
+                return True, msg
+
+            _log(f"[Bilgi] Doğrulama başarısız (muhtemelen başka bir gönderimle çakıştı), "
+                  f"tekrar deneniyor... ({attempt}/{_MAX_RETRIES})")
+            last_error = t("leaderboard.send_conflict_unverified")
+            time.sleep(0.5 + random.random())
+
+        return False, last_error

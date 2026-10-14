@@ -1,0 +1,38 @@
+(Aceh) Banda Aceh, Langsa, Lhokseumawe, Sabang, Subulussalam, Aceh Barat, Aceh Barat Daya, Aceh Besar, Aceh Jaya, Aceh Selatan, Aceh Singkil, Aceh Tamiang, Aceh Tengah, Aceh Tenggara, Aceh Timur, Aceh Utara, Bener Meriah, Bireuen, Gayo Lues, Nagan Raya, Pidie, Pidie Jaya, Simeulue
+(Sumatera Utara) Binjai, Gunungsitoli, Medan, Padangsidimpuan, Pematangsiantar, Sibolga, Tanjungbalai, Tebing Tinggi, Asahan, Batu Bara, Dairi, Deli Serdang, Humbang Hasundutan, Karo, Labuhanbatu, Labuhanbatu Selatan, Labuhanbatu Utara, Langkat, Mandailing Natal, Nias, Nias Barat, Nias Selatan, Nias Utara, Padang Lawas, Padang Lawas Utara, Pakpak Bharat, Samosir, Serdang Bedagai, Simalungun, Tapanuli Selatan, Tapanuli Tengah, Tapanuli Utara, Toba
+(Sumatera Barat) Bukittinggi, Padang, Padang Panjang, Pariaman, Payakumbuh, Sawahlunto, Kota Solok, Agam, Dharmasraya, Kepulauan Mentawai, Lima Puluh Kota, Padang Pariaman, Pasaman, Pasaman Barat, Pesisir Selatan, Sijunjung, Kabupaten Solok, Solok Selatan, Tanah Datar
+(Riau) Dumai, Pekanbaru, Bengkalis, Indragiri Hilir, Indragiri Hulu, Kampar, Kepulauan Meranti, Kuantan Singingi, Pelalawan, Rokan Hilir, Rokan Hulu, Siak
+(Kepulauan Riau) Batam, Tanjungpinang, Bintan, Karimun, Kepulauan Anambas, Lingga, Natuna
+(Jambi) Jambi, Sungai Penuh, Batanghari, Bungo, Kerinci, Merangin, Muaro Jambi, Sarolangun, Tanjung Jabung Barat, Tanjung Jabung Timur, Tebo
+(Sumatera Selatan) Lubuklinggau, Pagar Alam, Palembang, Prabumulih, Banyuasin, Empat Lawang, Lahat, Muara Enim, Musi Banyuasin, Musi Rawas, Musi Rawas Utara, Ogan Ilir, Ogan Komering Ilir, Ogan Komering Ulu, Ogan Komering Ulu Selatan, Ogan Komering Ulu Timur, Penukal Abab Lematang Ilir
+(Kepulauan Bangka Belitung) Pangkalpinang, Bangka, Bangka Barat, Bangka Selatan, Bangka Tengah, Belitung, Belitung Timur
+(Bengkulu) Bengkulu, Bengkulu Selatan, Bengkulu Tengah, Bengkulu Utara, Kaur, Kepahiang, Lebong, Mukomuko, Rejang Lebong, Seluma
+(Lampung) Bandar Lampung, Metro, Lampung Barat, Lampung Selatan, Lampung Tengah, Lampung Timur, Lampung Utara, Mesuji, Pesawaran, Pesisir Barat, Pringsewu, Tanggamus, Tulang Bawang, Tulang Bawang Barat, Way Kanan
+(DKI Jakarta) Jakarta Pusat, Jakarta Utara, Jakarta Barat, Jakarta Selatan, Jakarta Timur, Kepulauan Seribu
+(Jawa Barat) Kota Bandung, Banjar, Kota Bekasi, Kota Bogor, Cimahi, Kota Cirebon, Depok, Kota Sukabumi, Kota Tasikmalaya, Kabupaten Bandung, Bandung Barat, Kabupaten Bekasi, Kabupaten Bogor, Ciamis, Cianjur, Kabupaten Cirebon, Garut, Indramayu, Karawang, Kuningan, Majalengka, Pangandaran, Purwakarta, Subang, Kabupaten Sukabumi, Sumedang, Kabupaten Tasikmalaya
+(Banten) Cilegon, Kota Serang, Kota Tangerang, Tangerang Selatan, Lebak, Pandeglang, Kabupaten Serang, Kabupaten Tangerang
+(Jawa Tengah) Kota Magelang, Kota Pekalongan, Salatiga, Kota Semarang, Surakarta, Kota Tegal, Banjarnegara, Banyumas, Batang, Blora, Boyolali, Brebes, Cilacap, Demak, Grobogan, Jepara, Karanganyar, Kebumen, Kendal, Klaten, Kudus, Kabupaten Magelang, Pati, Kabupaten Pekalongan, Pemalang, Purbalingga, Purworejo, Rembang, Kabupaten Semarang, Sragen, Sukoharjo, Kabupaten Tegal, Temanggung, Wonogiri, Wonosobo
+(DI Yogyakarta) Yogyakarta, Bantul, Gunungkidul, Kulon Progo, Sleman
+(Jawa Timur) Batu, Kota Blitar, Kota Kediri, Kota Madiun, Kota Malang, Kota Mojokerto, Kota Pasuruan, Kota Probolinggo, Surabaya, Bangkalan, Banyuwangi, Kabupaten Blitar, Bojonegoro, Bondowoso, Gresik, Jember, Jombang, Kabupaten Kediri, Lamongan, Lumajang, Kabupaten Madiun, Magetan, Kabupaten Malang, Kabupaten Mojokerto, Nganjuk, Ngawi, Pacitan, Pamekasan, Kabupaten Pasuruan, Ponorogo, Kabupaten Probolinggo, Sampang, Sidoarjo, Situbondo, Sumenep, Trenggalek, Tuban, Tulungagung
+(Bali) Denpasar, Badung, Bangli, Buleleng, Gianyar, Jembrana, Karangasem, Klungkung, Tabanan
+(Nusa Tenggara Barat) Kota Bima, Mataram, Kabupaten Bima, Dompu, Lombok Barat, Lombok Tengah, Lombok Timur, Lombok Utara, Sumbawa, Sumbawa Barat
+(Nusa Tenggara Timur) Kota Kupang, Alor, Belu, Ende, Flores Timur, Kabupaten Kupang, Lembata, Malaka, Manggarai, Manggarai Barat, Manggarai Timur, Nagekeo, Ngada, Rote Ndao, Sabu Raijua, Sikka, Sumba Barat, Sumba Barat Daya, Sumba Tengah, Sumba Timur, Timor Tengah Selatan, Timor Tengah Utara
+(Kalimantan Barat) Pontianak, Singkawang, Bengkayang, Kapuas Hulu, Kayong Utara, Ketapang, Kubu Raya, Landak, Melawi, Mempawah, Sambas, Sanggau, Sekadau, Sintang
+(Kalimantan Tengah) Palangka Raya, Barito Selatan, Barito Timur, Barito Utara, Gunung Mas, Kapuas, Katingan, Kotawaringin Barat, Kotawaringin Timur, Lamandau, Murung Raya, Pulang Pisau, Sukamara, Seruyan
+(Kalimantan Selatan) Banjarbaru, Banjarmasin, Balangan, Banjar, Barito Kuala, Hulu Sungai Selatan, Hulu Sungai Tengah, Hulu Sungai Utara, Kotabaru, Tabalong, Tanah Bumbu, Tanah Laut, Tapin
+(Kalimantan Timur) Balikpapan, Bontang, Samarinda, Berau, Kutai Barat, Kutai Kartanegara, Kutai Timur, Mahakam Ulu, Paser, Penajam Paser Utara
+(Kalimantan Utara) Tarakan, Bulungan, Malinau, Nunukan, Tana Tidung
+(Sulawesi Utara) Bitung, Kotamobagu, Manado, Tomohon, Bolaang Mongondow, Bolaang Mongondow Selatan, Bolaang Mongondow Timur, Bolaang Mongondow Utara, Kepulauan Sangihe, Kepulauan Siau Tagulandang Biaro, Kepulauan Talaud, Minahasa, Minahasa Selatan, Minahasa Tenggara, Minahasa Utara
+(Gorontalo) Kota Gorontalo, Boalemo, Bone Bolango, Kabupaten Gorontalo, Gorontalo Utara, Pohuwato
+(Sulawesi Tengah) Palu, Banggai, Banggai Kepulauan, Banggai Laut, Buol, Donggala, Morowali, Morowali Utara, Parigi Moutong, Poso, Sigi, Tojo Una-Una, Tolitoli
+(Sulawesi Barat) Majene, Mamasa, Mamuju, Mamuju Tengah, Pasangkayu, Polewali Mandar
+(Sulawesi Selatan) Makassar, Palopo, Parepare, Bantaeng, Barru, Bone, Bulukumba, Enrekang, Gowa, Jeneponto, Kepulauan Selayar, Luwu, Luwu Timur, Luwu Utara, Maros, Pangkajene dan Kepulauan, Pinrang, Sidenreng Rappang, Sinjai, Soppeng, Takalar, Tana Toraja, Toraja Utara, Wajo
+(Sulawesi Tenggara) Baubau, Kendari, Bombana, Buton, Buton Selatan, Buton Tengah, Buton Utara, Kolaka, Kolaka Timur, Kolaka Utara, Konawe, Konawe Kepulauan, Konawe Selatan, Konawe Utara, Muna, Muna Barat, Wakatobi
+(Maluku) Ambon, Tual, Buru, Buru Selatan, Kepulauan Aru, Kepulauan Tanimbar, Maluku Barat Daya, Maluku Tengah, Maluku Tenggara, Seram Bagian Barat, Seram Bagian Timur
+(Maluku Utara) Ternate, Tidore Kepulauan, Halmahera Barat, Halmahera Selatan, Halmahera Tengah, Halmahera Timur, Halmahera Utara, Kepulauan Sula, Pulau Morotai, Pulau Taliabu
+(Papua) Kota Jayapura, Biak Numfor, Kabupaten Jayapura, Keerom, Kepulauan Yapen, Mamberamo Raya, Sarmi, Supiori, Waropen
+(Papua Barat) Fakfak, Kaimana, Manokwari, Manokwari Selatan, Pegunungan Arfak, Teluk Bintuni, Teluk Wondama
+(Papua Barat Daya) Kota Sorong, Maybrat, Raja Ampat, Kabupaten Sorong, Sorong Selatan, Tambrauw
+(Papua Tengah) Deiyai, Dogiyai, Intan Jaya, Mimika, Nabire, Paniai, Puncak, Puncak Jaya
+(Papua Pegunungan) Jayawijaya, Lanny Jaya, Mamberamo Tengah, Nduga, Pegunungan Bintang, Tolikara, Yahukimo, Yalimo
+(Papua Selatan) Asmat, Boven Digoel, Mappi, Merauke

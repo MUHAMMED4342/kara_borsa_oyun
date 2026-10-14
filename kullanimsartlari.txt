@@ -1,0 +1,144 @@
+"tr:
+Son güncelleme: 27 Eylül 2026 Pazar
+
+1. Kabul
+Karaborsa Simülasyonu'nu ("Oyun") indirip oynayarak bu Kullanım Şartları'nı kabul etmiş sayılırsınız. Bu şartları kabul etmiyorsanız Oyunu kullanmamalısınız.
+Geliştirici: muhammed.ali 
+İletişim: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. İçerik Uyarısı
+Oyun; kara borsa ticareti, silah, uyuşturucu benzeri kurgusal ürünler, kara para aklama, hapis ve suç temalarını tamamen kurgusal ve simülasyon amaçlı olarak içerir. Oyun içindeki hiçbir öğe, gerçek hayatta yasa dışı faaliyetleri teşvik etmez veya onaylamaz.
+
+3. Oyunun Yapısı ve Hesap Gerektirmemesi
+Oyun, tek oyunculu (single-player) bir masaüstü simülasyonudur ve oynamak için herhangi bir hesap oluşturmanız, giriş yapmanız veya kişisel bilgi vermeniz GEREKMEZ.
+Oyun ilerlemeniz (nakit, envanter, şirketler, arsalar, çalışanlar, kredi durumu, oyun günü vb.) yalnızca kendi bilgisayarınızda, oyunun yerel kayıt dosyasında saklanır. Bu veriler sunucularımıza gönderilmez ve cihazınızdan dışarı çıkmaz.
+Oyunu başlatırken belirlediğiniz kullanıcı adı, yalnızca yerel kayıt dosyanızı tanımlamak ve gönüllü olarak katıldığınız Skor Tablosu'nda görünmesi için kullanılır; bir hesap veya kimlik doğrulama anlamı taşımaz.
+Farklı bir bilgisayarda oynamaya başlarsanız ilerlemeniz oraya taşınmaz; her cihazın kendi yerel kaydı ayrıdır.
+
+4. Kabul Edilebilir Kullanım
+Aşağıdaki davranışlar yasaktır ve tespit edilmesi halinde Skor Tablosu ve/veya Destek Sistemi'ne erişiminizin kısıtlanmasına yol açabilir:
+- Hile, exploit, oyunun normal akışını bozan üçüncü taraf araçlar veya otomasyon (bot) kullanmak
+- Skor tablosunu manipüle etmeye yönelik girişimlerde bulunmak
+- Destek / Bilet sistemini kötüye kullanmak (spam, taciz, uygunsuz veya yasa dışı içerik göndermek)
+- Oyunun bağlı olduğu resmi servislere (skor tablosu, destek sistemi) zarar verecek veya aşırı yük bindirecek şekilde kullanmak
+
+5. Skor Tablosu ve Kullanıcı İçeriği
+"En İyi Skorlar" ekranına katılmayı seçtiğinizde (Ayarlar > Skor Gönderimi), oyunu başlatırken belirlediğiniz kullanıcı adınız, nakit bakiyeniz ve oyun gününüz herkese açık bir sıralamaya gönderilir ve diğer oyuncular tarafından görülebilir. Bu katılımı Ayarlar ekranından istediğiniz zaman kapatabilirsiniz.
+Gerçek adınızı ya da başka yerlerde kullandığınız kimliğinizi ifşa etmek istemiyorsanız, oyunu başlatırken kullanıcı adınızı buna göre seçmenizi öneririz.
+Destek biletlerinde paylaştığınız içerikten de siz sorumlusunuz; uygunsuz, hakaret içeren veya yasa dışı içerik paylaşılması durumunda ilgili bilet kapatılabilir.
+
+6. Fikri Mülkiyet ve Açık Kaynak
+Oyun açık kaynaklıdır; kodunu ve içeriğini özgürce inceleyebilir, kopyalayabilir, değiştirebilir ve dağıtabilirsiniz. Ancak topluluk sağlığı ve adil oyun ortamı için resmi Skor Tablosu ve Destek Sistemi üzerinde manipülasyon yapmak veya bu resmi servisleri izinsiz kendi dış projeleriniz için kötüye kullanmak yasaktır.
+
+7. Hizmetin Sağlanması
+Skor tablosu ve destek sistemi gibi özellikler internet bağlantısı gerektirir ve üçüncü taraf altyapılara (GitHub) bağlıdır. Oyunun kendisi (yerel kayıt, ticaret, şirketler, arsalar, çalışanlar vb.) internet bağlantısı olmadan tam olarak oynanabilir.
+Bu üçüncü taraf hizmetlerin kesintisiz veya hatasız çalışacağını garanti etmiyoruz; bakım, altyapı sorunları veya üçüncü taraf kesintileri nedeniyle geçici erişim sorunları yaşanabilir.
+Oyun "olduğu gibi" sunulur; belirli bir amaca uygunluk dahil, açık ya da zımni hiçbir garanti verilmez.
+
+8. Sorumluluğun Sınırlandırılması
+Yürürlükteki mevzuatın izin verdiği azami ölçüde, geliştiriciler; Oyunun kullanımından veya kullanılamamasından, yerel kayıt dosyalarının kaybından veya bozulmasından ya da üçüncü taraf hizmetlerdeki (GitHub vb.) aksaklıklardan kaynaklanan dolaylı, arızi veya sonuç niteliğindeki zararlardan sorumlu tutulamaz.
+
+9. Fesih
+Bu Kullanım Şartları'nı ihlal ettiğinizi tespit etmemiz halinde, Skor Tablosu ve/veya Destek Sistemi'ne erişiminizi önceden bildirimde bulunmaksızın kısıtlama hakkımız saklıdır.
+
+10. Değişiklikler
+Bu şartları zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğunda oyun içi bir onay ekranı ile yeniden bilgilendirilir ve onayınız istenir; Oyunu kullanmaya devam etmeniz güncellenmiş şartları kabul ettiğiniz anlamına gelir.
+
+11. Uygulanacak Hukuk
+Bu şartlar Türkiye kanunlarına tabidir ve buna göre yorumlanır."
+"en:
+Last updated: Sunday, September 27, 2026
+
+1. Acceptance
+By downloading and playing Karaborsa Simülasyonu ("the Game"), you accept these Terms of Service. If you do not accept these terms, you must not use the Game.
+Developers: muhammed.ali 
+Contact: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. Content Warning
+The Game contains purely fictional, simulation-only themes of black-market trading, fictional weapon- and drug-like products, money laundering, prison, and crime. Nothing in the Game encourages or endorses real-world illegal activity.
+
+3. Game Structure and No Account Required
+The Game is a single-player desktop simulation and does NOT require you to create an account, log in, or provide any personal information in order to play.
+Your game progress (cash, inventory, companies, land, employees, loan status, in-game day, etc.) is stored only on your own computer, in the game's local save file. This data is not sent to our servers and does not leave your device.
+The username you choose when launching the Game is used only to identify your local save file and, if you voluntarily opt in to the Leaderboard, to appear there; it does not represent an account or authentication in any way.
+If you start playing on a different computer, your progress will not carry over; each device has its own separate local save.
+
+4. Acceptable Use
+The following behaviors are prohibited and may result in restricted access to the Leaderboard and/or Support System if detected:
+- Cheating, exploits, third-party tools, or automation (bots) that disrupt the Game's normal flow
+- Attempting to manipulate the leaderboard
+- Abusing the Support / Ticket system (spam, harassment, or sharing inappropriate or illegal content)
+- Using the Game in a way that damages or overloads its official services (leaderboard, support system)
+
+5. Leaderboard and User Content
+When you opt in to the "Top Scores" screen (Settings > Score Submission), the username you chose when launching the Game, along with your cash balance and in-game day, is sent to a public ranking visible to other players. You can turn this off at any time from the Settings screen.
+If you do not want to reveal your real name or an identity you use elsewhere, we recommend choosing your username accordingly when launching the Game.
+You are also responsible for the content you share in support tickets; if inappropriate, abusive, or illegal content is shared, the related ticket may be closed.
+
+6. Intellectual Property and Open Source
+The Game is open source; you may freely inspect, copy, modify, and redistribute its code and content. However, manipulating the official Leaderboard or Support System, or misusing these official services for your own unauthorized external projects, is prohibited for the sake of community health and fair play.
+
+7. Provision of Service
+Features such as the leaderboard and support system require an internet connection and depend on third-party infrastructure (GitHub). The Game itself (local saves, trading, companies, land, employees, etc.) is fully playable without an internet connection.
+We do not guarantee these third-party services will be uninterrupted or error-free; temporary access issues may occur due to maintenance, infrastructure problems, or third-party outages.
+The Game is provided "as is", without any warranty, express or implied, including fitness for a particular purpose.
+
+8. Limitation of Liability
+To the maximum extent permitted by applicable law, the developers shall not be liable for any indirect, incidental, or consequential damages arising from your use or inability to use the Game, loss of or corruption of local save files, or disruptions in third-party services (GitHub, etc.).
+
+9. Termination
+We reserve the right to restrict your access to the Leaderboard and/or Support System without prior notice if we determine you have violated these Terms of Service.
+
+10. Changes
+We may update these terms from time to time. When significant changes are made, you will be informed again via an in-game confirmation screen and your consent will be requested; continuing to use the Game means you accept the updated terms.
+
+11. Governing Law
+These terms are governed by and construed in accordance with the laws of Turkey."
+"id:
+Terakhir diperbarui: Minggu, 27 September 2026
+
+1. Penerimaan
+Dengan mengunduh dan memainkan Karaborsa Simülasyonu ("Game"), Anda dianggap menerima Ketentuan Layanan ini. Jika Anda tidak menerima ketentuan ini, Anda tidak boleh menggunakan Game.
+Pengembang: muhammed.ali 
+Kontak: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. Peringatan Konten
+Game ini berisi tema perdagangan pasar gelap, produk fiktif mirip senjata dan narkoba, pencucian uang, penjara, dan kejahatan, sepenuhnya secara fiktif dan hanya untuk tujuan simulasi. Tidak ada elemen apa pun dalam Game yang mendorong atau membenarkan kegiatan ilegal di dunia nyata.
+
+3. Struktur Game dan Tidak Memerlukan Akun
+Game ini adalah simulasi desktop single-player dan Anda TIDAK perlu membuat akun, masuk (login), atau memberikan informasi pribadi apa pun untuk memainkannya.
+Kemajuan game Anda (uang tunai, inventaris, perusahaan, tanah, karyawan, status pinjaman, hari dalam game, dll.) disimpan hanya di komputer Anda sendiri, dalam file simpanan lokal game. Data ini tidak dikirim ke server kami dan tidak meninggalkan perangkat Anda.
+Nama pengguna yang Anda pilih saat meluncurkan Game hanya digunakan untuk mengidentifikasi file simpanan lokal Anda dan, jika Anda secara sukarela mengikuti Papan Peringkat, untuk ditampilkan di sana; nama pengguna ini bukan akun maupun autentikasi dalam bentuk apa pun.
+Jika Anda mulai bermain di komputer lain, kemajuan Anda tidak akan berpindah; setiap perangkat memiliki simpanan lokalnya sendiri yang terpisah.
+
+4. Penggunaan yang Dapat Diterima
+Perilaku berikut dilarang dan, jika terdeteksi, dapat menyebabkan akses Anda ke Papan Peringkat dan/atau Sistem Dukungan dibatasi:
+- Curang, mengeksploitasi celah, menggunakan alat pihak ketiga atau otomatisasi (bot) yang mengganggu alur normal Game
+- Mencoba memanipulasi papan peringkat
+- Menyalahgunakan sistem Dukungan / Tiket (spam, pelecehan, atau mengirim konten yang tidak pantas atau ilegal)
+- Menggunakan Game dengan cara yang merusak atau membebani layanan resminya secara berlebihan (papan peringkat, sistem dukungan)
+
+5. Papan Peringkat dan Konten Pengguna
+Saat Anda memilih untuk mengikuti layar "Skor Terbaik" (Pengaturan > Pengiriman Skor), nama pengguna yang Anda pilih saat meluncurkan Game, bersama dengan saldo uang tunai dan hari dalam game Anda, dikirim ke peringkat publik yang dapat dilihat oleh pemain lain. Anda dapat mematikan partisipasi ini kapan saja dari layar Pengaturan.
+Jika Anda tidak ingin mengungkapkan nama asli Anda atau identitas yang Anda gunakan di tempat lain, kami menyarankan agar Anda memilih nama pengguna dengan tepat saat meluncurkan Game.
+Anda juga bertanggung jawab atas konten yang Anda bagikan dalam tiket dukungan; jika konten yang tidak pantas, menghina, atau ilegal dibagikan, tiket terkait dapat ditutup.
+
+6. Kekayaan Intelektual dan Sumber Terbuka
+Game ini bersifat sumber terbuka (open source); Anda bebas memeriksa, menyalin, memodifikasi, dan mendistribusikan ulang kode dan kontennya. Namun, demi kesehatan komunitas dan lingkungan bermain yang adil, memanipulasi Papan Peringkat atau Sistem Dukungan resmi, atau menyalahgunakan layanan resmi tersebut untuk proyek eksternal Anda sendiri tanpa izin, dilarang.
+
+7. Penyediaan Layanan
+Fitur seperti papan peringkat dan sistem dukungan memerlukan koneksi internet dan bergantung pada infrastruktur pihak ketiga (GitHub). Game itu sendiri (simpanan lokal, perdagangan, perusahaan, tanah, karyawan, dll.) dapat dimainkan sepenuhnya tanpa koneksi internet.
+Kami tidak menjamin bahwa layanan pihak ketiga ini akan berjalan tanpa gangguan atau bebas dari kesalahan; masalah akses sementara dapat terjadi karena pemeliharaan, masalah infrastruktur, atau gangguan pihak ketiga.
+Game disediakan "sebagaimana adanya" ("as is"), tanpa jaminan apa pun, baik tersurat maupun tersirat, termasuk kesesuaian untuk tujuan tertentu.
+
+8. Pembatasan Tanggung Jawab
+Sejauh diizinkan oleh hukum yang berlaku, para pengembang tidak bertanggung jawab atas kerugian tidak langsung, insidental, atau konsekuensial yang timbul dari penggunaan atau ketidakmampuan menggunakan Game, hilang atau rusaknya file simpanan lokal, atau gangguan pada layanan pihak ketiga (GitHub, dll.).
+
+9. Pengakhiran
+Kami berhak membatasi akses Anda ke Papan Peringkat dan/atau Sistem Dukungan tanpa pemberitahuan sebelumnya jika kami menemukan bahwa Anda telah melanggar Ketentuan Layanan ini.
+
+10. Perubahan
+Kami dapat memperbarui ketentuan ini dari waktu ke waktu. Ketika perubahan signifikan dilakukan, Anda akan diberi tahu kembali melalui layar konfirmasi dalam game dan persetujuan Anda akan diminta; terus menggunakan Game berarti Anda menerima ketentuan yang diperbarui.
+
+11. Hukum yang Berlaku
+Ketentuan ini tunduk pada dan ditafsirkan sesuai dengan hukum Turki."
