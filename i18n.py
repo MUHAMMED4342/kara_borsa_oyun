@@ -189,15 +189,11 @@ def _detect_system_language(candidate_codes: list) -> str:
 
 
 def _bootstrap():
-    """Her process başına bir kez çalışır. Kullanıcının klasöründe
-    HENÜZ OLMAYAN her .json dil dosyasını (ilk kurulumda hepsi, daha
-    sonraki bir güncellemede eklenen YENİ diller de dahil) bundled
-    klasörden kopyalar - var olan hiçbir dosyaya asla dokunmaz, o
-    yüzden oyuncunun/çevirmenin üzerinde çalıştığı bir dil kesinlikle
-    ezilmez. Ayrıca en.json'a (ve varsa _meta.json'a) eksik anahtarları
-    ekler - böylece bir oyun güncellemesi yeni metin/yeni dil
-    eklediğinde, DAHA ÖNCE bu bilgisayarda çalışmış bir kurulum da
-    otomatik olarak bunlara kavuşur."""
+    """Her process başına bir kez çalışır. Oyunla gelen (bundled) tüm
+    dil dosyalarını kullanıcı klasörüne yazar (bkz. _sync_bundled_locales:
+    içerik değiştiyse üzerine yazılır, oyuncunun kendi oluşturduğu
+    bundled'da olmayan diller hariç) ve _meta.json'a eksik dil adlarını
+    ekler."""
     global _bootstrapped
     if _bootstrapped:
         return
@@ -208,73 +204,47 @@ def _bootstrap():
     try:
         os.makedirs(_LOCALES_DIR, exist_ok=True)
 
-        if os.path.isdir(bundled_dir):
-            for fname in os.listdir(bundled_dir):
-                if not fname.endswith(".json"):
-                    continue
-                dest_path = os.path.join(_LOCALES_DIR, fname)
-                if not os.path.exists(dest_path):
-                    # Bu dosya bu bilgisayarda hiç yok - ya gerçek ilk
-                    # çalıştırma (hiçbir şey yok), ya da geliştiricinin
-                    # SONRADAN eklediği yeni bir dil (ör. de.json). İki
-                    # durumda da güvenle tam kopyalanır, çünkü üzerine
-                    # yazılacak bir şey yok.
-                    shutil.copy2(os.path.join(bundled_dir, fname), dest_path)
-
-        _merge_missing_source_keys(bundled_dir)
+        _sync_bundled_locales(bundled_dir)
         _merge_missing_meta_entries(bundled_dir)
     except Exception as e:
         print(f"[i18n] Could not initialize locales folder: {e}")
 
 
-def _merge_missing_source_keys(bundled_dir: str):
-    """Adds any keys present in a BUNDLED locale file (the developer's
-    own shipped translations) but missing from the user's copy of that
-    same file - e.g. after a game update added new screens/text (new
-    keys land in en.json) or new official Turkish translations (new
-    keys land in tr.json). Never overwrites a value that already
-    exists in the user's file (so a translator's own edits, or a
-    player-created custom language, are never touched) - it only ever
-    fills in gaps using the bundled file as the source of truth.
+def _sync_bundled_locales(bundled_dir: str):
+    """Oyunla birlikte gelen (bundled) HER dil dosyasını (en, tr, id...)
+    kullanıcı klasörüne HER AÇILIŞTA yazar; içerik zaten aynıysa dokunmaz.
+    Böylece geliştirici bir çeviriyi düzelttiğinde, yeni sürüme geçen her
+    oyuncu düzeltmeyi otomatik alır (sürüm numarası vb. gerekmez).
 
-    This runs for EVERY bundled locale file that ships with the game
-    (currently en.json and tr.json), not just en.json - a bug fix from
-    an earlier version that left tr.json (and any other bundled,
-    developer-maintained language) permanently missing new keys on any
-    machine that already had a tr.json from a previous version, which
-    made new UI text (auction/country screens, etc.) silently fall
-    back to English for Turkish players until they wiped their locales
-    folder. Locale files that do NOT exist in the bundled folder (a
-    language a player created themselves via the Translation Editor)
-    are correctly left alone, since there's no bundled source to merge
-    from for those."""
+    Bundled klasörde OLMAYAN diller (oyuncunun Çeviri Editörü ile kendi
+    oluşturduğu diller) hiç işlenmez, o yüzden onlar güvendedir. Dikkat:
+    resmi bir dilde (ör. id.json) Çeviri Editörü ile yapılan yerel
+    değişiklikler bir sonraki açılışta geri alınır; oyuncular düzeltmeleri
+    kendi dosyalarında tutmak yerine size bildirmelidir."""
     if not os.path.isdir(bundled_dir):
         return
-
     for fname in os.listdir(bundled_dir):
         if not fname.endswith(".json") or fname.startswith("_"):
             continue
-        lang = fname[:-5]
-        bundled_path = os.path.join(bundled_dir, fname)
+        src = os.path.join(bundled_dir, fname)
+        dest = os.path.join(_LOCALES_DIR, fname)
         try:
-            with open(bundled_path, "r", encoding="utf-8") as f:
-                bundled_locale = json.load(f)
-        except Exception:
-            continue
-
-        user_locale = _load_locale(lang)
-        added = False
-        for key, value in bundled_locale.items():
-            if key not in user_locale:
-                user_locale[key] = value
-                added = True
-
-        if added:
-            _cache[lang] = user_locale
-            try:
-                save_locale(lang)
-            except Exception as e:
-                print(f"[i18n] Could not save merged locale ({lang}): {e}")
+            if os.path.exists(dest) and os.path.samefile(src, dest):
+                continue
+            with open(src, "rb") as f:
+                new_bytes = f.read()
+            json.loads(new_bytes.decode("utf-8"))  # bozuk dosyayı kopyalama
+            if os.path.exists(dest):
+                with open(dest, "rb") as f:
+                    if f.read() == new_bytes:
+                        continue
+            tmp = dest + ".tmp"
+            with open(tmp, "wb") as f:
+                f.write(new_bytes)
+            os.replace(tmp, dest)
+            _cache.pop(fname[:-5], None)
+        except Exception as e:
+            print(f"[i18n] Could not sync locale '{fname}': {e}")
 
 
 def _merge_missing_meta_entries(bundled_dir: str):
