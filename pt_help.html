@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karaborsa Simülasyonu — Ajuda</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px 60px;
+        line-height: 1.6;
+        color: #222;
+    }
+    h1 {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+    }
+    h2 {
+        color: #34495e;
+        margin-top: 34px;
+        border-bottom: 1px solid #dfe6e9;
+        padding-bottom: 6px;
+    }
+    h3 {
+        color: #2c3e50;
+        margin-top: 20px;
+    }
+    p.intro {
+        font-size: 1.05em;
+        color: #444;
+    }
+    .shortcut {
+        background: #2c3e50;
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: "Consolas", monospace;
+        font-size: 0.95em;
+        white-space: nowrap;
+    }
+    ul, ol {
+        padding-left: 22px;
+    }
+    li {
+        margin: 8px 0;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0 20px;
+    }
+    th, td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+        background: #f4f6f7;
+        color: #2c3e50;
+    }
+    .note {
+        background: #eef7ff;
+        border-left: 4px solid #3498db;
+        padding: 10px 16px;
+        margin: 16px 0;
+        border-radius: 0 4px 4px 0;
+    }
+    .warn {
+        background: #fff7ec;
+        border-left: 4px solid #e67e22;
+        padding: 10px 16px;
+        margin: 16px 0;
+        border-radius: 0 4px 4px 0;
+    }
+    footer {
+        margin-top: 50px;
+        padding-top: 16px;
+        border-top: 1px solid #e0e0e0;
+        color: #777;
+        font-size: 0.9em;
+    }
+    a {
+        color: #2980b9;
+    }
+</style>
+</head>
+<body>
+<h1>Karaborsa Simülasyonu — Ajuda</h1>
+<p class="intro">
+    Bem-vindo! Karaborsa Simülasyonu ("Simulação de Mercado Negro") é um
+    jogo de comércio e gestão de negócios totalmente fictício. Você compra
+    e vende mercadorias em um mercado negro de preços instáveis, abre
+    empresas para obter lucro fixo e crédito, investe em imóveis e espaço
+    de depósito, contrata funcionários, administra o risco com um
+    informante e tenta se manter longe da polícia — tudo isso enquanto
+    constrói a maior fortuna possível. Esta página é um guia rápido de como
+    tudo funciona.
+</p>
+
+<h2>Atalhos de teclado</h2>
+<p>Todas as ações do jogo também estão disponíveis como botões na tela,
+então você não precisa decorar estes atalhos para jogar — mas, se usa um
+leitor de tela ou prefere o teclado, aqui está a lista completa.</p>
+<table>
+    <tr><th>Tecla</th><th>O que faz</th></tr>
+    <tr><td><span class="shortcut">F1</span></td><td>Abre esta página de Ajuda</td></tr>
+    <tr><td><span class="shortcut">F2</span></td><td>Lê em voz alta a sua situação atual (dinheiro, dia, local etc.)</td></tr>
+    <tr><td><span class="shortcut">F3</span></td><td>Vai para o campo Histórico na janela principal (tudo o que foi anunciado até agora). Você também chega a ele com um Tab depois do botão Leilão</td></tr>
+    <tr><td><span class="shortcut">F5</span></td><td>Avança para o próximo dia</td></tr>
+    <tr><td><span class="shortcut">F6</span></td><td>Abre o Gerenciamento de terrenos (comprar ou vender terrenos, obter empréstimos com garantia de terreno e abrir o depósito dos seus terrenos)</td></tr>
+    <tr><td><span class="shortcut">F7</span></td><td>Abre o Gerenciamento de funcionários</td></tr>
+    <tr><td><span class="shortcut">F8</span></td><td>Abre o Leilão</td></tr>
+    <tr><td><span class="shortcut">C</span></td><td>Anuncia o seu saldo em dinheiro</td></tr>
+    <tr><td><span class="shortcut">D</span></td><td>Anuncia a categoria de produtos selecionada no momento</td></tr>
+    <tr><td><span class="shortcut">E</span></td><td>Anuncia um resumo do seu inventário, incluindo o quanto ele está cheio</td></tr>
+    <tr><td><span class="shortcut">I</span></td><td>Lista todos os itens que estão no seu inventário</td></tr>
+    <tr><td><span class="shortcut">Enter</span></td><td>Com um produto selecionado, abre o menu de ações de compra/venda desse produto</td></tr>
+    <tr><td><span class="shortcut">Page Up</span> / <span class="shortcut">Page Down</span></td><td>Aumenta / diminui o volume</td></tr>
+    <tr><td><span class="shortcut">Home</span> / <span class="shortcut">End</span></td><td>Música anterior / seguinte</td></tr>
+    <tr><td><span class="shortcut">↑</span> / <span class="shortcut">↓</span></td><td>Navega pela lista de produtos</td></tr>
+</table>
+
+<h2>Comprar e vender</h2>
+<p>
+    O centro do jogo é a lista de produtos: cada item tem um preço que muda
+    de dia para dia, às vezes devagar, às vezes de forma brusca após um
+    evento aleatório. Compre quando estiver barato, guarde o estoque e
+    venda quando estiver caro. Preste atenção na categoria de cada produto
+    (pressione <span class="shortcut">D</span> para ouvi-la) — algumas
+    categorias trazem mais risco (e mais atenção da polícia) do que outras.
+</p>
+<p>
+    O preço mostrado na lista é o que você paga ao comprar. Quando você
+    <em>vende</em>, uma comissão de 5% é descontada do preço de mercado,
+    então comprar e vender no mesmo dia sempre lhe custa um pouco — você
+    precisa de uma variação de preço real para ter lucro.
+</p>
+<div class="note">
+    <strong>Limite de inventário:</strong> os itens do seu inventário
+    principal podem valer, no total, no máximo 100.000 (pelos preços de
+    mercado atuais). Ao atingir o limite, você não pode comprar mais até
+    vender parte dos itens ou movê-los para o depósito do terreno (veja
+    abaixo). Os itens que você já possui nunca são retirados, mesmo que uma
+    alta de preços faça o valor ultrapassar o limite.
+</div>
+
+<h2>Eventos diários</h2>
+<p>
+    Sempre que um novo dia começa, vários eventos aleatórios podem
+    acontecer: oscilações de preço em categorias inteiras, ganhos ou perdas
+    inesperados de dinheiro, itens encontrados ou perdidos e mudanças nos
+    preços dos terrenos. A maioria dos eventos afeta uma pequena porcentagem
+    da sua fortuna, e as más notícias são tão comuns quanto as boas, então
+    não conte com a sorte para ficar rico.
+</p>
+
+<h2>Empresas</h2>
+<p>
+    Uma empresa é um negócio que você pode abrir na cidade que escolher.
+    Abrir uma empresa custa dinheiro e há uma taxa diária de manutenção,
+    mas ela gera lucro todos os dias e constrói a sua pontuação de crédito.
+    Uma pontuação de crédito melhor e uma renda estável liberam
+    empréstimos bancários com condições melhores. Se você deixar de pagar
+    a manutenção, a empresa vai à falência. Você pode ter várias empresas
+    ao mesmo tempo.
+</p>
+
+<h2>Terrenos</h2>
+<p>
+    Imóveis são uma forma mais lenta, porém mais estável, de fazer a sua
+    fortuna crescer. Os preços dos terrenos variam com o tempo e podem
+    disparar após certos eventos, e você também pode obter empréstimos
+    dando os seus terrenos como garantia (um terreno com empréstimo em
+    aberto não pode ser vendido). Abra
+    <span class="shortcut">F6</span> para ver a tela completa de
+    gerenciamento de terrenos.
+</p>
+
+<h2>Depósito do terreno</h2>
+<p>
+    Cada terreno que você possui aumenta um depósito compartilhado. A
+    capacidade é metade do que você pagou por cada terreno, somados, e é
+    medida em valor de mercado das mercadorias guardadas. Assim, um terreno
+    comprado por 50.000 permite guardar mercadorias de até 25.000.
+</p>
+<ul>
+    <li>Abra <span class="shortcut">F6</span> e escolha o botão
+        <strong>Depósito</strong>. Selecione um produto, digite a
+        quantidade e escolha <em>Guardar no depósito</em> ou <em>Retirar do
+        depósito</em>. Também há botões para guardar o máximo que couber e
+        para retirar tudo de volta.</li>
+    <li>Os itens do depósito <strong>não</strong> aparecem no seu
+        inventário e não contam para o limite de inventário. Eles ficam lá
+        até você retirá-los.</li>
+    <li>Retirar itens é sempre permitido, mesmo com o inventário cheio,
+        então as suas mercadorias nunca ficam presas.</li>
+    <li>A polícia continua de olho nos itens ilegais guardados, mas com
+        apenas metade do peso dos itens do seu inventário. Esconder tudo no
+        depósito não o torna invisível.</li>
+    <li>Você não pode vender um terreno se a capacidade restante do depósito
+        ficar pequena demais para as mercadorias guardadas. Retire parte dos
+        itens primeiro. Se o banco tomar um terreno por parcelas de
+        empréstimo não pagas, a capacidade diminui da mesma forma; você ainda
+        pode retirar as suas mercadorias, mas não guardar mais até ficar
+        abaixo da nova capacidade.</li>
+    <li>Você precisa de pelo menos um terreno antes de poder usar o
+        depósito.</li>
+</ul>
+
+<h2>Empréstimos bancários</h2>
+<p>
+    Está sem dinheiro? Se você tem uma empresa, o banco empresta dinheiro
+    com base na renda e na pontuação de crédito dela. Quanto melhor a sua
+    pontuação, mais você pode pegar emprestado e menores são os juros. Os
+    empréstimos são pagos em parcelas, uma a cada 30 dias. Se você não
+    conseguir pagar uma parcela, o empréstimo entra em inadimplência, então
+    peça emprestado apenas o que realisticamente puder devolver.
+</p>
+
+<h2>Funcionários</h2>
+<p>
+    Contrate pessoas e envie-as a uma cidade (um funcionário por cidade).
+    Cada funcionário gera dinheiro para você todos os dias e rende um pouco
+    mais com a experiência. Você paga uma taxa de contratação única, que
+    aumenta um pouco a cada funcionário que você já tem, então uma rede
+    muito grande fica cara. A cada 30 dias, cada funcionário recebe um
+    salário; se você não puder pagar, ele vai embora. Os funcionários são
+    gerenciados na tela de Funcionários (<span class="shortcut">F7</span>).
+</p>
+
+<h2>Informante e polícia</h2>
+<p>
+    Quanto mais arriscada é a sua atividade, mais "calor policial" se
+    acumula. Contratar um informante custa dinheiro e avisa quando a polícia
+    pode aparecer no dia seguinte, para que você possa se desfazer do
+    estoque ou se esconder. O aviso é uma previsão, não uma garantia: às
+    vezes o informante erra. Se o seu calor estiver alto demais e você for
+    pego, você vai para a prisão por alguns dias — durante esse tempo, os
+    seus negócios e empréstimos continuam funcionando sem você, então estar
+    preparado importa.
+</p>
+
+<h2>Leilão</h2>
+<p>
+    Pressione <span class="shortcut">F8</span> para abrir o Leilão. É um
+    leilão ao vivo, em tempo real: assim que você o abre, um item aleatório
+    (antiguidades, joias, carros clássicos e mais) é apresentado com um
+    anúncio de abertura — "X à venda por Y, quanto vão oferecer?" A partir
+    daí você pode apenas assistir: uma contagem regressiva começa (por
+    padrão, 60 segundos) e um grupo de quatro a oito concorrentes com nome
+    — cada um descrito pela aparência ou por quem representa, como "uma
+    mulher com um colar de pérolas" ou "um advogado dando lances para um
+    cliente", e cada um com o seu próprio limite de gastos — pode entrar
+    com lances a qualquer momento, com o preço atual e o tempo restante
+    anunciados periodicamente durante o leilão.
+</p>
+<p>
+    Se quiser participar, faça o seu lance a qualquer momento antes do
+    tempo acabar. Quem estiver na frente quando o tempo terminar leva o
+    item — você não precisa clicar em nada para a rodada se encerrar. Depois
+    que a rodada termina, há uma curta pausa e um novo item é leiloado
+    automaticamente, então o Leilão continua enquanto você deixar a tela
+    aberta.
+</p>
+<p>
+    A duração da rodada pode ser alterada nas Configurações (5–120
+    segundos). A escolha fica salva permanentemente e vale para a próxima
+    rodada, não para a que está em andamento. Tudo o que você ganha vai para a sua própria coleção, na
+    mesma tela, e pode ser revendido depois por um preço negociado de novo
+    a cada vez.
+</p>
+
+<h2>Jogos de azar</h2>
+<p>
+    Sentindo-se com sorte? O cassino do jogo permite apostar dinheiro em
+    troca da chance de ganhar um prêmio maior. Como sempre, a banca tem a
+    vantagem — jogue por diversão, não como estratégia financeira.
+</p>
+
+<h2>Classificação</h2>
+<p>
+    Na tela de Configurações você pode optar por participar da classificação
+    pública. Depois disso, o seu nome de usuário, o saldo em dinheiro e o
+    dia atual do jogo aparecem na lista de "Melhores pontuações" ao lado
+    dos demais, visível a todos os jogadores. Só o seu dinheiro conta,
+    então os itens do inventário ou do depósito não alteram a sua pontuação.
+    Você pode desativar a participação a qualquer momento.
+</p>
+
+<h2>Mensagem do dia</h2>
+<p>
+    Ao iniciar, o jogo pode mostrar e ler em voz alta uma mensagem curta do
+    desenvolvedor, por exemplo, novidades sobre uma atualização. Cada
+    mensagem é exibida apenas uma vez. Você pode ler a mais recente de novo
+    no menu principal ou desativar a leitura automática nas Configurações.
+</p>
+<p>
+    A mensagem do dia às vezes vem com uma recompensa semanal: se tiverem
+    passado pelo menos 7 dias desde a sua última recompensa, 1.000.000 são
+    adicionados ao seu dinheiro quando a mensagem é exibida, e você é
+    avisado. A recompensa é dada no máximo uma vez por semana.
+</p>
+
+<h2>Suporte</h2>
+<p>
+    Encontrou um bug, tem uma dúvida ou só quer dizer algo? Abra a tela de
+    Suporte / Chamados no menu principal a qualquer momento — não é preciso
+    conta nem um site separado. Você pode, se quiser, anexar o histórico
+    recente do jogo ao chamado para nos ajudar a entender o que aconteceu.
+</p>
+<p>
+    Os seus chamados são listados com o status de cada um. Quando um
+    chamado é encerrado, a lista o mostra como encerrado e, ao abri-lo, a
+    caixa de resposta fica somente leitura, com um aviso de que você não
+    pode mais responder. Se ainda precisar de ajuda, basta abrir um novo
+    chamado.
+</p>
+<div class="note">
+    <strong>Queremos oferecer mais idiomas.</strong> Se quiser ver este
+    jogo no seu próprio idioma, ou se puder ajudar com a tradução, avise-nos
+    pela tela de Suporte / Chamados — estamos muito abertos a adicionar
+    novos idiomas com a ajuda da comunidade.
+</div>
+
+<h2>Configurações</h2>
+<p>
+    Na tela de Configurações você pode mudar o idioma do jogo (o jogo
+    lembra a sua escolha), ajustar o volume da música e dos efeitos
+    sonoros, ativar ou desativar o som de digitação, definir a duração de
+    cada rodada do leilão, ativar ou desativar a
+    leitura da mensagem do dia, ativar ou desativar a verificação
+    automática de atualizações na inicialização (você sempre pode verificar
+    manualmente com o botão <em>Verificar atualizações</em>), gerenciar a
+    participação na classificação e alternar entre os modos Normal e
+    Portátil. O país de um novo jogo (Turquia, Estados Unidos, Reino
+    Unido, Austrália, Indonésia, Brasil ou Portugal) é escolhido ao iniciar
+    esse novo jogo.
+</p>
+
+<h2>Modo portátil</h2>
+<p>
+    O modo portátil permite levar o jogo, com todos os seus jogos salvos e
+    configurações, em um pen drive USB ou movê-lo para outro computador.
+</p>
+<ol>
+    <li>Certifique-se de que o arquivo .exe principal do jogo esteja em uma
+        pasta própria e vazia.</li>
+    <li>Abra as Configurações e escolha <strong>Mudar para o modo
+        portátil</strong>, depois confirme.</li>
+    <li>Os seus jogos salvos, configurações e a escolha de idioma são
+        copiados para uma pasta chamada <strong>KaraborsaData</strong> ao
+        lado do arquivo .exe, e um pequeno arquivo chamado
+        <strong>portable.flag</strong> é criado.</li>
+    <li>Copie ou mova a pasta inteira do jogo (o arquivo .exe junto com
+        KaraborsaData e portable.flag) para qualquer computador e jogue de
+        lá.</li>
+</ol>
+<p>
+    Para voltar, abra as Configurações e escolha <strong>Mudar para o modo
+    normal</strong>. Os seus dados são copiados de volta para a pasta de
+    dados normal do jogo neste computador. Depois de mudar, feche e abra o
+    jogo novamente para que tudo passe a usar o novo local.
+</p>
+<div class="warn">
+    <strong>Atenção:</strong> não exclua o portable.flag enquanto quiser
+    continuar no modo portátil — sem ele, o jogo volta a procurar os seus
+    dados no local normal. O modo portátil também não pode ser ativado se a
+    pasta do jogo estiver protegida contra gravação (por exemplo, dentro de
+    Arquivos de Programas); mova o jogo primeiro para uma pasta comum.
+</div>
+
+<h2>Salvando o seu progresso</h2>
+<p>
+    Não há conta online: o seu progresso é salvo automaticamente neste
+    dispositivo enquanto você joga, em um arquivo de jogo para cada nome de
+    usuário. Para jogar em outro computador, use o Modo Portátil e copie a
+    pasta do jogo.
+</p>
+
+<div class="warn">
+    <strong>Um lembrete rápido:</strong> tudo neste jogo — mercado negro,
+    armas, drogas, lavagem de dinheiro e crime — é totalmente fictício e
+    existe apenas para entretenimento. Nada aqui reflete ou aprova
+    atividades ilegais no mundo real.
+</div>
+
+<footer>
+    Para os nossos Termos de Uso e a Política de Privacidade completos,
+    veja a tela correspondente no menu principal.
+</footer>
+
+</body>
+</html>

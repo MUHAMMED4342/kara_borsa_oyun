@@ -1,3 +1,4 @@
+
 import math
 import os
 import random
@@ -16,7 +17,7 @@ from history_log import log_history
 from formatting import format_tl
 from audio_manager import AudioManager
 from save_manager import list_saves, delete_save, rename_save
-from game_state import resource_path, open_help, open_release_notes, ID_LOAD, ID_NEW, ROULETTE_BET_LABELS, get_roulette_color_label, COUNTRIES, DEFAULT_COUNTRY
+from game_state import GameState, resource_path, open_help, open_release_notes, ID_LOAD, ID_NEW, ROULETTE_BET_LABELS, get_roulette_color_label, COUNTRIES, DEFAULT_COUNTRY
 from i18n import t
 import i18n
 import daily_message
@@ -28,6 +29,8 @@ import ticket_manager
 import app_paths
 import settings_manager
 import app_log
+import extra_settings
+import ban_system
 import updater
 
 
@@ -524,7 +527,7 @@ class WarehouseDialog(wx.Dialog):
         self._pending_speech = wx.CallLater(delay_ms, speak, text)
 
 
-TERMS_VERSION = "1.0"
+TERMS_VERSION = "1.1"
 TERMS_FILES = [
     ("terms.tab_privacy", "gizlilik politikası.txt"),
     ("terms.tab_terms", "kullanimsartlari.txt"),
@@ -673,7 +676,7 @@ class SettingsDialog(wx.Dialog):
     "işaretli / işaretsiz" durumunu kendisi anons ediyor."""
 
     def __init__(self, parent=None):
-        super().__init__(parent, title=t("settings.title"), size=(420, 640))
+        super().__init__(parent, title=t("settings.title"), size=(420, 780))
         self.audio = AudioManager()
         self._last_vol_speak_time = 0.0
         self._build_ui()
@@ -710,6 +713,19 @@ class SettingsDialog(wx.Dialog):
         self.cb_auto_update = wx.CheckBox(panel, label=t("settings.auto_update"))
         self.cb_auto_update.SetValue(settings_manager.is_auto_update_check_enabled())
         outer.Add(self.cb_auto_update, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+
+        self.auction_duration_label = wx.StaticText(panel, label=t("settings.auction_duration_label"))
+        outer.Add(self.auction_duration_label, 0, wx.LEFT | wx.RIGHT, 15)
+        self.spin_auction_duration = wx.SpinCtrl(
+            panel, min=GameState.AUCTION_MIN_DURATION_SECONDS,
+            max=GameState.AUCTION_MAX_DURATION_SECONDS,
+            initial=self._current_auction_duration(),
+        )
+        bind_typing_sound(self.spin_auction_duration, self.audio)
+        outer.Add(self.spin_auction_duration, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
+        auction_hint = wx.StaticText(panel, label=t("settings.auction_duration_hint"))
+        auction_hint.Wrap(380)
+        outer.Add(auction_hint, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
 
         self.btn_check_update = wx.Button(panel, label=t("settings.check_update_btn"))
         outer.Add(self.btn_check_update, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
@@ -758,6 +774,8 @@ class SettingsDialog(wx.Dialog):
         self.cb_typing_sound.Bind(wx.EVT_CHECKBOX, self.on_toggle_typing_sound)
         self.cb_auto_update.Bind(wx.EVT_CHECKBOX, self.on_toggle_auto_update)
         self.btn_check_update.Bind(wx.EVT_BUTTON, self.on_check_update_now)
+        self.spin_auction_duration.Bind(wx.EVT_SPINCTRL, self.on_auction_duration_changed)
+        self.spin_auction_duration.Bind(wx.EVT_KILL_FOCUS, self.on_auction_duration_blur)
         self.btn_portable.Bind(wx.EVT_BUTTON, self.on_toggle_portable)
         self.music_slider.Bind(wx.EVT_SLIDER, self.on_music_slider)
         self.sfx_slider.Bind(wx.EVT_SLIDER, self.on_sfx_slider)
@@ -802,6 +820,34 @@ class SettingsDialog(wx.Dialog):
         settings_manager.set_typing_sound_enabled(enabled)
         speak(t("settings.typing_sound_toggled",
                 state=t("settings.state_enabled") if enabled else t("settings.state_disabled")))
+
+    def _current_auction_duration(self) -> int:
+        saved = extra_settings.get_value("auction_duration_seconds")
+        try:
+            saved = int(saved)
+        except (TypeError, ValueError):
+            saved = GameState.AUCTION_DEFAULT_DURATION_SECONDS
+        return max(GameState.AUCTION_MIN_DURATION_SECONDS,
+                   min(GameState.AUCTION_MAX_DURATION_SECONDS, saved))
+
+    def _apply_auction_duration(self, announce: bool):
+        """Süreyi sınıra çekip kalıcı olarak kaydeder (sonsuza kadar
+        geçerli; oyuncu tekrar değiştirene kadar)."""
+        seconds = max(GameState.AUCTION_MIN_DURATION_SECONDS,
+                      min(GameState.AUCTION_MAX_DURATION_SECONDS,
+                          int(self.spin_auction_duration.GetValue())))
+        changed = seconds != self._current_auction_duration()
+        self.spin_auction_duration.SetValue(seconds)
+        extra_settings.set_value("auction_duration_seconds", seconds)
+        if announce and changed:
+            speak(t("settings.auction_duration_applied", seconds=seconds))
+
+    def on_auction_duration_changed(self, event):
+        self._apply_auction_duration(announce=True)
+
+    def on_auction_duration_blur(self, event):
+        self._apply_auction_duration(announce=True)
+        event.Skip()
 
     def on_toggle_auto_update(self, event):
         enabled = self.cb_auto_update.GetValue()
@@ -878,6 +924,10 @@ class SettingsDialog(wx.Dialog):
         self._throttled_speak(t("settings.sfx_volume", vol=self.sfx_slider.GetValue()))
 
     def on_close_dialog(self, event):
+        try:
+            self._apply_auction_duration(announce=False)
+        except Exception:
+            pass
         self.EndModal(wx.ID_CLOSE)
 
 
@@ -885,7 +935,7 @@ class CountrySelectDialog(wx.Dialog):
     """YENİ bir oyuna başlarken gösterilen ülke seçim penceresi. Oyuncunun
     seçtiği ülkeye göre (bkz. game_state.COUNTRIES) şirket/arsa şehir ve
     ilçe havuzu belirlenir - Türkiye'nin yanı sıra ABD, İngiltere ve
-    Avustralya ve Endonezya desteklenir. Kayıtlı bir oyun YÜKLENİRKEN bu pencere
+    Avustralya, Endonezya, Brezilya ve Portekiz desteklenir. Kayıtlı bir oyun YÜKLENİRKEN bu pencere
     gösterilmez; ülke, o kaydın kendi 'country' alanından okunur (bkz.
     game_state.GameState.__init__)."""
 
@@ -1533,11 +1583,8 @@ class HistoryDialog(wx.Dialog):
             self.text_ctrl.SetValue(t("history.empty"))
             return
 
-        lines = []
-        for entry in entries:
-            day = entry.get("day")
-            gun_str = t("history.day_prefix", day=day) if day is not None else ""
-            lines.append(f"{entry['time']}  {gun_str}{entry['text']}")
+        from history_log import format_entry
+        lines = [format_entry(entry) for entry in entries]
 
         self.text_ctrl.SetValue("\n".join(lines))
         self.text_ctrl.SetInsertionPointEnd()
@@ -2717,6 +2764,11 @@ class AuctionDialog(wx.Dialog):
         self.state = state
         self.awaiting_restart = False
         self.restart_at = 0.0
+        # Teklif geçmişi turlar boyunca BİRİKİR (salt okunur metin alanı).
+        # state.bid_history her turda sıfırlandığı için, o turda kaç satırın
+        # zaten gösterildiğini sayarak sadece yeni satırları ekleriz.
+        self._history_rows_seen = 0
+        self._history_new_round = False
 
         self._build_ui()
         self._bind_events()
@@ -2753,8 +2805,11 @@ class AuctionDialog(wx.Dialog):
         sizer.Add(self.bidders_text, 0, wx.LEFT | wx.RIGHT, 10)
 
         sizer.Add(wx.StaticText(panel, label=t("auction.history_label")), 0, wx.LEFT | wx.TOP, 10)
-        self.history_box = wx.ListBox(panel, style=wx.LB_SINGLE)
-        self.history_box.SetMinSize((520, 120))
+        self.history_box = wx.TextCtrl(
+            panel, value="",
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_DONTWRAP
+        )
+        self.history_box.SetMinSize((520, 140))
         sizer.Add(self.history_box, 0, wx.EXPAND | wx.ALL, 10)
 
         bid_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -2771,22 +2826,6 @@ class AuctionDialog(wx.Dialog):
         self.status_text = wx.StaticText(panel, label="")
         self.status_text.Wrap(520)
         sizer.Add(self.status_text, 0, wx.EXPAND | wx.ALL, 10)
-
-        duration_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        duration_sizer.Add(wx.StaticText(panel, label=t("auction.duration_setting_label")), 0, wx.ALL | wx.CENTER, 5)
-        self.duration_spinner = wx.SpinCtrl(
-            panel, min=self.state.AUCTION_MIN_DURATION_SECONDS,
-            max=self.state.AUCTION_MAX_DURATION_SECONDS,
-            initial=self.state.get_auction_duration_seconds(),
-        )
-        bind_typing_sound(self.duration_spinner, self.parent.audio)
-        duration_sizer.Add(self.duration_spinner, 0, wx.ALL | wx.CENTER, 5)
-        self.duration_apply_btn = wx.Button(panel, label=t("auction.duration_apply_btn"))
-        duration_sizer.Add(self.duration_apply_btn, 0, wx.ALL | wx.CENTER, 5)
-        sizer.Add(duration_sizer, 0, wx.EXPAND | wx.ALL, 5)
-        duration_hint = wx.StaticText(panel, label=t("auction.duration_hint"))
-        duration_hint.Wrap(520)
-        sizer.Add(duration_hint, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
         sizer.Add(wx.StaticText(panel, label=t("auction.owned_label")), 0, wx.LEFT | wx.TOP, 5)
         self.owned_box = wx.ListBox(panel, style=wx.LB_SINGLE)
@@ -2805,7 +2844,6 @@ class AuctionDialog(wx.Dialog):
     def _bind_events(self):
         self.bid_btn.Bind(wx.EVT_BUTTON, self.on_bid)
         self.sell_btn.Bind(wx.EVT_BUTTON, self.on_sell)
-        self.duration_apply_btn.Bind(wx.EVT_BUTTON, self.on_apply_duration)
         self.close_btn.Bind(wx.EVT_BUTTON, self.on_close)
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
@@ -2824,6 +2862,8 @@ class AuctionDialog(wx.Dialog):
     def _begin_new_auction_round(self, initial=False):
         self.awaiting_restart = False
         opening = self.state.start_new_auction()
+        self._history_rows_seen = 0
+        self._history_new_round = True
 
         self._refresh_owned()
         self._refresh_history()
@@ -2882,6 +2922,7 @@ class AuctionDialog(wx.Dialog):
         speak(result["message"])
 
         self._refresh_history()
+        self._append_history_line(result["message"])
         self._refresh_owned()
         self.cash_text.SetLabel(t("auction.cash_label", amount=format_tl(self.state.cash)))
         self.bid_btn.Disable()
@@ -2917,11 +2958,32 @@ class AuctionDialog(wx.Dialog):
         self.bidders_text.SetLabel(t("auction.active_bidders_label", count=active_count))
 
     def _refresh_history(self):
-        self.history_box.Clear()
-        for row in self.state.get_auction_bid_history():
-            self.history_box.Append(t("auction.history_row", who=row["label"], amount=format_tl(row["amount"])))
-        if self.history_box.GetCount() > 0:
-            self.history_box.SetSelection(self.history_box.GetCount() - 1)
+        """Sadece YENİ teklif satırlarını salt okunur metin alanına ekler;
+        eski satırlar (önceki turlar dahil) silinmez, böylece oyuncu tüm
+        geçmişi ok tuşlarıyla okuyabilir."""
+        rows = self.state.get_auction_bid_history()
+        for row in rows[self._history_rows_seen:]:
+            self._append_history_line(
+                t("auction.history_row", who=row["label"], amount=format_tl(row["amount"]))
+            )
+        self._history_rows_seen = len(rows)
+
+    def _append_history_line(self, text: str):
+        """Satırı (yalnızca mesaj, zaman damgası yok) ekler. Oyuncu geçmişi
+        okurken imleç yerinden oynamaz; sadece sonda duruyorsa sona kaydırılır."""
+        ctrl = self.history_box
+        pos = ctrl.GetInsertionPoint()
+        at_end = pos >= ctrl.GetLastPosition()
+        reading = self.FindFocus() is ctrl
+        prefix = ""
+        if ctrl.GetLastPosition() > 0:
+            prefix = "\n\n" if self._history_new_round else "\n"
+        self._history_new_round = False
+        ctrl.AppendText(f"{prefix}{text}")
+        if reading and not at_end:
+            ctrl.SetInsertionPoint(pos)
+        else:
+            ctrl.SetInsertionPointEnd()
 
     def _refresh_owned(self):
         self.owned_box.Clear()
@@ -2958,14 +3020,6 @@ class AuctionDialog(wx.Dialog):
             self._sync_bid_spinner_min()
             if self.parent:
                 self.parent.update_wallet_display()
-
-    def on_apply_duration(self, event):
-        applied = self.state.set_auction_duration_seconds(self.duration_spinner.GetValue())
-        self.duration_spinner.SetValue(applied)
-        message = t("auction.duration_applied_message", seconds=applied)
-        self.status_text.SetLabel(message)
-        self.status_text.Wrap(520)
-        speak(message)
 
     def on_sell(self, event):
         idx = self.owned_box.GetSelection()
@@ -3069,7 +3123,7 @@ class NewTicketDialog(wx.Dialog):
                 for entry in entries:
                     day = entry.get("day")
                     gun_str = t("history.day_prefix", day=day) if day is not None else ""
-                    lines.append(f"{entry['time']}  {gun_str}{entry['text']}")
+                    lines.append(f"{entry['text']}  {gun_str}{entry['time']}")
                 parts.append(t("newticket.history_section", lines="\n".join(lines)))
         except Exception as e:
             print(f"[Bilet] Oyun geçmişi okunamadı: {e}")
@@ -3112,6 +3166,10 @@ class NewTicketDialog(wx.Dialog):
 
         def worker():
             try:
+                banned = ban_system.check_online(ban_system.SCOPE_TICKETS, self.username)
+                if banned:
+                    wx.CallAfter(self._on_banned, banned)
+                    return
                 ticket = ticket_manager.create_ticket(
                     self.username, subject, message, extra_info=self.extra_info
                 )
@@ -3131,6 +3189,16 @@ class NewTicketDialog(wx.Dialog):
             t("newticket.created_title"), wx.OK | wx.ICON_INFORMATION
         )
         self.EndModal(wx.ID_OK)
+
+    def _on_banned(self, ban):
+        """Bu bilgisayar destek bileti göndermekten yasaklı."""
+        self._sending = False
+        self.send_btn.Enable()
+        self.cancel_btn.Enable()
+        self.status_label.SetLabel("")
+        message = ban_system.describe(ban)
+        speak(message)
+        wx.MessageBox(message, t("ban.title"), wx.OK | wx.ICON_WARNING)
 
     def _on_error(self, error_message):
         self._sending = False
@@ -3388,6 +3456,10 @@ class TicketsDialog(wx.Dialog):
 
         def worker():
             try:
+                banned = ban_system.check_online(ban_system.SCOPE_TICKETS, self.username)
+                if banned:
+                    wx.CallAfter(self._on_reply_banned, banned)
+                    return
                 ticket_manager.add_reply(self.username, ticket_number, message)
                 thread = ticket_manager.fetch_ticket_thread(ticket_number)
                 wx.CallAfter(self._on_reply_success, ticket_number, thread)
@@ -3403,6 +3475,13 @@ class TicketsDialog(wx.Dialog):
         self._show_thread(ticket_number, thread)
         self.audio.play_sound(SOUND_TICKET_SENT)
         speak(t("tickets.reply_sent_speak"))
+
+    def _on_reply_banned(self, ban):
+        self._busy = False
+        self.reply_btn.Enable()
+        message = ban_system.describe(ban)
+        speak(message)
+        wx.MessageBox(message, t("ban.title"), wx.OK | wx.ICON_WARNING)
 
     def _on_reply_error(self, error_message):
         self._busy = False

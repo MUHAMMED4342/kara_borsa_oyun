@@ -17,13 +17,49 @@ from typing import List, Dict
 
 MAX_ENTRIES = 500
 
+# Geçmişe YAZILMAYAN anonslar (çeviri anahtarının başlangıcına göre).
+# Geçmiş, oyunda OLAN BİTENLERİ (gün başlangıcı, kâr, olaylar, alım-satım,
+# açık artırma, hapis...) içermeli; arayüz konuşmalarını (yükleniyor,
+# hoş geldiniz, "Nakit: ...", seçim/uyarı/ayar bildirimleri, ses seviyesi)
+# içermemeli. Anahtarı bilinmeyen (birleştirilmiş) metinler yazılır.
+NOISE_KEY_PREFIXES = (
+    "welcome.", "loadgame.", "app.", "cheat.", "menu.", "settings.", "terms.",
+    "country.", "language.", "leaderboard.", "warehouse.", "newticket.",
+    "tickets.", "audio.", "common.", "status.", "state.inventory_",
+    "state.wallet", "state.release_notes", "product.category_announce",
+    "land.select", "land.market_select", "company.select", "company.enter_name",
+    "employees.select", "bankloan.option_select", "bankloan.select_package",
+    "gambling.select", "gambling.enter", "gambling.add_bet_first",
+    "gambling.insufficient", "gambling.bet_added", "gambling.bet_removed",
+    "auction.no_active_auction", "auction.select_owned_first",
+    "auction.speak_intro", "auction.status_announcement",
+    "auction.time_up_cannot_bid", "loan.need_", "jail.exit_blocked",
+    "log.score_sent",
+)
+
+
+def is_noise(text: str) -> bool:
+    """Metin, bilinen 'gereksiz' bir çeviri anahtarından geldiyse True."""
+    try:
+        import i18n
+        key = i18n.key_for_text(text)
+    except Exception:
+        return False
+    return bool(key) and key.startswith(NOISE_KEY_PREFIXES)
+
+
+def format_entry(entry: Dict) -> str:
+    """Bir kaydın ekranda/ekran okuyucuda görünen hâli: SADECE mesaj
+    (zaman damgası ve gün eki yok)."""
+    return entry.get("text", "")
+
 _lock = threading.Lock()
 _entries: List[Dict] = []
 
 
 def log_history(text: str, day: int = None) -> None:
     """Yeni bir mesajı geçmiş kaydına ekler."""
-    if not text:
+    if not text or is_noise(text):
         return
     with _lock:
         _entries.append({

@@ -8,6 +8,9 @@ import webbrowser
 
 import updater
 import daily_message
+import anti_cheat
+import ban_system
+import history_log
 import app_log
 from game_data import PRODUCT_CATEGORIES, get_flat_product_order, product_display_name, category_display_name, land_type_display_name, company_type_display_name
 from accessibility_helper import speak as _tts_speak
@@ -41,7 +44,7 @@ _last_spoken_time = 0.0
 _DUPLICATE_SPEAK_WINDOW = 2.0  # saniye
 
 
-def speak(text: str):
+def speak(text: str, history: bool = True):
     """Ekran okuyucuya seslendirir VE aynı mesajı geçmiş kaydına ekler.
     Böylece hızlı gün atlarken kaçırdığınız anonsları F3 ile açılan
     'Geçmiş' ekranından tekrar okuyabilirsiniz.
@@ -61,7 +64,8 @@ def speak(text: str):
     _last_spoken_text = text
     _last_spoken_time = now
     _tts_speak(text)
-    log_history(text)
+    if history:
+        log_history(text)
 
 
 def _ask_update_confirmation(remote_version: str) -> bool:
@@ -95,13 +99,17 @@ class MainFrame(wx.Frame):
     SOUND_TICKET_REPLY = resource_path("sounds/yanit.mp3")
 
     def __init__(self, username=None, load_data=None, country=None):
-        super().__init__(None, title=t("app.title_with_user", username=username), size=(800, 650))
+        super().__init__(None, title=t("app.title_with_user", username=username), size=(800, 820))
         self.username = username
         self.state = GameState(load_data, country=country)
         self.audio = AudioManager()
         self.flat_products = get_flat_product_order()
         self.jail_dialog = None
         self.autosave_timer = None
+        self.anticheat_timer = None
+        self.history_timer = None
+        self._history_last_key = None
+        self._history_count = 0
         self._last_volume_speak_time = 0
         self._last_spoken_index = -1
         self._advancing_day = False
@@ -126,12 +134,29 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_TIMER, self.on_autosave, self.autosave_timer)
         self.autosave_timer.Start(30000)
 
+        # Cheat Engine koruması: skor tablosu olduğu için oyun açıkken de
+        # düzenli aralıkla kontrol edilir (bkz. anti_cheat.py).
+        self._anticheat_busy = False
+        self.anticheat_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_anticheat_tick, self.anticheat_timer)
+        self.anticheat_timer.Start(3000)
+
         if self.state.in_jail:
             speak(t("welcome.jail", username=username, days=self.state.jail_days))
             self.set_jail_mode(True)
             wx.CallAfter(self.start_jail_dialog)
         else:
             speak(t("welcome.normal", username=username))
+
+        # Ana penceredeki geçmiş alanı: ilk yükleme + saniyede bir yeni satırlar.
+        self._reload_history()
+        self.history_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_history_tick, self.history_timer)
+        self.history_timer.Start(1000)
+
+        # Yasak listesi: açılışta indirilir; bu bilgisayar yasaklıysa sebep ve
+        # süre bir mesaj olarak gösterilir (bkz. ban_system.py).
+        ban_system.sync_async(self.username or "", self._on_ban_sync_done)
 
         if settings_manager.is_daily_message_enabled():
             daily_message.check_for_new_message(self._on_daily_message_ready)
@@ -140,6 +165,96 @@ class MainFrame(wx.Frame):
             ticket_manager.check_for_new_replies_async(
                 self.username, self._on_ticket_replies_ready
             )
+
+    def _on_ban_sync_done(self, bans):
+        """Arka plan thread'inden çağrılır."""
+        if bans:
+            wx.CallAfter(self._show_ban_message, bans)
+
+    def _show_ban_message(self, bans):
+        message = ban_system.describe_all(bans)
+        speak(message)
+        wx.MessageBox(message, t("ban.title"), wx.OK | wx.ICON_WARNING, self)
+
+    # ------------------------------------------------ ana penceredeki geçmiş
+    @staticmethod
+    def _history_key(entry):
+        return (entry.get("time"), entry.get("day"), entry.get("text"))
+
+    def _history_line(self, entry) -> str:
+        """Sadece mesaj: zaman damgası ve gün eki yok (ekran okuyucuda karışıklık yaratıyordu)."""
+        return history_log.format_entry(entry)
+
+    def _on_history_focus(self, event):
+        event.Skip()
+        wx.CallAfter(self._history_caret_to_end)
+
+    def _history_caret_to_end(self):
+        if self.FindFocus() is self.history_text:
+            self.history_text.SetInsertionPointEnd()
+
+    def _reload_history(self):
+        try:
+            from history_log import get_history
+            entries = get_history()
+        except Exception:
+            return
+        self.history_text.SetValue("\n".join(self._history_line(e) for e in entries))
+        self.history_text.SetInsertionPointEnd()
+        self._history_count = len(entries)
+        self._history_last_key = self._history_key(entries[-1]) if entries else None
+
+    def on_history_tick(self, event):
+        """Yeni geçmiş satırlarını alana ekler. Oyuncu alanda okurken imleç
+        yerinden oynamaz; sadece sondaysa sona kaydırılır."""
+        try:
+            from history_log import get_history
+            entries = get_history()
+        except Exception:
+            return
+        if not entries:
+            if self._history_count:
+                self._reload_history()
+            return
+        last_key = self._history_key(entries[-1])
+        if last_key == self._history_last_key and len(entries) == self._history_count:
+            return
+        start = None
+        if self._history_last_key is not None:
+            for i in range(len(entries) - 1, -1, -1):
+                if self._history_key(entries[i]) == self._history_last_key:
+                    start = i + 1
+                    break
+        if start is None:            # liste kırpılmış/sıfırlanmış: baştan yükle
+            self._reload_history()
+            return
+        new_lines = [self._history_line(e) for e in entries[start:]]
+        self._history_count = len(entries)
+        self._history_last_key = last_key
+        if not new_lines:
+            return
+        ctrl = self.history_text
+        pos = ctrl.GetInsertionPoint()
+        at_end = pos >= ctrl.GetLastPosition()
+        reading = self.FindFocus() is ctrl
+        prefix = "\n" if ctrl.GetLastPosition() > 0 else ""
+        ctrl.AppendText(prefix + "\n".join(new_lines))
+        if reading and not at_end:
+            ctrl.SetInsertionPoint(pos)
+        else:
+            ctrl.SetInsertionPointEnd()
+
+    def on_anticheat_tick(self, event):
+        if self._anticheat_busy:
+            return
+        if not anti_cheat.find_cheat_tool():
+            return
+        self._anticheat_busy = True
+        try:
+            if not anti_cheat.ensure_clear(self):
+                self.Close()
+        finally:
+            self._anticheat_busy = False
 
     def _on_daily_message_ready(self, date_str: str, messages):
         """daily_message arka plan thread'inden çağrılır; UI güncellemesi
@@ -160,6 +275,22 @@ class MainFrame(wx.Frame):
         if not message_text:
             daily_message.mark_seen(date_str)
             return
+
+        # Haftalık ödül: son ödülden en az 7 gün geçtiyse nakit eklenir.
+        # Önce nakit eklenip kaydedilir, SONRA işaretlenir; böylece ödül
+        # asla iki kez verilmez ve mesaj gösterilirken zaten hesaptadır.
+        if not anti_cheat.is_tainted() and daily_message.is_reward_due(date_str):
+            reward = daily_message.REWARD_AMOUNT
+            self.state.cash += reward
+            if self.state.cash > self.state.highest_cash:
+                self.state.highest_cash = self.state.cash
+            self.update_wallet_display()
+            self.auto_save()
+            daily_message.mark_reward_given(date_str)
+            message_text += "\n\n" + t(
+                "daily_message.reward_notice",
+                amount=t("money.amount_tl", amount=format_tl(reward)),
+            )
 
         speak(t("daily_message.announce", date=date_str, message=message_text))
         dlg = DailyMessageDialog(self, date_str, message_text)
@@ -226,6 +357,22 @@ class MainFrame(wx.Frame):
         btn_sizer4.Add(self.support_btn, 0, wx.ALL, 3)
         btn_sizer4.Add(self.auction_btn, 0, wx.ALL, 3)
         sizer.Add(btn_sizer4, 0, wx.ALIGN_CENTER | wx.BOTTOM, 10)
+
+        # Geçmiş: Açık Artırma düğmesinden SONRAKİ ilk sekme durağı (oluşturma
+        # sırası = Tab sırası). F3 de buraya odaklanır.
+        sizer.Add(wx.StaticText(panel, label=t("history.title")), 0, wx.LEFT, 10)
+        self.history_text = wx.TextCtrl(
+            panel, value="",
+            # TE_DONTWRAP: her mesaj TAM BİR satır. Satır kaydırma açıkken ekran
+            # okuyucu görsel satırlarda durur ve her kelimede aşağı ok gerekir.
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_DONTWRAP
+        )
+        self.history_text.SetMinSize((-1, 260))
+        sizer.Add(self.history_text, 1, wx.EXPAND | wx.ALL, 10)
+        # Alana Tab ile girince imleç EN SON satırda olsun: ekran okuyucu en
+        # yeni mesajı hemen okur, eskilere yukarı okla gidilir (yüzlerce kez
+        # aşağı ok gerekmez).
+        self.history_text.Bind(wx.EVT_SET_FOCUS, self._on_history_focus)
 
         self.CreateStatusBar()
         self.SetStatusText(t("ui.status_bar_full"))
@@ -629,6 +776,7 @@ class MainFrame(wx.Frame):
             t("ticket.info_day"): self.state.day,
             t("ticket.info_cash"): t("money.amount_tl", amount=format_tl(self.state.cash)),
             t("ticket.info_in_jail"): t("common.yes") if self.state.in_jail else t("common.no"),
+            "Device ID": ban_system.get_device_id(),
         }
 
     def _on_ticket_replies_ready(self, results: list):
@@ -763,14 +911,9 @@ class MainFrame(wx.Frame):
         speak(text)
 
     def on_history(self, event):
-        """F3: Şimdiye kadar söylenmiş tüm mesajları gösteren geçmiş ekranını açar."""
-        if self.state.in_jail:
-            speak(t("common.in_jail"))
-            return
-
-        dlg = HistoryDialog(self)
-        dlg.ShowModal()
-        dlg.Destroy()
+        """F3: ana penceredeki geçmiş alanına odaklanır (en son satırda)."""
+        self.history_text.SetFocus()
+        self.history_text.SetInsertionPointEnd()
 
     def start_jail_dialog(self):
         if self.jail_dialog is not None:
@@ -809,6 +952,9 @@ class MainFrame(wx.Frame):
         Skoru hesaplar ve GitHub Gist'e gönderir.
         Her 3 günde bir otomatik olarak çağrılır.
         """
+        if anti_cheat.is_tainted():
+            return
+
         if not leaderboard.is_score_submission_enabled():
             return
         
@@ -825,6 +971,11 @@ class MainFrame(wx.Frame):
         def send_score_async():
             self._score_submission_in_progress = True
             try:
+                # Bilgisayar skor tablosundan yasaklıysa gönderme (liste
+                # gönderimden hemen önce yeniden indirilir).
+                if ban_system.check_online(ban_system.SCOPE_LEADERBOARD, self.username):
+                    log_history(t("ban.score_blocked_log"))
+                    return
                 success, msg = send_score(
                     self.username, 
                     self.state.cash, 
@@ -1076,10 +1227,10 @@ class MainFrame(wx.Frame):
                 speak(t("common.select_product"))
             return
         if key == ord('E') or key == ord('e'):
-            speak(self.state.inventory_summary_text())
+            speak(self.state.inventory_summary_text(), history=False)
             return
         if key == ord('I') or key == ord('i'):
-            speak(self.state.inventory_items_text())
+            speak(self.state.inventory_items_text(), history=False)
             return
         
         if key == wx.WXK_PAGEUP:
@@ -1127,6 +1278,10 @@ class MainFrame(wx.Frame):
             self.jail_dialog = None
         if self.autosave_timer:
             self.autosave_timer.Stop()
+        if self.anticheat_timer:
+            self.anticheat_timer.Stop()
+        if self.history_timer:
+            self.history_timer.Stop()
 
         if self.username and not self.state.in_jail:
             self.update_score()
@@ -1139,6 +1294,10 @@ class MainFrame(wx.Frame):
 
 class App(wx.App):
     def OnInit(self):
+        # Cheat Engine açıksa, kapatılana kadar oyun başlamaz.
+        if not anti_cheat.ensure_clear():
+            return False
+
         self._play_startup_logo_sound()
 
         if not self._ensure_terms_accepted():

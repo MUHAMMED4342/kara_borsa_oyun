@@ -1,0 +1,20 @@
+(Aveiro) Aveiro, Águeda, Albergaria-a-Velha, Anadia, Arouca, Espinho, Estarreja, Ílhavo, Santa Maria da Feira, Mealhada, Oliveira de Azeméis, Ovar, São João da Madeira, Vagos, Vale de Cambra, Oliveira do Bairro
+(Beja) Beja, Moura, Serpa, Odemira, Aljustrel, Almodôvar, Castro Verde, Ferreira do Alentejo, Mértola, Ourique, Vidigueira
+(Braga) Braga, Guimarães, Barcelos, Vila Nova de Famalicão, Fafe, Esposende, Póvoa de Lanhoso, Vizela, Vila Verde, Amares, Cabeceiras de Basto, Celorico de Basto, Terras de Bouro, Vieira do Minho
+(Bragança) Bragança, Mirandela, Macedo de Cavaleiros, Miranda do Douro, Vimioso, Mogadouro, Vila Flor, Alfândega da Fé, Carrazeda de Ansiães, Torre de Moncorvo, Freixo de Espada à Cinta, Vinhais
+(Castelo Branco) Castelo Branco, Covilhã, Fundão, Idanha-a-Nova, Oleiros, Penamacor, Proença-a-Nova, Sertã, Vila de Rei, Vila Velha de Ródão
+(Coimbra) Coimbra, Figueira da Foz, Cantanhede, Lousã, Mira, Montemor-o-Velho, Oliveira do Hospital, Penacova, Soure, Condeixa-a-Nova, Miranda do Corvo, Arganil, Góis, Pampilhosa da Serra, Penela, Vila Nova de Poiares, Tábua
+(Évora) Évora, Estremoz, Montemor-o-Novo, Vendas Novas, Borba, Reguengos de Monsaraz, Vila Viçosa, Arraiolos, Mora, Mourão, Portel, Redondo, Viana do Alentejo, Alandroal
+(Faro) Faro, Loulé, Portimão, Albufeira, Lagos, Olhão, Tavira, Silves, Vila Real de Santo António, Lagoa, São Brás de Alportel, Castro Marim, Alcoutim, Aljezur, Monchique, Vila do Bispo
+(Guarda) Guarda, Seia, Gouveia, Pinhel, Sabugal, Trancoso, Fornos de Algodres, Almeida, Celorico da Beira, Figueira de Castelo Rodrigo, Manteigas, Mêda, Aguiar da Beira, Vila Nova de Foz Côa
+(Leiria) Leiria, Caldas da Rainha, Marinha Grande, Peniche, Pombal, Alcobaça, Nazaré, Batalha, Porto de Mós, Óbidos, Bombarral, Alvaiázere, Ansião, Castanheira de Pêra, Figueiró dos Vinhos, Pedrógão Grande
+(Lisboa) Lisboa, Sintra, Cascais, Loures, Amadora, Oeiras, Odivelas, Mafra, Vila Franca de Xira, Torres Vedras, Alenquer, Arruda dos Vinhos, Azambuja, Cadaval, Lourinhã, Sobral de Monte Agraço
+(Portalegre) Portalegre, Elvas, Ponte de Sor, Campo Maior, Castelo de Vide, Marvão, Nisa, Alter do Chão, Arronches, Avis, Crato, Fronteira, Gavião, Monforte, Sousel
+(Porto) Porto, Vila Nova de Gaia, Matosinhos, Maia, Gondomar, Valongo, Santo Tirso, Póvoa de Varzim, Vila do Conde, Paredes, Penafiel, Paços de Ferreira, Trofa, Lousada, Felgueiras, Amarante, Marco de Canaveses, Baião
+(Santarém) Santarém, Tomar, Torres Novas, Abrantes, Entroncamento, Rio Maior, Cartaxo, Almeirim, Ourém, Benavente, Coruche, Salvaterra de Magos, Alpiarça, Chamusca, Golegã, Ferreira do Zêzere, Mação, Constância, Sardoal
+(Setúbal) Setúbal, Almada, Seixal, Barreiro, Sesimbra, Palmela, Moita, Montijo, Alcochete, Sines, Santiago do Cacém, Grândola, Alcácer do Sal
+(Viana do Castelo) Viana do Castelo, Ponte de Lima, Valença, Caminha, Monção, Arcos de Valdevez, Melgaço, Paredes de Coura, Ponte da Barca, Vila Nova de Cerveira
+(Vila Real) Vila Real, Chaves, Peso da Régua, Valpaços, Mondim de Basto, Alijó, Sabrosa, Santa Marta de Penaguião, Montalegre, Boticas, Murça, Mesão Frio, Ribeira de Pena, Vila Pouca de Aguiar
+(Viseu) Viseu, Lamego, Tondela, Mangualde, Cinfães, Castro Daire, Nelas, Oliveira de Frades, Santa Comba Dão, São Pedro do Sul, Vouzela, Sátão, Moimenta da Beira, Resende, Tarouca, Penalva do Castelo, Carregal do Sal, Armamar, Penedono, Sernancelhe, Tabuaço, Vila Nova de Paiva, Mortágua
+(Açores) Ponta Delgada, Angra do Heroísmo, Horta, Ribeira Grande, Lagoa, Praia da Vitória, Vila Franca do Campo, Povoação, Nordeste, Lajes das Flores, Santa Cruz das Flores, Velas, Madalena, Lajes do Pico, Vila do Porto, Santa Cruz da Graciosa, Corvo, São Roque do Pico, Calheta
+(Madeira) Funchal, Câmara de Lobos, Santa Cruz, Machico, Ribeira Brava, Calheta, Ponta do Sol, Santana, São Vicente, Porto Moniz, Porto Santo

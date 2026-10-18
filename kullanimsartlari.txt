@@ -142,3 +142,52 @@ Kami dapat memperbarui ketentuan ini dari waktu ke waktu. Ketika perubahan signi
 
 11. Hukum yang Berlaku
 Ketentuan ini tunduk pada dan ditafsirkan sesuai dengan hukum Turki."
+
+"pt:
+Última atualização: domingo, 27 de setembro de 2026
+
+1. Aceitação
+Ao baixar e jogar Karaborsa Simülasyonu ("o Jogo"), você aceita estes Termos de Uso. Se não concordar com estes termos, não deverá utilizar o Jogo.
+Desenvolvedores: muhammed.ali
+Contato: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. Aviso sobre o conteúdo
+O Jogo apresenta temas inteiramente fictícios, exclusivamente para fins de simulação, como comércio no mercado negro, produtos fictícios semelhantes a armas e drogas, lavagem de dinheiro, prisão e criminalidade. Nada no Jogo incentiva ou aprova atividades ilegais na vida real.
+
+3. Estrutura do jogo e dispensa de conta
+O Jogo é uma simulação para computador, destinada a um único jogador, e NÃO exige que você crie uma conta, faça login ou forneça informações pessoais para jogar.
+Seu progresso no Jogo (dinheiro, inventário, empresas, terrenos, funcionários, situação dos empréstimos, dia no jogo etc.) é armazenado exclusivamente no seu computador, no arquivo de salvamento local do Jogo. Esses dados não são enviados aos nossos servidores nem saem do seu dispositivo.
+O nome de usuário escolhido ao iniciar o Jogo serve apenas para identificar seu arquivo de salvamento local e, caso você opte voluntariamente por participar do Ranking, para aparecer nele. Esse nome não representa uma conta nem qualquer forma de autenticação.
+Se começar a jogar em outro computador, seu progresso não será transferido; cada dispositivo possui seu próprio arquivo de salvamento local.
+
+4. Uso permitido
+Os seguintes comportamentos são proibidos e, caso detectados, podem resultar em restrições de acesso ao Ranking e/ou ao Sistema de Suporte:
+- Trapacear, explorar falhas ou utilizar ferramentas de terceiros ou automações (bots) que prejudiquem o funcionamento normal do Jogo
+- Tentar manipular o Ranking
+- Utilizar indevidamente o Sistema de Suporte / Tickets (spam, assédio ou compartilhamento de conteúdo inadequado ou ilegal)
+- Utilizar o Jogo de maneira que prejudique ou sobrecarregue seus serviços oficiais (Ranking e Sistema de Suporte)
+
+5. Ranking e conteúdo dos usuários
+Ao optar por participar da tela "Melhores pontuações" (Configurações > Envio de pontuação), o nome de usuário escolhido ao iniciar o Jogo, seu saldo em dinheiro e o dia atual no Jogo serão enviados a uma classificação pública, visível para outros jogadores. Você pode desativar essa participação a qualquer momento na tela Configurações.
+Se não quiser divulgar seu nome verdadeiro ou uma identidade que usa em outros lugares, recomendamos que escolha seu nome de usuário levando isso em consideração ao iniciar o Jogo.
+Você também é responsável pelo conteúdo que compartilha nos tickets de suporte; se enviar conteúdo inadequado, ofensivo ou ilegal, o ticket correspondente poderá ser encerrado.
+
+6. Propriedade intelectual e código aberto
+O Jogo é de código aberto; você pode examinar, copiar, modificar e redistribuir livremente seu código e conteúdo. No entanto, para preservar a integridade da comunidade e um ambiente de jogo justo, é proibido manipular o Ranking ou o Sistema de Suporte oficiais, bem como utilizar indevidamente esses serviços em projetos externos próprios sem autorização.
+
+7. Prestação do serviço
+Recursos como o Ranking e o Sistema de Suporte exigem conexão com a internet e dependem de infraestrutura de terceiros (GitHub). O Jogo em si (salvamentos locais, comércio, empresas, terrenos, funcionários etc.) pode ser jogado integralmente sem conexão com a internet.
+Não garantimos que esses serviços de terceiros funcionem sem interrupções ou erros; problemas temporários de acesso podem ocorrer devido a manutenções, problemas de infraestrutura ou indisponibilidade de serviços de terceiros.
+O Jogo é fornecido "no estado em que se encontra", sem qualquer garantia, expressa ou implícita, inclusive de adequação a uma finalidade específica.
+
+8. Limitação de responsabilidade
+Na máxima extensão permitida pela legislação aplicável, os desenvolvedores não serão responsáveis por danos indiretos, incidentais ou consequenciais decorrentes do uso ou da impossibilidade de uso do Jogo, da perda ou corrupção de arquivos de salvamento locais ou de interrupções em serviços de terceiros (GitHub etc.).
+
+9. Rescisão
+Reservamo-nos o direito de restringir seu acesso ao Ranking e/ou ao Sistema de Suporte, sem aviso prévio, se constatarmos que você violou estes Termos de Uso.
+
+10. Alterações
+Podemos atualizar estes termos periodicamente. Quando ocorrerem alterações significativas, você será informado novamente por meio de uma tela de confirmação dentro do Jogo, e seu consentimento será solicitado; continuar usando o Jogo significa que você aceita os termos atualizados.
+
+11. Legislação aplicável
+Estes termos são regidos pelas leis da Turquia e interpretados de acordo com elas."

@@ -73,6 +73,7 @@ _BUILTIN_LANGUAGE_NAMES = {
     "en": "English",
     "tr": "Türkçe",
     "id": "Bahasa Indonesia",
+    "pt": "Português",
 }
 
 
@@ -155,7 +156,7 @@ def _detect_system_language(candidate_codes: list) -> str:
                 0x01: "ar", 0x04: "zh", 0x07: "de", 0x09: "en",
                 0x0A: "es", 0x0C: "fr", 0x10: "it", 0x11: "ja",
                 0x12: "ko", 0x13: "nl", 0x16: "pt", 0x19: "ru",
-                0x1F: "tr", 0x21: "id", 0x22: "uk", 0x29: "fa", 0x2A: "vi",
+                0x16: "pt", 0x1F: "tr", 0x21: "id", 0x22: "uk", 0x29: "fa", 0x2A: "vi",
                 0x2D: "eu", 0x30: "el",
             }
             detected = LANGID_TO_CODE.get(primary_lang_id)
@@ -477,7 +478,27 @@ def _restore_saved_language():
         pass
 
 
+_text_to_key = {}
+_TEXT_TO_KEY_MAX = 4000
+
+
+def key_for_text(text: str):
+    """t() ile üretilmiş bir metnin hangi çeviri anahtarından geldiğini
+    döner (bilinmiyorsa None). history_log, 'gereksiz' anonsları anahtarına
+    göre geçmişe yazmamak için kullanır."""
+    return _text_to_key.get(text)
+
+
 def t(key, /, **kwargs) -> str:
+    text = _translate(key, **kwargs)
+    if len(text) <= 400:
+        if len(_text_to_key) > _TEXT_TO_KEY_MAX:
+            _text_to_key.clear()
+        _text_to_key[text] = key
+    return text
+
+
+def _translate(key, /, **kwargs) -> str:
     """Returns the translated text for `key` in the current language.
 
     `key` is POSITIONAL-ONLY (the `/` above) on purpose: several

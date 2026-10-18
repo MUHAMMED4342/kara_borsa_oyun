@@ -1,0 +1,27 @@
+(Acre) Rio Branco, Cruzeiro do Sul, Sena Madureira, Tarauacá, Feijó, Brasiléia, Senador Guiomard
+(Alagoas) Maceió, Arapiraca, Rio Largo, Palmeira dos Índios, União dos Palmares, Penedo, São Miguel dos Campos, Delmiro Gouveia, Marechal Deodoro, Coruripe
+(Amapá) Macapá, Santana, Laranjal do Jari, Oiapoque, Mazagão, Porto Grande
+(Amazonas) Manaus, Parintins, Itacoatiara, Manacapuru, Coari, Tefé, Tabatinga, Maués, São Gabriel da Cachoeira, Humaitá
+(Bahia) Salvador, Feira de Santana, Vitória da Conquista, Camaçari, Itabuna, Juazeiro, Lauro de Freitas, Ilhéus, Jequié, Teixeira de Freitas, Barreiras, Alagoinhas, Porto Seguro, Simões Filho, Paulo Afonso, Eunápolis, Santo Antônio de Jesus, Valença, Candeias, Guanambi
+(Ceará) Fortaleza, Caucaia, Juazeiro do Norte, Maracanaú, Sobral, Crato, Itapipoca, Maranguape, Iguatu, Quixadá, Pacatuba, Aquiraz, Canindé, Russas
+(Distrito Federal) Brasília, Ceilândia, Taguatinga, Samambaia, Plano Piloto, Gama, Planaltina, Sobradinho, Águas Claras, Santa Maria, Recanto das Emas, Guará
+(Espírito Santo) Vitória, Vila Velha, Serra, Cariacica, Linhares, Cachoeiro de Itapemirim, Colatina, Guarapari, São Mateus, Aracruz, Viana, Nova Venécia
+(Goiás) Goiânia, Aparecida de Goiânia, Anápolis, Rio Verde, Luziânia, Águas Lindas de Goiás, Valparaíso de Goiás, Trindade, Formosa, Novo Gama, Itumbiara, Senador Canedo, Catalão, Jataí, Planaltina
+(Maranhão) São Luís, Imperatriz, Timon, Caxias, Codó, Paço do Lumiar, Açailândia, Bacabal, Balsas, Santa Inês, Barra do Corda, Chapadinha
+(Mato Grosso) Cuiabá, Várzea Grande, Rondonópolis, Sinop, Tangará da Serra, Cáceres, Sorriso, Lucas do Rio Verde, Primavera do Leste, Barra do Garças, Alta Floresta
+(Mato Grosso do Sul) Campo Grande, Dourados, Três Lagoas, Corumbá, Ponta Porã, Naviraí, Nova Andradina, Aquidauana, Sidrolândia, Paranaíba, Maracaju
+(Minas Gerais) Belo Horizonte, Uberlândia, Contagem, Juiz de Fora, Betim, Montes Claros, Ribeirão das Neves, Uberaba, Governador Valadares, Ipatinga, Sete Lagoas, Divinópolis, Santa Luzia, Ibirité, Poços de Caldas, Patos de Minas, Pouso Alegre, Teófilo Otoni, Barbacena, Sabará, Varginha, Conselheiro Lafaiete, Itabira, Araguari, Passos, Ouro Preto
+(Pará) Belém, Ananindeua, Santarém, Marabá, Castanhal, Parauapebas, Abaetetuba, Cametá, Marituba, Bragança, Altamira, Tucuruí, Barcarena
+(Paraíba) João Pessoa, Campina Grande, Santa Rita, Patos, Bayeux, Sousa, Cabedelo, Cajazeiras, Guarabira, Sapé
+(Paraná) Curitiba, Londrina, Maringá, Ponta Grossa, Cascavel, São José dos Pinhais, Foz do Iguaçu, Colombo, Guarapuava, Paranaguá, Araucária, Toledo, Apucarana, Pinhais, Campo Largo, Arapongas, Almirante Tamandaré, Umuarama, Piraquara, Cambé
+(Pernambuco) Recife, Jaboatão dos Guararapes, Olinda, Caruaru, Petrolina, Paulista, Cabo de Santo Agostinho, Camaragibe, Garanhuns, Vitória de Santo Antão, Igarassu, São Lourenço da Mata, Santa Cruz do Capibaribe, Abreu e Lima, Ipojuca, Serra Talhada
+(Piauí) Teresina, Parnaíba, Picos, Piripiri, Floriano, Campo Maior, Barras, União, Altos, Pedro II
+(Rio de Janeiro) Rio de Janeiro, São Gonçalo, Duque de Caxias, Nova Iguaçu, Niterói, Belford Roxo, São João de Meriti, Campos dos Goytacazes, Petrópolis, Volta Redonda, Magé, Itaboraí, Mesquita, Nova Friburgo, Barra Mansa, Macaé, Cabo Frio, Angra dos Reis, Teresópolis, Resende, Maricá, Itaguaí, Queimados, Araruama
+(Rio Grande do Norte) Natal, Mossoró, Parnamirim, São Gonçalo do Amarante, Macaíba, Ceará-Mirim, Caicó, Assu, Currais Novos, São José de Mipibu
+(Rio Grande do Sul) Porto Alegre, Caxias do Sul, Pelotas, Canoas, Santa Maria, Gravataí, Viamão, Novo Hamburgo, São Leopoldo, Rio Grande, Alvorada, Passo Fundo, Sapucaia do Sul, Uruguaiana, Santa Cruz do Sul, Cachoeirinha, Bagé, Bento Gonçalves, Erechim, Guaíba, Ijuí, Santa Rosa
+(Rondônia) Porto Velho, Ji-Paraná, Ariquemes, Vilhena, Cacoal, Rolim de Moura, Jaru, Guajará-Mirim
+(Roraima) Boa Vista, Rorainópolis, Caracaraí, Alto Alegre, Mucajaí, Cantá, Pacaraima
+(Santa Catarina) Florianópolis, Joinville, Blumenau, São José, Chapecó, Itajaí, Criciúma, Jaraguá do Sul, Palhoça, Lages, Balneário Camboriú, Brusque, Tubarão, São Bento do Sul, Camboriú, Navegantes, Concórdia, Rio do Sul, Araranguá
+(São Paulo) São Paulo, Guarulhos, Campinas, São Bernardo do Campo, Santo André, Osasco, São José dos Campos, Ribeirão Preto, Sorocaba, Mauá, São José do Rio Preto, Santos, Mogi das Cruzes, Diadema, Jundiaí, Piracicaba, Carapicuíba, Bauru, Itaquaquecetuba, São Vicente, Franca, Guarujá, Taubaté, Praia Grande, Limeira, Suzano, Taboão da Serra, Sumaré, Barueri, Embu das Artes, Indaiatuba, Cotia, Americana, Marília, Presidente Prudente, Araraquara, Jacareí, Hortolândia, São Carlos, Rio Claro, Araçatuba
+(Sergipe) Aracaju, Nossa Senhora do Socorro, Lagarto, Itabaiana, São Cristóvão, Estância, Tobias Barreto, Propriá, Barra dos Coqueiros
+(Tocantins) Palmas, Araguaína, Gurupi, Porto Nacional, Paraíso do Tocantins, Colinas do Tocantins, Guaraí, Tocantinópolis, Dianópolis

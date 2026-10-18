@@ -17,6 +17,7 @@ from typing import List, Dict, Optional, Tuple
 
 from formatting import format_tl
 from i18n import t
+import ban_system
 
 
 GIST_ID = "5cde0d504dec8aac37cdfc211d91a891"
@@ -375,6 +376,10 @@ def _merge_entry(score_data: List[Dict], username: str,
                 "cash": cash,
                 "day": day,
                 "clean_money": clean_money,
+                # Bilgisayar kimliği (geri döndürülemeyen özet): yönetici
+                # panelinin yasağı kullanıcı adına değil bilgisayara
+                # uygulayabilmesi için (bkz. ban_system.py).
+                "device_id": ban_system.get_device_id(),
                 "last_updated": __import__("datetime").datetime.now().isoformat()
             })
             
@@ -390,6 +395,7 @@ def _merge_entry(score_data: List[Dict], username: str,
         "cash": cash,
         "day": day,
         "clean_money": clean_money,
+        "device_id": ban_system.get_device_id(),
         "last_updated": __import__("datetime").datetime.now().isoformat()
     })
     _log(f"[Bilgi] Yeni kullanıcı eklendi: {username}, Nakit: {format_tl(cash)} TL")
@@ -512,6 +518,11 @@ def send_score(username: str, cash: float, day: int, clean_money: float = 0) -> 
 
     if not username:
         return False, t("leaderboard.empty_username")
+
+    # İkinci savunma hattı (asıl kontrol main.py'de, gönderimden hemen önce
+    # çevrimiçi yapılır): yerel kayıtta bu bilgisayar için yasak varsa gönderme.
+    if ban_system.is_banned(ban_system.SCOPE_LEADERBOARD):
+        return False, t("ban.score_blocked_log")
 
     with _score_lock:
         last_error = t("leaderboard.send_failed_connection")

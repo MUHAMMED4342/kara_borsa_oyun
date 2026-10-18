@@ -10,6 +10,7 @@ import webbrowser
 
 import updater
 import asset_loader
+import extra_settings
 from game_data import (
     PRODUCT_CATEGORIES, PRODUCTS, EVENTS, RARE_EVENTS, get_flat_product_order,
     COMPANY_TYPES, CREDIT_TIERS, calculate_police_risk, INFORMANT_CONFIG,
@@ -101,6 +102,8 @@ COUNTRIES = {
     "uk": {"name_key": "country.uk", "cities_file": "iller_uk.txt", "districts_file": "ilceler_uk.txt"},
     "au": {"name_key": "country.au", "cities_file": "iller_au.txt", "districts_file": "ilceler_au.txt"},
     "id": {"name_key": "country.id", "cities_file": "iller_id.txt", "districts_file": "ilceler_id.txt"},
+    "br": {"name_key": "country.br", "cities_file": "iller_br.txt", "districts_file": "ilceler_br.txt"},
+    "pt": {"name_key": "country.pt", "cities_file": "iller_pt.txt", "districts_file": "ilceler_pt.txt"},
 }
 DEFAULT_COUNTRY = "tr"
 
@@ -497,10 +500,18 @@ class GameState:
         # başlar). auction_duration_seconds ise kalıcı bir tercihtir -
         # oyuncu bunu açık artırma ekranından değiştirebilir.
         self.auction_inventory = load_data.get("auction_inventory", {}) if load_data else {}
-        self.auction_duration_seconds = (
+        # Tur süresi artık OYUNCU AYARIDIR (Ayarlar ekranı, bkz.
+        # extra_settings) ve her kayıtta geçerlidir. Eski kayıtlarda
+        # kayıt dosyasında tutulan değer varsa, ayar henüz yoksa bir kez
+        # oradan devralınıp kalıcı ayara taşınır.
+        legacy_duration = (
             load_data.get("auction_duration_seconds", self.AUCTION_DEFAULT_DURATION_SECONDS)
             if load_data else self.AUCTION_DEFAULT_DURATION_SECONDS
         )
+        self.auction_duration_seconds = self._clamp_auction_duration(legacy_duration)
+        if (extra_settings.get_value("auction_duration_seconds") is None
+                and self.auction_duration_seconds != self.AUCTION_DEFAULT_DURATION_SECONDS):
+            extra_settings.set_value("auction_duration_seconds", self.auction_duration_seconds)
         self.auction_current = None
 
         # ARSA DEPOSU: {ürün_adı: adet}. Envanterden ayrı, ortak bir depo;
@@ -1525,21 +1536,30 @@ class GameState:
     AUCTION_RESALE_MIN_MULT = 0.75
     AUCTION_RESALE_MAX_MULT = 1.35
 
-    def get_auction_duration_seconds(self) -> int:
-        return self.auction_duration_seconds
-
-    def set_auction_duration_seconds(self, seconds) -> int:
-        """Açık artırma süresini (saniye) değiştirir; AUCTION_MIN/MAX
-        aralığına sıkıştırılır. Zaten devam eden bir açık artırmayı
-        ETKİLEMEZ - yeni süre yalnızca bundan SONRA start_new_auction()
-        ile başlayacak açık artırmalarda geçerli olur. Uygulanan (sınıra
-        çekilmiş) değeri döner."""
+    def _clamp_auction_duration(self, seconds) -> int:
         try:
             seconds = int(seconds)
         except (TypeError, ValueError):
             seconds = self.AUCTION_DEFAULT_DURATION_SECONDS
-        seconds = max(self.AUCTION_MIN_DURATION_SECONDS, min(self.AUCTION_MAX_DURATION_SECONDS, seconds))
+        return max(self.AUCTION_MIN_DURATION_SECONDS,
+                   min(self.AUCTION_MAX_DURATION_SECONDS, seconds))
+
+    def get_auction_duration_seconds(self) -> int:
+        """Oyuncunun Ayarlar'da belirlediği tur süresi. Her seferinde
+        kalıcı ayardan okunur; böylece Ayarlar ekranında yapılan değişiklik
+        oyun açıkken de hemen (bir SONRAKİ turdan itibaren) geçerli olur."""
+        saved = extra_settings.get_value("auction_duration_seconds")
+        if saved is not None:
+            self.auction_duration_seconds = self._clamp_auction_duration(saved)
+        return self.auction_duration_seconds
+
+    def set_auction_duration_seconds(self, seconds) -> int:
+        """Tur süresini (saniye) AUCTION_MIN/MAX aralığına sıkıştırıp
+        kalıcı olarak kaydeder. Devam eden turu ETKİLEMEZ. Uygulanan
+        değeri döner."""
+        seconds = self._clamp_auction_duration(seconds)
         self.auction_duration_seconds = seconds
+        extra_settings.set_value("auction_duration_seconds", seconds)
         return seconds
 
     def _generate_auction_bidders(self, item: dict) -> list:
@@ -1593,7 +1613,7 @@ class GameState:
             "bidders": self._generate_auction_bidders(item),
             "bid_history": [],
             "start_time": time.time(),
-            "duration_seconds": self.auction_duration_seconds,
+            "duration_seconds": self.get_auction_duration_seconds(),
             "resolved": False,
             # SADECE BİR anons/olay penceresi vardır (bkz. tick_auction) -
             # bir sonraki olayın (teklif YA DA hatırlatma, ikisi asla

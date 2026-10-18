@@ -15,6 +15,7 @@ import hashlib
 import app_paths
 import ticket_manager
 import settings_manager
+import extra_settings
 
 
 APP_NAME = "KaraborsaSimulasyonu"
@@ -252,12 +253,14 @@ def rename_save(old_username: str, new_username: str) -> tuple:
 # bir oyun kaydıymış gibi listeye eklememeli. "session.json", kaldırılan
 # hesap sisteminden eski kurulumlarda kalmış olabilir; yine de kayıt
 # sayılmaz. Klasöre başka bir sistem dosyası (*.json) eklenirse buraya
-# da eklenmeli.
+# da eklenmeli. (delete_all_saves() de bu listeyi kullandığı için, burada
+# olmayan bir ayar dosyası "Tüm kayıtları sil" ile SİLİNİR!)
 _RESERVED_SAVE_FILENAMES = {
     "session.json",
     ticket_manager.TICKETS_FILENAME,
     settings_manager.SETTINGS_FILENAME,
     "skor_ayarlari.json",
+    extra_settings.FILENAME,   # ekstra_ayarlar.json (açık artırma süresi vb.)
 }
 
 

@@ -1,10 +1,47 @@
-15.10.2026
+18.10.2026
 "tr:
-Merhaba! Güzel bir haberim var: Endonezce dil desteği artık oyunda! Oyunu Endonezce oynayabilirsiniz. Bu dili eklememi öneren oyuncumuz Casper'a gönülden teşekkür ederim. Destek biletlerinizi Endonezce göndermekten çekinmeyin, size de Endonezce yanıt vereceğim. Çeviriler henüz mükemmel olmayabilir; fark ettiğiniz hataları en kısa sürede düzelteceğim. Bir sonraki güncellemede de sizler için güzel bir sürprizim var. Görüşmek üzere!
-"
-"en:
-Hello! I have some good news: Indonesian language support is now in the game! You can play it in Indonesian. Heartfelt thanks to our player Casper, who suggested adding this language. Feel free to send your support tickets in Indonesian, and I will reply to you in Indonesian too. The translations may not be perfect yet; I will fix any mistakes you notice as soon as possible. I also have a nice surprise for you in the next update. See you then!
+Merhaba! Bu güncellemede güzel haberlerim var.
+Portekizce dil desteği eklendi! Çevirileri yapan jp'ye gönülden çok teşekkür ederiz, emeği için sağ olsun.
+Artık oyunun ana penceresinde bir geçmiş yazı alanı var. Duyurulan olayları, kârları ve alım satımları oradan sakince okuyabilirsiniz.
+Bir de sürprizim var: her 7 günde bir gönderdiğim günün mesajlarından sonra hesabınıza 1.000.000 lira eklenecek. Mesajı görünce bakiyenize yansır, hem de size söylenir.
+Ayrıca hile korumaları eklendi ve oyunun güvenliği artırıldı. Skor tablosunun adil kalması için hepimizin buna ihtiyacı var.
+Bir sorun görürseniz ya da bir fikriniz olursa destek bileti göndermekten çekinmeyin. Keyifli oyunlar!
+""en:
+Hello! I have some good news for you in this update.
+
+Portuguese language support has been added! A big thank you to jp, who did the translations. We really appreciate the effort.
+
+The main window now has a history text field, so you can calmly read back announcements, profits and trades.
+
+And here is a little surprise: after the daily messages I send every 7 days, 1,000,000 will be added to your cash. It shows up in your balance when you see the message, and you will be told about it.
+
+Cheat protections have also been added and the game's security has been improved. We all need this to keep the leaderboard fair.
+
+If you notice a problem or have an idea, feel free to send a support ticket. Enjoy the game!
 "
 "id:
-Halo! Ada kabar baik: dukungan bahasa Indonesia kini hadir di dalam game! Anda bisa memainkannya dalam bahasa Indonesia. Terima kasih sebesar-besarnya kepada pemain kami, Casper, yang telah mengusulkan penambahan bahasa ini. Jangan ragu mengirim tiket dukungan dalam bahasa Indonesia, saya juga akan membalasnya dalam bahasa Indonesia. Terjemahannya mungkin belum sempurna; kesalahan yang Anda temukan akan segera saya perbaiki. Saya juga menyiapkan kejutan menarik untuk Anda di pembaruan berikutnya. Sampai jumpa!
+Halo! Ada kabar baik untuk Anda di pembaruan ini.
+
+Dukungan bahasa Portugis telah ditambahkan! Terima kasih banyak kepada jp yang telah mengerjakan terjemahannya. Kami sangat menghargai usahanya.
+
+Jendela utama kini memiliki kolom teks riwayat, sehingga Anda bisa membaca ulang pengumuman, keuntungan, dan transaksi dengan tenang.
+
+Ada juga kejutan kecil: setelah pesan hari ini yang saya kirim setiap 7 hari, uang tunai Anda akan bertambah 1.000.000. Jumlahnya langsung masuk ke saldo Anda saat pesan ditampilkan, dan hal itu akan diumumkan kepada Anda.
+
+Selain itu, perlindungan terhadap kecurangan telah ditambahkan dan keamanan game ditingkatkan. Kita semua membutuhkannya agar papan peringkat tetap adil.
+
+Jika Anda menemukan masalah atau punya ide, jangan ragu mengirim tiket dukungan. Selamat bermain!
+"
+"pt:
+Olá! Tenho boas notícias para você nesta atualização.
+
+O suporte ao idioma português foi adicionado! Um grande obrigado ao jp, que fez as traduções. Agradecemos muito o esforço.
+
+A janela principal agora tem um campo de texto de histórico, para você ler com calma os anúncios, os lucros e as negociações.
+
+E tenho uma pequena surpresa: depois das mensagens do dia que envio a cada 7 dias, 1.000.000 serão adicionados ao seu dinheiro. O valor entra no seu saldo quando você vê a mensagem, e você será avisado.
+
+Também foram adicionadas proteções contra trapaças e a segurança do jogo foi reforçada. Todos nós precisamos disso para manter a classificação justa.
+
+Se você notar algum problema ou tiver uma ideia, fique à vontade para enviar um chamado de suporte. Bom jogo!
 "
