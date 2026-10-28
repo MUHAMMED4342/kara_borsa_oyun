@@ -1,0 +1,272 @@
+"tr:
+Gizlilik Politikası — Karaborsa Simülasyonu
+Son güncelleme: 18 Ekim 2026 Pazar
+
+1. Kapsam
+Bu politika, Karaborsa Simülasyonu masaüstü oyununu ("Oyun") ve oyunla ilgili web sayfalarını (ör. iletişim sayfası) kullanırken hangi verilerin toplandığını, nasıl kullanıldığını ve kimlerle paylaşıldığını açıklar. Oyunu kullanarak bu politikayı kabul etmiş olursunuz.
+Geliştirici: muhammed.ali 
+İletişim: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. Hangi Verileri Topluyoruz
+
+2.1 Hesap Bilgileri
+Oyunu oynamak için hesap oluşturmanız GEREKMEZ. Oyun; kullanıcı adı, şifre, e-posta veya benzeri kişisel kimlik bilgisi TOPLAMAZ ve sunucularımıza GÖNDERMEZ.
+Oyunu başlatırken belirlediğiniz kullanıcı adı yalnızca yerel kayıt dosyanızı tanımlamak için kullanılır ve cihazınızdan dışarı gönderilmez (gönüllü olarak katıldığınız Skor Tablosu hariç — bkz. 2.3).
+
+2.2 Oyun İlerleme Verisi
+Nakit bakiyeniz, envanteriniz, şirketleriniz, arsalarınız, çalışanlarınız, kredi durumunuz ve oyun günü gibi tüm ilerleme verileriniz YALNIZCA kendi bilgisayarınızda, oyunun yerel kayıt dosyasında saklanır. Bu veriler buluta yüklenmez ve cihazınızdan dışarı çıkmaz.
+Farklı bir cihazda oynamaya başlarsanız ilerlemeniz otomatik olarak taşınmaz; her cihazın kendi yerel kaydı ayrıdır. Kaydınızı başka bir cihaza taşımak isterseniz, kayıt dosyasını elle kopyalamanız gerekir.
+
+2.3 Skor Tablosu
+"En İyi Skorlar" ekranına katılmayı seçtiğinizde (Ayarlar > Skor Gönderimi), oyunu başlatırken belirlediğiniz kullanıcı adınız, nakit bakiyeniz ve oyun gününüz, diğer tüm oyuncuların görebileceği herkese açık bir sıralamaya gönderilir. Bu bilgiler gönderildikten sonra başka oyuncular tarafından görülebilir hale gelir. Bu katılımı Ayarlar ekranından istediğiniz zaman kapatabilirsiniz.
+Gerçek adınızı ya da başka yerlerde kullandığınız kimliğinizi ifşa etmek istemiyorsanız, oyunu başlatırken kullanıcı adınızı buna göre seçmenizi öneririz.
+Skor tablosu GitHub'ın altyapısı (Gist) üzerinde barındırılır; bu nedenle GitHub'ın kendi gizlilik politikası da gönderilen bu veriler için geçerlidir.
+
+2.4 Destek Talepleri (Biletler)
+"Destek / Bilet" ekranından bir talep açtığınızda, oyunu başlatırken belirlediğiniz kullanıcı adınız ve yazdığınız mesaj, geliştiricinin destek sisteminde (GitHub Issues) kayıt altına alınır ve talebiniz yanıtlanana kadar saklanır. Bilet ekranındaki "Log Yükle" butonunu kullanırsanız, oyun içi geçmişiniz ve cihazınızdaki teknik hata kayıtları (uygulama günlüğü) da mesajınıza eklenir; bu tamamen isteğe bağlıdır, buton kullanılmadıkça bu bilgiler bilete eklenmez. Bilet içeriğine paylaştığınız her bilgiden siz sorumlusunuz; şifre, kimlik numarası gibi hassas bilgileri bilet mesajlarına yazmamanızı öneririz.
+
+2.5 Yerel Cihaz Verileri
+Aşağıdaki veriler yalnızca kendi bilgisayarınızda saklanır ve bize gönderilmez (2.4'te açıklanan "Log Yükle" butonuyla kendi isteğinizle bir bilete eklemediğiniz sürece):
+- Yerel kayıt dosyanız (nakit, envanter, şirketler, arsalar, çalışanlar vb.)
+- Yerel kayıt yedeği ve bilet geçmişiniz
+- Ses/müzik seviyesi, skor gönderimi, günün mesajı gibi tercihleriniz
+- Ekran okuyucu için tutulan "söylenen mesajlar" geçmişi
+- Uygulamanın teknik hata/olay kayıtlarının tutulduğu yerel günlük dosyası
+- Yasak durumu kaydı (yalnızca bir yasak uygulanmışsa; dosya ve Windows kayıt defteri)
+
+2.6 Cihaz Kimliği ve Yasaklar
+Skor Tablosu'na katılırsanız veya destek bileti açarsanız, kötüye kullanımı (hile, spam, taciz vb.) engelleyebilmemiz için gönderdiğiniz bilgilere bilgisayarınıza ait bir cihaz kimliği de eklenir. Bu kimlik, bilgisayarınızın Windows tanımlayıcısından üretilen tek yönlü bir özettir; adınızı, kişisel bilgilerinizi veya asıl tanımlayıcıyı içermez ve geri döndürülerek asıl tanımlayıcıya ulaşılamaz. Skor Tablosu'na gönderilen kayıtta bu kimlik de bulunur ve herkese açık sıralama verisinde görünebilir; destek biletinde ise bilet metninin içinde yer alır.
+Bir yasak uygulanırsa; cihaz kimliği, kullanıcı adı, yasak sebebi, bitiş tarihi ve kapsamı (skor tablosu ve/veya destek bileti) GitHub (Gist) üzerindeki yasak listesine yazılır ve bu liste herkese açık olabilir. Yasak, kullanıcı adına değil bilgisayara uygulanır. Oyun her açılışta bu listeyi indirir (yalnızca okuma; sizden hiçbir veri gönderilmez), yasak sizin bilgisayarınızla eşleşirse bilgisayarınızda yerel olarak (dosya ve Windows kayıt defteri) saklanır ve sebep/süre size oyun açılışında mesaj olarak gösterilir. Yasak kaldırıldığında veya süresi dolduğunda bu kayıt temizlenir.
+
+3. Verilerinizi Ne İçin Kullanıyoruz
+- Oyunun teknik olarak çalışmasını sağlamak (yerel kayıt, ayarlar vb.)
+- Destek taleplerinizi yanıtlamak
+- Skor tablosunu (yalnızca gönüllü katılımla) yürütmek
+Verilerinizi reklam amacıyla kullanmıyor, üçüncü taraflara satmıyoruz. Oyun, hesap ve ilerleme verilerini sunucularımıza göndermez.
+
+4. Verileriniz Nerede Saklanıyor
+Oyun ilerlemeniz, ayarlarınız ve geçmişiniz YALNIZCA kendi cihazınızda saklanır.
+Gönüllü olarak katıldığınız Skor Tablosu ve açtığınız Destek Talepleri, GitHub'ın altyapısı (Gist / Issues) üzerinde barındırılır; bu nedenle GitHub'ın kendi gizlilik politikası da ilgili veriler için geçerlidir.
+Skor tablosu ve destek sistemi internet bağlantısı gerektirir. Oyunun kendisi (yerel kayıt, ticaret, şirketler, arsalar, çalışanlar vb.) internet bağlantısı olmadan tam olarak oynanabilir.
+
+5. Veri Güvenliği
+Oyun, hesap veya şifre toplamadığı için tarafımızca saklanan bir şifreniz yoktur. Yerel kayıt dosyanızın güvenliği (yedekleme, cihaz güvenliği vb.) tamamen sizin sorumluluğunuzdadır.
+Skor Tablosu'na gönderdiğiniz kullanıcı adı ve nakit bilgisi herkese açıktır; kişisel bilgi paylaşmamanızı öneririz.
+
+6. Verilerinizin Saklanma Süresi ve Silme
+Yerel kayıt dosyanız cihazınızda kaldığı sürece saklanır; silmek için oyun içindeki "Kayıtlı Oyunu Yükle" ekranından silebilir veya cihazınızdaki kayıt klasörünü elle temizleyebilirsiniz.
+Skor tablosuna gönderilmiş kayıtlar herkese açık olduğu için silme talepleri makul süre içinde işleme alınır ancak önceden görülmüş/kopyalanmış kayıtlar üzerinde kontrolümüz olmayabilir. Destek biletleri, talep sonuçlandıktan sonra makul bir süre içinde kapatılır.
+Silme talepleriniz için iletişim sayfamız üzerinden bize ulaşabilirsiniz.
+
+7. Haklarınız
+Bulunduğunuz ülkenin mevzuatına (örn. KVKK, GDPR) bağlı olarak, tarafımızca işlenen verilerinize ilişkin erişme, düzeltme ve silinmesini talep etme hakkına sahip olabilirsiniz. Oyun yerel çalıştığı ve hesap toplamadığı için bu hakların büyük kısmı zaten doğal olarak sizdedir (veriler yalnızca sizin cihazınızda). Skor tablosu ve destek biletleriyle ilgili taleplerinizi iletişim sayfamız (https://bilgisayar-xi.vercel.app/iletisim.html) üzerinden iletebilirsiniz.
+
+8. Politikada Değişiklik
+Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişiklikler olduğunda oyun içi bir onay ekranı ile yeniden bilgilendirilir ve onayınız istenir.
+
+9. İletişim
+Sorularınız için: https://bilgisayar-xi.vercel.app/iletisim.html veya oyun içindeki Destek / Bilet ekranı."
+"en:
+Privacy Policy — Karaborsa Simülasyonu
+Last updated: Sunday, October 18, 2026
+
+1. Scope
+This policy explains what data is collected, how it is used, and with whom it is shared when you use the Karaborsa Simülasyonu desktop game ("the Game") and its related web pages (e.g. the contact page). By using the Game, you accept this policy.
+Developers: muhammed.ali 
+Contact: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. What Data We Collect
+
+2.1 Account Information
+You do NOT need to create an account to play the Game. The Game does not collect or send to our servers any username, password, email, or similar personal identity information.
+The username you choose when launching the Game is used only to identify your local save file and does not leave your device (except for the Leaderboard you voluntarily opt in to — see 2.3).
+
+2.2 Game Progress Data
+All your progress data — cash balance, inventory, companies, land holdings, employees, loan status, in-game day, etc. — is stored ONLY on your own computer, in the game's local save file. This data is not uploaded to the cloud and does not leave your device.
+If you start playing on a different computer, your progress will not carry over automatically; each device has its own separate local save. If you want to move your save to another device, you must copy the save file manually.
+
+2.3 Leaderboard
+When you opt in to the "Top Scores" screen (Settings > Score Submission), the username you chose when launching the Game, along with your cash balance and in-game day, is sent to a public ranking visible to all other players. Once submitted, this information can be seen by other players. You can turn off this participation at any time from the Settings screen.
+If you do not want to reveal your real name or an identity you use elsewhere, we recommend choosing your username accordingly when launching the Game.
+The leaderboard is hosted on GitHub's infrastructure (Gist); therefore GitHub's own privacy policy also applies to the data submitted there.
+
+2.4 Support Requests (Tickets)
+When you open a request from the "Support / Ticket" screen, the username you chose when launching the Game and your message are recorded in the developer's support system (GitHub Issues) and kept until your request is resolved. If you use the "Upload Log" button on the ticket screen, your in-game history and the technical error logs on your device (application log) are also attached to your message; this is entirely optional and these are added only if you use that button. You are responsible for anything you share in a ticket; we recommend not writing sensitive information such as passwords or ID numbers in ticket messages.
+
+2.5 Local Device Data
+The following data is stored only on your own computer and is not sent to us (unless you voluntarily attach it to a ticket via the "Upload Log" button described in 2.4):
+- Your local save file (cash, inventory, companies, land, employees, etc.)
+- Your local save backup and ticket history
+- Your preferences such as sound/music volume, score submission, daily message
+- The "spoken messages" history kept for the screen reader
+- The local log file where the application's technical error/event records are kept
+- Ban status record (only if a ban has been applied; file and Windows registry)
+
+2.6 Device Identifier and Bans
+If you join the Leaderboard or open a support ticket, a device identifier for your computer is added to the information you send, so that we can prevent abuse (cheating, spam, harassment, etc.). This identifier is a one-way hash derived from your computer's Windows identifier; it contains no name or personal information and cannot be reversed to reveal the original identifier. In a Leaderboard submission this identifier is part of the record and may be visible in the public ranking data; in a support ticket it appears inside the ticket text.
+If a ban is applied, the device identifier, username, reason, end date and scope (leaderboard and/or support tickets) are written to the ban list on GitHub (Gist), which may be publicly visible. A ban applies to the computer, not to a username. The Game downloads this list at every launch (read-only; nothing is sent from you), and if a ban matches your computer it is stored locally (in a file and in the Windows registry) and the reason and duration are shown to you as a message when the Game opens. When the ban is lifted or expires, this record is cleared.
+
+3. What We Use Your Data For
+- Making sure the Game works technically (local saves, settings, etc.)
+- Responding to your support requests
+- Running the leaderboard (only with voluntary participation)
+We do not use your data for advertising purposes and do not sell it to third parties. The Game does not send account or progress data to our servers.
+
+4. Where Your Data Is Stored
+Your game progress, settings, and history are stored ONLY on your own device.
+The Leaderboard you voluntarily opt in to and the Support Requests you open are hosted on GitHub's infrastructure (Gist / Issues); therefore GitHub's own privacy policy also applies to the relevant data.
+The leaderboard and support system require an internet connection. The Game itself (local save, trading, companies, land, employees, etc.) is fully playable without an internet connection.
+
+5. Data Security
+Because the Game does not collect an account or password, we do not store any password for you. The security of your local save file (backups, device security, etc.) is entirely your responsibility.
+The username and cash information you submit to the Leaderboard is public; we recommend not sharing personal information.
+
+6. Data Retention and Deletion
+Your local save file is kept for as long as it remains on your device; you can delete it from the in-game "Load Saved Game" screen or by manually clearing the save folder on your device.
+Because leaderboard entries are public, deletion requests are processed within a reasonable time, but we may not have control over records that have already been viewed or copied by others. Support tickets are closed within a reasonable time after the request is resolved.
+You can contact us via our contact page for deletion requests.
+
+7. Your Rights
+Depending on the laws of your country (e.g. KVKK, GDPR), you may have the right to access, correct, and request the deletion of data we process about you. Because the Game runs locally and collects no account, most of these rights already belong to you naturally (the data is only on your device). You can submit requests regarding the leaderboard and support tickets via our contact page (https://bilgisayar-xi.vercel.app/iletisim.html).
+
+8. Changes to This Policy
+We may update this policy from time to time. When significant changes are made, you will be informed again via an in-game confirmation screen and your consent will be requested.
+
+9. Contact
+For questions: https://bilgisayar-xi.vercel.app/iletisim.html or the Support / Ticket screen in the Game."
+"id:
+Kebijakan Privasi — Karaborsa Simülasyonu
+Terakhir diperbarui: Minggu, 18 Oktober 2026
+
+1. Ruang Lingkup
+Kebijakan ini menjelaskan data apa yang dikumpulkan, bagaimana data digunakan, dan kepada siapa data dibagikan saat Anda menggunakan game desktop Karaborsa Simülasyonu ("Game") dan halaman web terkaitnya (mis. halaman kontak). Dengan menggunakan Game, Anda menerima kebijakan ini.
+Pengembang: muhammed.ali 
+Kontak: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. Data Apa yang Kami Kumpulkan
+
+2.1 Informasi Akun
+Anda TIDAK perlu membuat akun untuk memainkan Game. Game tidak mengumpulkan atau mengirim ke server kami nama pengguna, kata sandi, email, atau informasi identitas pribadi serupa apa pun.
+Nama pengguna yang Anda pilih saat meluncurkan Game hanya digunakan untuk mengidentifikasi file simpanan lokal Anda dan tidak meninggalkan perangkat Anda (kecuali Papan Peringkat yang Anda ikuti secara sukarela — lihat 2.3).
+
+2.2 Data Kemajuan Game
+Semua data kemajuan Anda — saldo uang tunai, inventaris, perusahaan, kepemilikan tanah, karyawan, status pinjaman, hari dalam game, dll. — disimpan HANYA di komputer Anda sendiri, dalam file simpanan lokal game. Data ini tidak diunggah ke cloud dan tidak meninggalkan perangkat Anda.
+Jika Anda mulai bermain di komputer lain, kemajuan Anda tidak akan berpindah secara otomatis; setiap perangkat memiliki simpanan lokalnya sendiri yang terpisah. Jika Anda ingin memindahkan simpanan ke perangkat lain, Anda harus menyalin file simpanan secara manual.
+
+2.3 Papan Peringkat
+Saat Anda mengikuti layar "Skor Terbaik" (Pengaturan > Pengiriman Skor), nama pengguna yang Anda pilih saat meluncurkan Game, bersama dengan saldo uang tunai dan hari dalam game Anda, dikirim ke peringkat publik yang terlihat oleh semua pemain lain. Setelah dikirim, informasi ini dapat dilihat oleh pemain lain. Anda dapat mematikan partisipasi ini kapan saja dari layar Pengaturan.
+Jika Anda tidak ingin mengungkapkan nama asli Anda atau identitas yang Anda gunakan di tempat lain, kami menyarankan memilih nama pengguna Anda dengan tepat saat meluncurkan Game.
+Papan peringkat dihosting di infrastruktur GitHub (Gist); oleh karena itu kebijakan privasi GitHub sendiri juga berlaku untuk data yang dikirim ke sana.
+
+2.4 Permintaan Dukungan (Tiket)
+Saat Anda membuka permintaan dari layar "Dukungan / Tiket", nama pengguna yang Anda pilih saat meluncurkan Game dan pesan Anda dicatat dalam sistem dukungan pengembang (GitHub Issues) dan disimpan sampai permintaan Anda diselesaikan. Jika Anda menggunakan tombol "Muat Log" di layar tiket, riwayat dalam game Anda dan log kesalahan teknis di perangkat Anda (log aplikasi) juga dilampirkan ke pesan Anda; ini sepenuhnya opsional dan hanya ditambahkan jika Anda menggunakan tombol tersebut. Anda bertanggung jawab atas apa pun yang Anda bagikan dalam tiket; kami menyarankan untuk tidak menulis informasi sensitif seperti kata sandi atau nomor identitas dalam pesan tiket.
+
+2.5 Data Perangkat Lokal
+Data berikut disimpan hanya di komputer Anda sendiri dan tidak dikirim kepada kami (kecuali Anda secara sukarela melampirkannya ke tiket melalui tombol "Muat Log" yang dijelaskan di 2.4):
+- File simpanan lokal Anda (uang tunai, inventaris, perusahaan, tanah, karyawan, dll.)
+- Cadangan simpanan lokal dan riwayat tiket Anda
+- Preferensi Anda seperti volume suara/musik, pengiriman skor, pesan harian
+- Riwayat "pesan yang diucapkan" yang disimpan untuk pembaca layar
+- File log lokal tempat catatan kesalahan/peristiwa teknis aplikasi disimpan
+- Catatan status pemblokiran (hanya jika pemblokiran diterapkan; file dan registri Windows)
+
+2.6 Identitas Perangkat dan Pemblokiran
+Jika Anda mengikuti Papan Peringkat atau membuka tiket dukungan, identitas perangkat komputer Anda ditambahkan ke informasi yang Anda kirim agar kami dapat mencegah penyalahgunaan (kecurangan, spam, pelecehan, dll.). Identitas ini adalah hash satu arah yang berasal dari pengenal Windows komputer Anda; tidak berisi nama atau informasi pribadi dan tidak dapat dibalik untuk mengungkap pengenal aslinya. Pada pengiriman Papan Peringkat, identitas ini menjadi bagian dari catatan dan dapat terlihat dalam data peringkat publik; pada tiket dukungan, identitas ini muncul di dalam teks tiket.
+Jika pemblokiran diterapkan, identitas perangkat, nama pengguna, alasan, tanggal berakhir, dan cakupan (papan peringkat dan/atau tiket dukungan) ditulis ke daftar pemblokiran di GitHub (Gist), yang mungkin dapat dilihat publik. Pemblokiran berlaku untuk komputer, bukan untuk nama pengguna. Game mengunduh daftar ini setiap kali dibuka (hanya baca; tidak ada data yang dikirim dari Anda), dan jika pemblokiran cocok dengan komputer Anda, pemblokiran disimpan secara lokal (dalam file dan registri Windows) serta alasan dan durasinya ditampilkan kepada Anda sebagai pesan saat Game dibuka. Ketika pemblokiran dicabut atau berakhir, catatan ini dihapus.
+
+3. Untuk Apa Kami Menggunakan Data Anda
+- Memastikan Game berfungsi secara teknis (simpanan lokal, pengaturan, dll.)
+- Menanggapi permintaan dukungan Anda
+- Menjalankan papan peringkat (hanya dengan partisipasi sukarela)
+Kami tidak menggunakan data Anda untuk tujuan periklanan dan tidak menjualnya kepada pihak ketiga. Game tidak mengirim data akun atau kemajuan ke server kami.
+
+4. Di Mana Data Anda Disimpan
+Kemajuan game, pengaturan, dan riwayat Anda disimpan HANYA di perangkat Anda sendiri.
+Papan Peringkat yang Anda ikuti secara sukarela dan Permintaan Dukungan yang Anda buka dihosting di infrastruktur GitHub (Gist / Issues); oleh karena itu kebijakan privasi GitHub sendiri juga berlaku untuk data terkait.
+Papan peringkat dan sistem dukungan memerlukan koneksi internet. Game itu sendiri (simpanan lokal, perdagangan, perusahaan, tanah, karyawan, dll.) sepenuhnya dapat dimainkan tanpa koneksi internet.
+
+5. Keamanan Data
+Karena Game tidak mengumpulkan akun atau kata sandi, kami tidak menyimpan kata sandi apa pun untuk Anda. Keamanan file simpanan lokal Anda (cadangan, keamanan perangkat, dll.) sepenuhnya menjadi tanggung jawab Anda.
+Nama pengguna dan informasi uang tunai yang Anda kirimkan ke Papan Peringkat bersifat publik; kami menyarankan untuk tidak membagikan informasi pribadi.
+
+6. Penyimpanan dan Penghapusan Data
+File simpanan lokal Anda disimpan selama masih ada di perangkat Anda; Anda dapat menghapusnya dari layar "Muat Game Tersimpan" dalam game atau dengan membersihkan folder simpanan secara manual di perangkat Anda.
+Karena entri papan peringkat bersifat publik, permintaan penghapusan diproses dalam waktu yang wajar, tetapi kami mungkin tidak memiliki kendali atas catatan yang sudah dilihat atau disalin oleh orang lain. Tiket dukungan ditutup dalam waktu yang wajar setelah permintaan diselesaikan.
+Anda dapat menghubungi kami melalui halaman kontak kami untuk permintaan penghapusan.
+
+7. Hak Anda
+Bergantung pada hukum negara Anda (mis. KVKK, GDPR), Anda mungkin memiliki hak untuk mengakses, memperbaiki, dan meminta penghapusan data yang kami proses tentang Anda. Karena Game berjalan secara lokal dan tidak mengumpulkan akun, sebagian besar hak ini sudah menjadi milik Anda secara alami (data hanya ada di perangkat Anda). Anda dapat mengirimkan permintaan terkait papan peringkat dan tiket dukungan melalui halaman kontak kami (https://bilgisayar-xi.vercel.app/iletisim.html).
+
+8. Perubahan pada Kebijakan Ini
+Kami dapat memperbarui kebijakan ini dari waktu ke waktu. Ketika perubahan signifikan dibuat, Anda akan diberi tahu lagi melalui layar konfirmasi dalam game dan persetujuan Anda akan diminta.
+
+9. Kontak
+Untuk pertanyaan: https://bilgisayar-xi.vercel.app/iletisim.html atau layar Dukungan / Tiket di dalam Game."
+"pt:
+Política de Privacidade — Karaborsa Simülasyonu
+Última atualização: domingo, 18 de outubro de 2026
+
+1. Abrangência
+Esta política explica quais dados são coletados, como são utilizados e com quem são compartilhados quando você usa o jogo para computador Karaborsa Simülasyonu (o "Jogo") e as páginas da web relacionadas a ele (por exemplo, a página de contato). Ao utilizar o Jogo, você concorda com esta política.
+Desenvolvedor: muhammed.ali 
+Contato: https://bilgisayar-xi.vercel.app/iletisim.html
+
+2. Quais dados coletamos
+
+2.1 Informações de conta
+Você NÃO precisa criar uma conta para jogar. O Jogo não coleta nomes de usuário, senhas, endereços de e-mail ou outras informações pessoais semelhantes, nem envia esses dados aos nossos servidores.
+O nome de usuário escolhido ao iniciar o Jogo é usado apenas para identificar seu arquivo de salvamento local e não sai do seu dispositivo (exceto se você optar voluntariamente por participar do ranking — consulte a seção 2.3).
+
+2.2 Dados de progresso no jogo
+Todos os dados do seu progresso — saldo em dinheiro, inventário, empresas, terrenos, funcionários, situação dos empréstimos, dia do jogo etc. — são armazenados SOMENTE no seu próprio computador, no arquivo local de salvamento do jogo. Esses dados não são enviados à nuvem nem saem do seu dispositivo.
+Se você começar a jogar em outro computador, seu progresso não será transferido automaticamente; cada dispositivo tem seu próprio arquivo de salvamento. Para transferir seu progresso a outro dispositivo, você precisará copiar manualmente o arquivo salvo.
+
+2.3 Ranking
+Quando você opta por participar do ranking "Melhores Pontuações" (Configurações > Envio de Pontuação), o nome de usuário escolhido ao iniciar o Jogo, juntamente com seu saldo em dinheiro e o dia atual no jogo, é enviado a uma classificação pública, visível para todos os outros jogadores. Depois do envio, essas informações poderão ser vistas por outros jogadores. Você pode desativar sua participação a qualquer momento na tela de Configurações.
+Se não quiser revelar seu nome verdadeiro ou uma identidade que utiliza em outros lugares, recomendamos escolher seu nome de usuário levando isso em consideração ao iniciar o Jogo.
+O ranking fica hospedado na infraestrutura do GitHub (Gist); portanto, a política de privacidade do próprio GitHub também se aplica aos dados enviados.
+
+2.4 Solicitações de suporte (chamados)
+Quando você abre uma solicitação pela tela "Suporte / Chamado", o nome de usuário escolhido ao iniciar o Jogo e a mensagem enviada são registrados no sistema de suporte do desenvolvedor (GitHub Issues) e mantidos até que sua solicitação seja resolvida. Se você usar o botão "Enviar Log" na tela do chamado, seu histórico no jogo e os registros técnicos de erros do seu dispositivo (log do aplicativo) também serão anexados à mensagem; isso é totalmente opcional, e esses dados só serão incluídos se você usar o botão. Você é responsável por tudo o que compartilhar em um chamado; recomendamos não incluir informações confidenciais, como senhas ou números de documentos de identidade, nas mensagens de suporte.
+
+2.5 Dados armazenados no dispositivo
+Os dados a seguir são armazenados apenas no seu computador e não são enviados a nós (a menos que você os anexe voluntariamente a um chamado pelo botão "Enviar Log", descrito na seção 2.4):
+- Seu arquivo local de salvamento (dinheiro, inventário, empresas, terrenos, funcionários etc.)
+- Sua cópia de segurança local do salvamento e o histórico de chamados
+- Suas preferências, como volume dos sons e da música, envio de pontuação e mensagem do dia
+- O histórico de "mensagens faladas" mantido para o leitor de tela
+- O arquivo de log local que armazena registros de erros técnicos e eventos do aplicativo
+- O registro do status de banimento (somente se um banimento tiver sido aplicado; arquivo e registro do Windows)
+
+2.6 Identificador do dispositivo e banimentos
+Se você optar por participar do Ranking ou abrir um chamado de suporte, um identificador do seu computador é adicionado às informações enviadas, para que possamos evitar abusos (trapaças, spam, assédio etc.). Esse identificador é um hash unidirecional derivado do identificador do Windows do seu computador; não contém nome nem informações pessoais e não pode ser revertido para revelar o identificador original. No envio ao Ranking, esse identificador faz parte do registro e pode ficar visível nos dados públicos da classificação; em um chamado de suporte, ele aparece no texto do chamado.
+Se um banimento for aplicado, o identificador do dispositivo, o nome de usuário, o motivo, a data de término e o alcance (ranking e/ou chamados de suporte) são gravados na lista de banimentos no GitHub (Gist), que pode ser visível publicamente. O banimento se aplica ao computador, e não a um nome de usuário. O Jogo baixa essa lista a cada inicialização (somente leitura; nada é enviado por você) e, se um banimento corresponder ao seu computador, ele é armazenado localmente (em um arquivo e no registro do Windows), e o motivo e a duração são exibidos a você em uma mensagem quando o Jogo é aberto. Quando o banimento é encerrado ou expira, esse registro é apagado.
+
+3. Para que usamos seus dados
+- Garantir o funcionamento técnico do Jogo (arquivos locais de salvamento, configurações etc.)
+- Responder às suas solicitações de suporte
+- Manter o ranking (apenas mediante participação voluntária)
+Não utilizamos seus dados para publicidade nem os vendemos a terceiros. O Jogo não envia dados de conta ou de progresso aos nossos servidores.
+
+4. Onde seus dados são armazenados
+Seu progresso no jogo, suas configurações e seu histórico são armazenados SOMENTE no seu dispositivo.
+O ranking do qual você participa voluntariamente e as solicitações de suporte que você abre ficam hospedados na infraestrutura do GitHub (Gist / Issues); portanto, a política de privacidade do próprio GitHub também se aplica a esses dados.
+O ranking e o sistema de suporte exigem conexão com a internet. O Jogo em si (arquivos locais de salvamento, comércio, empresas, terrenos, funcionários etc.) pode ser jogado integralmente sem conexão com a internet.
+
+5. Segurança dos dados
+Como o Jogo não coleta informações de conta nem senhas, não armazenamos nenhuma senha sua. A segurança do seu arquivo local de salvamento (cópias de segurança, proteção do dispositivo etc.) é de sua inteira responsabilidade.
+O nome de usuário e as informações sobre o saldo em dinheiro que você envia ao ranking são públicos; recomendamos não compartilhar informações pessoais.
+
+6. Armazenamento e exclusão dos dados
+Seu arquivo local de salvamento permanece armazenado enquanto estiver no seu dispositivo; você pode excluí-lo pela tela "Carregar Jogo Salvo", no próprio Jogo, ou limpando manualmente a pasta de salvamento do dispositivo.
+Como os registros do ranking são públicos, as solicitações de exclusão são processadas em um prazo razoável, mas talvez não tenhamos controle sobre registros que já tenham sido visualizados ou copiados por outras pessoas. Os chamados de suporte são encerrados em um prazo razoável após a resolução da solicitação.
+Para solicitar a exclusão de dados, entre em contato conosco pela página de contato.
+
+7. Seus direitos
+Dependendo das leis do seu país (por exemplo, KVKK e GDPR), você poderá ter o direito de acessar, corrigir e solicitar a exclusão dos dados que tratamos sobre você. Como o Jogo funciona localmente e não coleta dados de conta, a maior parte desses direitos já pode ser exercida diretamente por você (pois os dados estão somente no seu dispositivo). Você pode enviar solicitações relacionadas ao ranking e aos chamados de suporte por nossa página de contato (https://bilgisayar-xi.vercel.app/iletisim.html).
+
+8. Alterações nesta política
+Podemos atualizar esta política de tempos em tempos. Quando houver alterações significativas, você será informado novamente por uma tela de confirmação dentro do Jogo, e seu consentimento será solicitado.
+
+9. Contato
+Em caso de dúvidas: https://bilgisayar-xi.vercel.app/iletisim.html ou a tela "Suporte / Chamado" no Jogo."

@@ -26,6 +26,7 @@ exe'nin içine/yanına elle koyulmalı.
 """
 
 import os
+import re
 import sys
 import json
 import time
@@ -43,6 +44,13 @@ API_BASE = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}"
 TICKET_LABEL = "oyun-ici-bilet"
 
 REQUEST_TIMEOUT = 15
+
+# Oyuncunun yorumlarının sonuna eklenen GİZLİ işaret (GitHub'da görünmez,
+# oyunda gösterilmeden önce silinir). Yönetim paneli, aynı hesaptan
+# yazıldığı için ayırt edilemeyen oyuncu / yönetim yorumlarını bununla
+# ayırır: işaretli = oyuncu, işaretsiz = yönetim cevabı.
+PLAYER_MARKER = "<!--oyuncu-->"
+_HIDDEN_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 # ---------------------------------------------------------------------------
@@ -277,7 +285,7 @@ def fetch_ticket_thread(number: int) -> Dict:
         comments.append({
             "id": c.get("id"),
             "author": author,
-            "body": c.get("body", ""),
+            "body": _HIDDEN_RE.sub("", c.get("body", "") or "").strip(),
             "created_at": c.get("created_at"),
         })
 
@@ -308,7 +316,8 @@ def add_reply(username: str, number: int, message: str) -> Dict:
                             "Lütfen yeni bir bilet açın.")
 
     resp = requests.post(f"{API_BASE}/issues/{number}/comments",
-                          headers=_headers(), json={"body": message},
+                          headers=_headers(),
+                          json={"body": f"{message}\n\n{PLAYER_MARKER}"},
                           timeout=REQUEST_TIMEOUT)
     if resp.status_code >= 400:
         raise RuntimeError(_parse_error(resp))

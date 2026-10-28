@@ -426,6 +426,68 @@ def list_tickets(include_closed: bool = False, max_pages: int = 3) -> List[Dict]
     return tickets
 
 
+PLAYER_MARKER = "<!--oyuncu-->"   # ticket_manager.py ile aynı
+_HIDDEN_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def _clean_body(text: str) -> str:
+    return _HIDDEN_RE.sub("", text or "").strip()
+
+
+def fetch_thread(number: int) -> Dict:
+    """Bir biletin ilk mesajını ve tüm yorumlarını döner. Yorumlarda
+    is_player: oyuncunun yorumu (gizli işaretli) mu, yönetim cevabı mı."""
+    token = read_ticket_token()
+    issue = _request("GET", f"{TICKET_API}/issues/{number}", token).json()
+    comments: List[Dict] = []
+    for page in range(1, 6):
+        items = _request(
+            "GET", f"{TICKET_API}/issues/{number}/comments?per_page=100&page={page}", token
+        ).json()
+        if not isinstance(items, list) or not items:
+            break
+        for c in items:
+            raw = c.get("body") or ""
+            comments.append({
+                "id": c.get("id"),
+                "author": (c.get("user") or {}).get("login", "?"),
+                "body": _clean_body(raw),
+                "created": (c.get("created_at") or "")[:16].replace("T", " "),
+                "is_player": PLAYER_MARKER in raw,
+            })
+        if len(items) < 100:
+            break
+    info = parse_ticket(issue)
+    return {"info": info, "state": issue.get("state", "open"),
+            "body": _clean_body(issue.get("body")), "comments": comments}
+
+
+def format_thread(th: Dict) -> str:
+    """Konuşmayı okunur metne çevirir: her mesaj 'Kim - tarih' satırı + metin."""
+    info = th["info"]
+    parts = [f"Oyuncu ({info['username'] or '?'}) - {info['created']}\n{th['body']}"]
+    for c in th["comments"]:
+        who = "Oyuncu" if c["is_player"] else "Yönetim"
+        parts.append(f"{who} - {c['created']}\n{c['body']}")
+    return "\n\n".join(parts)
+
+
+def post_reply(number: int, text: str, close: bool = False) -> str:
+    """Bilete yönetim cevabı yazar (oyuncu bunu oyunda 'Yönetim cevabı'
+    olarak görür ve yeni yanıt bildirimi alır). close=True ise ardından
+    bileti kapatır."""
+    text = (text or "").strip()
+    if not text:
+        raise GistError("Boş yanıt gönderilemez.")
+    token = read_ticket_token()
+    _request("POST", f"{TICKET_API}/issues/{number}/comments", token, json={"body": text})
+    msg = f"#{number} numaralı bilete yanıt gönderildi."
+    if close:
+        _request("PATCH", f"{TICKET_API}/issues/{number}", token, json={"state": "closed"})
+        msg += " Bilet kapatıldı."
+    return msg
+
+
 def close_tickets(numbers: List[int]) -> str:
     """Verilen numaralı biletleri kapatır (spam temizliği)."""
     token = read_ticket_token()
@@ -680,6 +742,115 @@ class BanListDialog(wx.Dialog):
         self.frame.run_async(lambda: remove_ban(ban["id"]), done)
 
 
+class TicketThreadDialog(wx.Dialog):
+    """Bir biletin konuşmasını okur ve yanıtlar. Oluşturma sırası = Tab sırası
+    ve ekran okuyucu etiketi: etiket -> konuşma -> etiket -> yanıt kutusu ->
+    düğmeler."""
+
+    def __init__(self, owner: "TicketListDialog", ticket: Dict):
+        super().__init__(owner, title=f"Bilet #{ticket['number']} - {ticket['title']}",
+                         size=(820, 640), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.owner = owner
+        self.frame = owner.frame
+        self.ticket = ticket
+        self.thread: Optional[Dict] = None
+        panel = wx.Panel(self)
+        v = wx.BoxSizer(wx.VERTICAL)
+
+        self.conv_label = wx.StaticText(panel, label="Konuşma:")
+        self.conv_text = wx.TextCtrl(
+            panel, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_DONTWRAP)
+        self.conv_text.SetMinSize((-1, 280))
+        self.reply_label = wx.StaticText(panel, label="Yanıtınız (Ctrl+Enter ile gönderilir):")
+        self.reply_text = wx.TextCtrl(panel, style=wx.TE_MULTILINE)
+        self.reply_text.SetMinSize((-1, 110))
+        self.send_btn = wx.Button(panel, label="Yanıtla")
+        self.send_close_btn = wx.Button(panel, label="Yanıtla ve Kapat")
+        self.ban_btn = wx.Button(panel, label="Sahibini Yasakla")
+        self.close_btn = wx.Button(panel, label="Bileti Kapat")
+        self.refresh_btn = wx.Button(panel, label="Yenile")
+        self.exit_btn = wx.Button(panel, wx.ID_CANCEL, "Kapat")
+
+        v.Add(self.conv_label, 0, wx.LEFT | wx.TOP, 8)
+        v.Add(self.conv_text, 1, wx.EXPAND | wx.ALL, 6)
+        v.Add(self.reply_label, 0, wx.LEFT | wx.TOP, 8)
+        v.Add(self.reply_text, 0, wx.EXPAND | wx.ALL, 6)
+        h = wx.BoxSizer(wx.HORIZONTAL)
+        for b in (self.send_btn, self.send_close_btn, self.ban_btn,
+                  self.close_btn, self.refresh_btn, self.exit_btn):
+            h.Add(b, 0, wx.ALL, 5)
+        v.Add(h, 0, wx.ALIGN_RIGHT | wx.ALL, 5)
+        panel.SetSizer(v)
+
+        self.send_btn.Bind(wx.EVT_BUTTON, lambda e: self.send(False))
+        self.send_close_btn.Bind(wx.EVT_BUTTON, lambda e: self.send(True))
+        self.ban_btn.Bind(wx.EVT_BUTTON, lambda e: self.owner.ban_ticket_owner(self.ticket, self))
+        self.close_btn.Bind(wx.EVT_BUTTON, self.on_close_ticket)
+        self.refresh_btn.Bind(wx.EVT_BUTTON, lambda e: self.load())
+        self.reply_text.Bind(wx.EVT_KEY_DOWN, self.on_reply_key)
+        self.Centre()
+        self.load()
+
+    def on_reply_key(self, event):
+        if event.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER) and event.ControlDown():
+            self.send(False)
+        else:
+            event.Skip()
+
+    def load(self, focus_reply: bool = False):
+        number = self.ticket["number"]
+
+        def done(thread, error):
+            if error:
+                self.frame.show_error(error)
+                return
+            self.thread = thread
+            self.conv_text.SetValue(format_thread(thread))
+            self.conv_text.SetInsertionPointEnd()   # imleç en son mesajda
+            state = "AÇIK" if thread["state"] == "open" else "KAPALI"
+            self.SetTitle(f"Bilet #{number} - {self.ticket['title']} ({state})")
+            self.frame.SetStatusText(f"Bilet #{number}: {len(thread['comments'])} yorum, {state}.")
+            (self.reply_text if focus_reply else self.conv_text).SetFocus()
+
+        self.frame.run_async(lambda: fetch_thread(number), done)
+
+    def send(self, close: bool):
+        text = self.reply_text.GetValue().strip()
+        if not text:
+            wx.MessageBox("Önce bir yanıt yazın.", "Uyarı", wx.OK | wx.ICON_WARNING, self)
+            self.reply_text.SetFocus()
+            return
+        number = self.ticket["number"]
+
+        def done(message, error):
+            if error:
+                self.frame.show_error(error)
+                return
+            self.reply_text.SetValue("")
+            wx.Bell()
+            self.frame.SetStatusText(message)
+            self.load(focus_reply=True)
+            self.owner.load()
+
+        self.frame.run_async(lambda: post_reply(number, text, close), done)
+
+    def on_close_ticket(self, event):
+        number = self.ticket["number"]
+        if wx.MessageBox(f"#{number} numaralı bilet kapatılsın mı?", "Onay",
+                         wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION, self) != wx.YES:
+            return
+
+        def done(message, error):
+            if error:
+                self.frame.show_error(error)
+                return
+            self.frame.SetStatusText(message)
+            self.load()
+            self.owner.load()
+
+        self.frame.run_async(lambda: close_tickets([number]), done)
+
+
 class TicketListDialog(wx.Dialog):
     """Destek biletlerini listeler; sahibini yasaklar, açık biletlerini kapatır.
     Oluşturma sırası = Tab sırası ve ekran okuyucu etiketi: etiket -> liste ->
@@ -695,11 +866,12 @@ class TicketListDialog(wx.Dialog):
 
         self.list_label = wx.StaticText(panel, label="Biletler:")
         self.list_ctrl = wx.ListCtrl(panel, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.SUNKEN_BORDER)
-        for i, (name, w) in enumerate((("No", 55), ("Kullanıcı", 130), ("Konu", 270),
-                                       ("Cihaz", 100), ("Aynı cihazdan bilet", 130),
-                                       ("Tarih", 90), ("Durum", 70))):
+        for i, (name, w) in enumerate((("No", 55), ("Kullanıcı", 120), ("Konu", 240),
+                                       ("Cihaz", 90), ("Aynı cihazdan bilet", 120),
+                                       ("Yorum", 60), ("Tarih", 90), ("Durum", 70))):
             self.list_ctrl.InsertColumn(i, name, width=w)
         self.closed_cb = wx.CheckBox(panel, label="Kapalı biletleri de göster")
+        self.open_btn = wx.Button(panel, label="Oku / Yanıtla (Enter)")
         self.ban_btn = wx.Button(panel, label="Sahibini Yasakla (B)")
         self.close_one_btn = wx.Button(panel, label="Seçili Bileti Kapat")
         self.close_all_btn = wx.Button(panel, label="Bu Kişinin Tüm Açık Biletlerini Kapat")
@@ -710,11 +882,13 @@ class TicketListDialog(wx.Dialog):
         v.Add(self.list_ctrl, 1, wx.EXPAND | wx.ALL, 6)
         v.Add(self.closed_cb, 0, wx.LEFT | wx.BOTTOM, 10)
         h = wx.BoxSizer(wx.HORIZONTAL)
-        for b in (self.ban_btn, self.close_one_btn, self.close_all_btn, self.refresh_btn, self.exit_btn):
+        for b in (self.open_btn, self.ban_btn, self.close_one_btn, self.close_all_btn, self.refresh_btn, self.exit_btn):
             h.Add(b, 0, wx.ALL, 5)
         v.Add(h, 0, wx.ALIGN_RIGHT | wx.ALL, 5)
         panel.SetSizer(v)
 
+        self.open_btn.Bind(wx.EVT_BUTTON, self.on_open)
+        self.list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.on_open)
         self.ban_btn.Bind(wx.EVT_BUTTON, self.on_ban)
         self.close_one_btn.Bind(wx.EVT_BUTTON, self.on_close_one)
         self.close_all_btn.Bind(wx.EVT_BUTTON, self.on_close_all)
@@ -752,8 +926,9 @@ class TicketListDialog(wx.Dialog):
                 self.list_ctrl.SetItem(i, 2, t["title"])
                 self.list_ctrl.SetItem(i, 3, t["device"][:10])
                 self.list_ctrl.SetItem(i, 4, str(t["same_device"]))
-                self.list_ctrl.SetItem(i, 5, t["created"])
-                self.list_ctrl.SetItem(i, 6, "Açık" if t["state"] == "open" else "Kapalı")
+                self.list_ctrl.SetItem(i, 5, str(t["comments"]))
+                self.list_ctrl.SetItem(i, 6, t["created"])
+                self.list_ctrl.SetItem(i, 7, "Açık" if t["state"] == "open" else "Kapalı")
             if tickets:
                 self.list_ctrl.Select(0)
                 self.list_ctrl.Focus(0)
@@ -769,15 +944,26 @@ class TicketListDialog(wx.Dialog):
             return bool(t["username"]) and x["username"] == t["username"]
         return [x["number"] for x in self.tickets if x["state"] == "open" and same(x)]
 
+    def on_open(self, event):
+        t = self._selected()
+        if t:
+            dlg = TicketThreadDialog(self, t)
+            dlg.ShowModal()
+            dlg.Destroy()
+            self.load()
+
     def on_ban(self, event):
         t = self._selected()
-        if not t:
-            return
+        if t:
+            self.ban_ticket_owner(t)
+
+    def ban_ticket_owner(self, t: Dict, parent=None):
+        host = parent or self
         if not (t["device"] or t["username"]):
             wx.MessageBox("Bu biletten kullanıcı adı veya cihaz kimliği okunamadı.", "Uyarı",
-                          wx.OK | wx.ICON_WARNING, self)
+                          wx.OK | wx.ICON_WARNING, host)
             return
-        dlg = BanDialog(self, t["username"], t["device"],
+        dlg = BanDialog(host, t["username"], t["device"],
                         leaderboard=False, tickets=True, remove_scores=False)
         ok = dlg.ShowModal() == wx.ID_OK
         values = dlg.get_values() if ok else None
@@ -791,10 +977,10 @@ class TicketListDialog(wx.Dialog):
             if error:
                 self.frame.show_error(error)
                 return
-            wx.MessageBox(message, "Bilgi", wx.OK | wx.ICON_INFORMATION, self)
+            wx.MessageBox(message, "Bilgi", wx.OK | wx.ICON_INFORMATION, host)
             if open_numbers and wx.MessageBox(
                     f"Bu kişinin {len(open_numbers)} açık bileti var. Hepsi kapatılsın mı?",
-                    "Biletleri kapat", wx.YES_NO | wx.ICON_QUESTION, self) == wx.YES:
+                    "Biletleri kapat", wx.YES_NO | wx.ICON_QUESTION, host) == wx.YES:
                 self.frame.run_async(lambda: close_tickets(open_numbers), self._after_close)
             else:
                 self.load()
