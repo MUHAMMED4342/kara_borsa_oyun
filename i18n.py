@@ -74,6 +74,11 @@ _BUILTIN_LANGUAGE_NAMES = {
     "tr": "Türkçe",
     "id": "Bahasa Indonesia",
     "pt": "Português",
+    "de": "Deutsch",
+    "fr": "Français",
+    "zh": "中文",
+    "ja": "日本語",
+    "hi": "हिन्दी",
 }
 
 
@@ -157,7 +162,7 @@ def _detect_system_language(candidate_codes: list) -> str:
                 0x0A: "es", 0x0C: "fr", 0x10: "it", 0x11: "ja",
                 0x12: "ko", 0x13: "nl", 0x16: "pt", 0x19: "ru",
                 0x16: "pt", 0x1F: "tr", 0x21: "id", 0x22: "uk", 0x29: "fa", 0x2A: "vi",
-                0x2D: "eu", 0x30: "el",
+                0x2D: "eu", 0x30: "el", 0x39: "hi",
             }
             detected = LANGID_TO_CODE.get(primary_lang_id)
         except Exception:

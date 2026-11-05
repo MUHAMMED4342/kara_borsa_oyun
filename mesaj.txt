@@ -1,47 +1,64 @@
-18.10.2026
+05.11.2026
 "tr:
-Merhaba! Bu güncellemede güzel haberlerim var.
-Portekizce dil desteği eklendi! Çevirileri yapan jp'ye gönülden çok teşekkür ederiz, emeği için sağ olsun.
-Artık oyunun ana penceresinde bir geçmiş yazı alanı var. Duyurulan olayları, kârları ve alım satımları oradan sakince okuyabilirsiniz.
-Bir de sürprizim var: her 7 günde bir gönderdiğim günün mesajlarından sonra hesabınıza 1.000.000 lira eklenecek. Mesajı görünce bakiyenize yansır, hem de size söylenir.
-Ayrıca hile korumaları eklendi ve oyunun güvenliği artırıldı. Skor tablosunun adil kalması için hepimizin buna ihtiyacı var.
-Bir sorun görürseniz ya da bir fikriniz olursa destek bileti göndermekten çekinmeyin. Keyifli oyunlar!
-""en:
-Hello! I have some good news for you in this update.
+Merhaba! Bu güncellemede dil müjdem var.
 
-Portuguese language support has been added! A big thank you to jp, who did the translations. We really appreciate the effort.
+Almanca, Fransızca, Çince, Japonca ve Hintçe dil desteği eklendi! Artık oyunu bu dillerde de oynayabilirsiniz. Dili Ayarlar'daki Dili Değiştir düğmesinden seçebilirsiniz.
 
-The main window now has a history text field, so you can calmly read back announcements, profits and trades.
+Çeviriler yapay zekâ yardımıyla hazırlandı, bu yüzden bazı yerlerde hatalar olabilir. Bir yanlışlık görürseniz destek bileti göndermekten çekinmeyin, birlikte düzeltelim. Keyifli oyunlar!
+"
+"en:
+Hello! I have some good news about languages in this update.
 
-And here is a little surprise: after the daily messages I send every 7 days, 1,000,000 will be added to your cash. It shows up in your balance when you see the message, and you will be told about it.
+German, French, Chinese, Japanese and Hindi language support has been added! You can now play the game in these languages too. You can pick the language with the Change Language button in Settings.
 
-Cheat protections have also been added and the game's security has been improved. We all need this to keep the leaderboard fair.
-
-If you notice a problem or have an idea, feel free to send a support ticket. Enjoy the game!
+The translations were prepared with the help of AI, so there may be mistakes in some places. If you notice one, feel free to send a support ticket and we will fix it together. Enjoy the game!
 "
 "id:
-Halo! Ada kabar baik untuk Anda di pembaruan ini.
+Halo! Ada kabar baik soal bahasa di pembaruan ini.
 
-Dukungan bahasa Portugis telah ditambahkan! Terima kasih banyak kepada jp yang telah mengerjakan terjemahannya. Kami sangat menghargai usahanya.
+Dukungan bahasa Jerman, Prancis, Mandarin, Jepang, dan Hindi telah ditambahkan! Sekarang Anda bisa memainkan game ini dalam bahasa-bahasa tersebut. Anda bisa memilih bahasa lewat tombol Ubah Bahasa di Pengaturan.
 
-Jendela utama kini memiliki kolom teks riwayat, sehingga Anda bisa membaca ulang pengumuman, keuntungan, dan transaksi dengan tenang.
-
-Ada juga kejutan kecil: setelah pesan hari ini yang saya kirim setiap 7 hari, uang tunai Anda akan bertambah 1.000.000. Jumlahnya langsung masuk ke saldo Anda saat pesan ditampilkan, dan hal itu akan diumumkan kepada Anda.
-
-Selain itu, perlindungan terhadap kecurangan telah ditambahkan dan keamanan game ditingkatkan. Kita semua membutuhkannya agar papan peringkat tetap adil.
-
-Jika Anda menemukan masalah atau punya ide, jangan ragu mengirim tiket dukungan. Selamat bermain!
+Terjemahannya dibuat dengan bantuan AI, jadi mungkin ada kesalahan di beberapa bagian. Jika Anda menemukannya, jangan ragu mengirim tiket dukungan dan kita perbaiki bersama. Selamat bermain!
 "
 "pt:
-Olá! Tenho boas notícias para você nesta atualização.
+Olá! Tenho boas notícias sobre idiomas nesta atualização.
 
-O suporte ao idioma português foi adicionado! Um grande obrigado ao jp, que fez as traduções. Agradecemos muito o esforço.
+O suporte aos idiomas alemão, francês, chinês, japonês e hindi foi adicionado! Agora você também pode jogar nesses idiomas. Você pode escolher o idioma pelo botão Alterar idioma nas Configurações.
 
-A janela principal agora tem um campo de texto de histórico, para você ler com calma os anúncios, os lucros e as negociações.
+As traduções foram feitas com a ajuda de IA, então pode haver erros em alguns pontos. Se você notar algum, fique à vontade para enviar um chamado de suporte e vamos corrigir juntos. Bom jogo!
+"
+"de:
+Hallo! In diesem Update habe ich gute Nachrichten zu den Sprachen.
 
-E tenho uma pequena surpresa: depois das mensagens do dia que envio a cada 7 dias, 1.000.000 serão adicionados ao seu dinheiro. O valor entra no seu saldo quando você vê a mensagem, e você será avisado.
+Die Unterstützung für Deutsch, Französisch, Chinesisch, Japanisch und Hindi wurde hinzugefügt! Sie können das Spiel jetzt auch in diesen Sprachen spielen. Die Sprache wählen Sie über die Schaltfläche „Sprache ändern“ in den Einstellungen.
 
-Também foram adicionadas proteções contra trapaças e a segurança do jogo foi reforçada. Todos nós precisamos disso para manter a classificação justa.
+Die Übersetzungen wurden mit Hilfe von KI erstellt, daher kann es an einigen Stellen Fehler geben. Wenn Sie einen bemerken, senden Sie gerne ein Support-Ticket, dann korrigieren wir ihn gemeinsam. Viel Spaß beim Spielen!
+"
+"fr:
+Bonjour ! J'ai de bonnes nouvelles concernant les langues dans cette mise à jour.
 
-Se você notar algum problema ou tiver uma ideia, fique à vontade para enviar um chamado de suporte. Bom jogo!
+La prise en charge de l'allemand, du français, du chinois, du japonais et de l'hindi a été ajoutée ! Vous pouvez désormais jouer dans ces langues aussi. Vous pouvez choisir la langue avec le bouton Changer la langue dans les Paramètres.
+
+Les traductions ont été préparées avec l'aide de l'IA, il peut donc y avoir des erreurs à certains endroits. Si vous en remarquez une, n'hésitez pas à envoyer un ticket d'assistance et nous la corrigerons ensemble. Bon jeu !
+"
+"zh:
+您好！这次更新有关于语言的好消息。
+
+新增了德语、法语、中文、日语和印地语支持！现在您也可以用这些语言玩游戏了。您可以通过“设置”中的“更改语言”按钮选择语言。
+
+翻译是在 AI 的帮助下完成的，因此某些地方可能存在错误。如果您发现问题，欢迎随时提交支持工单，我们会一起改正。祝您游戏愉快！
+"
+"ja:
+こんにちは！今回のアップデートで、言語についてうれしいお知らせがあります。
+
+ドイツ語、フランス語、中国語、日本語、ヒンディー語のサポートが追加されました！これらの言語でもゲームを遊べるようになりました。言語は「設定」の「言語を変更」ボタンから選べます。
+
+翻訳はAIの助けを借りて作成したため、一部に誤りがあるかもしれません。見つけたら、遠慮なくサポートチケットを送ってください。一緒に直していきましょう。楽しくプレイしてください！
+"
+"hi:
+नमस्ते! इस अपडेट में भाषाओं को लेकर अच्छी खबर है।
+
+जर्मन, फ़्रेंच, चीनी, जापानी और हिन्दी भाषा का समर्थन जोड़ा गया है! अब आप गेम इन भाषाओं में भी खेल सकते हैं। आप सेटिंग्स में 'भाषा बदलें' बटन से भाषा चुन सकते हैं।
+
+अनुवाद AI की मदद से तैयार किए गए हैं, इसलिए कुछ जगहों पर गलतियाँ हो सकती हैं। यदि आपको कोई गलती दिखे, तो बेझिझक सपोर्ट टिकट भेजें, हम मिलकर उसे ठीक कर लेंगे। खेल का आनंद लें!
 "
