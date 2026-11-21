@@ -1,64 +1,64 @@
-05.11.2026
+21.11.2026
+
 "tr:
-Merhaba! Bu güncellemede dil müjdem var.
+Merhaba! Bu güncellemede maalesef güzel haberlerim yok.
 
-Almanca, Fransızca, Çince, Japonca ve Hintçe dil desteği eklendi! Artık oyunu bu dillerde de oynayabilirsiniz. Dili Ayarlar'daki Dili Değiştir düğmesinden seçebilirsiniz.
+GitHub tarafından gönderilen telif hakkı uyarısı nedeniyle oyun müziklerimizin bazılarını kaldırmak zorunda kaldım. Bu güncellemede ne yazık ki bunun dışında başka bir yenilik bulunmuyor.
 
-Çeviriler yapay zekâ yardımıyla hazırlandı, bu yüzden bazı yerlerde hatalar olabilir. Bir yanlışlık görürseniz destek bileti göndermekten çekinmeyin, birlikte düzeltelim. Keyifli oyunlar!
-"
+Umarım yakında sizlerle daha güzel ve kapsamlı güncellemeler paylaşabiliriz. Anlayışınız için teşekkürler!"
+
 "en:
-Hello! I have some good news about languages in this update.
+Hello! Unfortunately, I don't have any good news in this update.
 
-German, French, Chinese, Japanese and Hindi language support has been added! You can now play the game in these languages too. You can pick the language with the Change Language button in Settings.
+Due to a copyright notice from GitHub, I had to remove some of the music from the game. Unfortunately, there are no other new features in this update.
 
-The translations were prepared with the help of AI, so there may be mistakes in some places. If you notice one, feel free to send a support ticket and we will fix it together. Enjoy the game!
-"
+I hope we can share better and more substantial updates with you soon. Thank you for your understanding!"
+
 "id:
-Halo! Ada kabar baik soal bahasa di pembaruan ini.
+Halo! Sayangnya, tidak ada kabar baik dalam pembaruan kali ini.
 
-Dukungan bahasa Jerman, Prancis, Mandarin, Jepang, dan Hindi telah ditambahkan! Sekarang Anda bisa memainkan game ini dalam bahasa-bahasa tersebut. Anda bisa memilih bahasa lewat tombol Ubah Bahasa di Pengaturan.
+Karena adanya pemberitahuan hak cipta dari GitHub, saya terpaksa menghapus beberapa musik dari game. Sayangnya, tidak ada fitur baru lainnya dalam pembaruan ini.
 
-Terjemahannya dibuat dengan bantuan AI, jadi mungkin ada kesalahan di beberapa bagian. Jika Anda menemukannya, jangan ragu mengirim tiket dukungan dan kita perbaiki bersama. Selamat bermain!
-"
+Semoga kami bisa segera menghadirkan pembaruan yang lebih baik dan lebih menarik untuk Anda. Terima kasih atas pengertiannya!"
+
 "pt:
-Olá! Tenho boas notícias sobre idiomas nesta atualização.
+Olá! Infelizmente, não tenho boas notícias nesta atualização.
 
-O suporte aos idiomas alemão, francês, chinês, japonês e hindi foi adicionado! Agora você também pode jogar nesses idiomas. Você pode escolher o idioma pelo botão Alterar idioma nas Configurações.
+Devido a um aviso de direitos autorais enviado pelo GitHub, tive que remover algumas músicas do jogo. Infelizmente, não há nenhuma outra novidade nesta atualização.
 
-As traduções foram feitas com a ajuda de IA, então pode haver erros em alguns pontos. Se você notar algum, fique à vontade para enviar um chamado de suporte e vamos corrigir juntos. Bom jogo!
-"
+Espero que possamos trazer atualizações melhores e mais completas em breve. Agradeço pela compreensão!"
+
 "de:
-Hallo! In diesem Update habe ich gute Nachrichten zu den Sprachen.
+Hallo! Leider gibt es in diesem Update keine guten Neuigkeiten.
 
-Die Unterstützung für Deutsch, Französisch, Chinesisch, Japanisch und Hindi wurde hinzugefügt! Sie können das Spiel jetzt auch in diesen Sprachen spielen. Die Sprache wählen Sie über die Schaltfläche „Sprache ändern“ in den Einstellungen.
+Aufgrund einer Urheberrechtsmeldung von GitHub musste ich einige Musikstücke aus dem Spiel entfernen. Leider gibt es in diesem Update keine weiteren Neuerungen.
 
-Die Übersetzungen wurden mit Hilfe von KI erstellt, daher kann es an einigen Stellen Fehler geben. Wenn Sie einen bemerken, senden Sie gerne ein Support-Ticket, dann korrigieren wir ihn gemeinsam. Viel Spaß beim Spielen!
-"
+Ich hoffe, dass wir euch bald wieder bessere und umfangreichere Updates präsentieren können. Vielen Dank für euer Verständnis!"
+
 "fr:
-Bonjour ! J'ai de bonnes nouvelles concernant les langues dans cette mise à jour.
+Bonjour ! Malheureusement, je n'ai pas de bonnes nouvelles dans cette mise à jour.
 
-La prise en charge de l'allemand, du français, du chinois, du japonais et de l'hindi a été ajoutée ! Vous pouvez désormais jouer dans ces langues aussi. Vous pouvez choisir la langue avec le bouton Changer la langue dans les Paramètres.
+En raison d'un avis de violation des droits d'auteur envoyé par GitHub, j'ai dû supprimer certaines musiques du jeu. Malheureusement, cette mise à jour ne contient aucune autre nouveauté.
 
-Les traductions ont été préparées avec l'aide de l'IA, il peut donc y avoir des erreurs à certains endroits. Si vous en remarquez une, n'hésitez pas à envoyer un ticket d'assistance et nous la corrigerons ensemble. Bon jeu !
-"
+J'espère que nous pourrons bientôt vous proposer des mises à jour plus intéressantes et plus complètes. Merci de votre compréhension !"
+
 "zh:
-您好！这次更新有关于语言的好消息。
+您好！很遗憾，这次更新没有什么好消息。
 
-新增了德语、法语、中文、日语和印地语支持！现在您也可以用这些语言玩游戏了。您可以通过“设置”中的“更改语言”按钮选择语言。
+由于 GitHub 发出了版权警告，我不得不删除游戏中的部分音乐。遗憾的是，本次更新没有其他新内容。
 
-翻译是在 AI 的帮助下完成的，因此某些地方可能存在错误。如果您发现问题，欢迎随时提交支持工单，我们会一起改正。祝您游戏愉快！
-"
+希望我们很快能为大家带来更好、内容更丰富的更新。感谢大家的理解！"
+
 "ja:
-こんにちは！今回のアップデートで、言語についてうれしいお知らせがあります。
+こんにちは！残念ながら、今回のアップデートにはあまり良いお知らせがありません。
 
-ドイツ語、フランス語、中国語、日本語、ヒンディー語のサポートが追加されました！これらの言語でもゲームを遊べるようになりました。言語は「設定」の「言語を変更」ボタンから選べます。
+GitHubから著作権に関する通知を受け取ったため、ゲーム内の音楽の一部を削除せざるを得ませんでした。残念ながら、今回のアップデートにはそれ以外の新機能や変更はありません。
 
-翻訳はAIの助けを借りて作成したため、一部に誤りがあるかもしれません。見つけたら、遠慮なくサポートチケットを送ってください。一緒に直していきましょう。楽しくプレイしてください！
-"
+近いうちに、もっと良い内容のアップデートを皆さんにお届けできることを願っています。ご理解いただきありがとうございます！"
+
 "hi:
-नमस्ते! इस अपडेट में भाषाओं को लेकर अच्छी खबर है।
+नमस्ते! दुर्भाग्य से, इस अपडेट में कोई अच्छी खबर नहीं है।
 
-जर्मन, फ़्रेंच, चीनी, जापानी और हिन्दी भाषा का समर्थन जोड़ा गया है! अब आप गेम इन भाषाओं में भी खेल सकते हैं। आप सेटिंग्स में 'भाषा बदलें' बटन से भाषा चुन सकते हैं।
+GitHub की ओर से कॉपीराइट संबंधी सूचना मिलने के कारण मुझे गेम के कुछ संगीत हटाने पड़े। दुर्भाग्य से, इस अपडेट में इसके अलावा कोई नई सुविधा या बदलाव नहीं है।
 
-अनुवाद AI की मदद से तैयार किए गए हैं, इसलिए कुछ जगहों पर गलतियाँ हो सकती हैं। यदि आपको कोई गलती दिखे, तो बेझिझक सपोर्ट टिकट भेजें, हम मिलकर उसे ठीक कर लेंगे। खेल का आनंद लें!
-"
+उम्मीद है कि हम जल्द ही आपके लिए और भी बेहतर और विस्तृत अपडेट ला सकेंगे। आपकी समझ के लिए धन्यवाद!"
